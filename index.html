@@ -50,6 +50,7 @@
                   <option value="run_5k">Run a 5K</option>
                   <option value="bar_hang">2-min bar hang</option>
                   <option value="pushups">30 pushups</option>
+                  <option value="custom">Custom</option>
                 </select>
               </div>
               <div>
@@ -75,6 +76,11 @@
             </div>
 
             <div class="grid2" style="margin-top:10px">
+              <div id="primaryCustomWrap" hidden>
+                <label class="small">Custom goal</label>
+                <input class="input" id="primaryCustomText" placeholder='e.g., "Lose 10 lbs in 30 days"' />
+                <div class="muted">We’ll still build workouts, but customization is limited for custom goals.</div>
+              </div>
               <div id="primaryBaselineWrap" hidden>
                 <label class="small" id="primaryBaselineLabel">Baseline</label>
                 <input class="input" id="primaryBaseline" inputmode="numeric" placeholder="" />

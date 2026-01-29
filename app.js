@@ -586,6 +586,7 @@ function updateGoalFieldVisibility() {
   const t = String($('primaryType')?.value || '').trim();
   const baseWrap = $('primaryBaselineWrap');
   const progWrap = $('primaryProgressWrap');
+  const customWrap = $('primaryCustomWrap');
   const baseLabel = $('primaryBaselineLabel');
   const progLabel = $('primaryProgressLabel');
   const baseHint = $('primaryBaselineHint');
@@ -596,6 +597,12 @@ function updateGoalFieldVisibility() {
   // default hidden
   baseWrap.hidden = true;
   progWrap.hidden = true;
+  if (customWrap) customWrap.hidden = true;
+
+  if (t === 'custom') {
+    if (customWrap) customWrap.hidden = false;
+    return;
+  }
 
   if (t === 'bar_hang') {
     baseWrap.hidden = false;
@@ -644,11 +651,22 @@ function saveGoalsFromForm() {
     createdAt: new Date().toISOString()
   };
 
+  if (t === 'custom') {
+    const txt = String($('primaryCustomText')?.value || '').trim();
+    if (!txt) {
+      alert('Enter a custom goal description.');
+      return;
+    }
+    goal.customText = txt;
+  }
+
   // goal-specific baseline + progress
   const baselineVal = Number($('primaryBaseline')?.value || 0);
   const progressVal = Number($('primaryProgress')?.value || 0);
 
-  if (t === 'bar_hang') {
+  if (t === 'custom') {
+    // no structured baseline/progress yet
+  } else if (t === 'bar_hang') {
     if (baselineVal) goal.maxHangSec = baselineVal;
     if (progressVal) goal.bestHangSec = progressVal;
   } else if (t === 'pushups') {
@@ -704,6 +722,9 @@ function hydrateGoalsForm() {
     if (base) base.value = '';
     if (prog) prog.value = '';
   }
+
+  const c = $('primaryCustomText');
+  if (c) c.value = String(state.primaryGoal?.customText || '');
 
   updateGoalFieldVisibility();
 }
