@@ -32,8 +32,6 @@
         <div class="cardHeader">
           <h2>Dashboard</h2>
           <div class="row wrap">
-            <button class="btn" id="btnSetPrimary" type="button">Set primary goal</button>
-            <button class="btn secondary" id="btnSetSecondary" type="button">Set secondary</button>
             <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
             <button class="btn secondary" id="btnAddGoal" type="button">Add habit goal</button>
           </div>
@@ -42,12 +40,47 @@
         <div class="grid2">
           <div class="panel">
             <div class="panelTitle">Primary goal</div>
-            <div id="primaryGoal" class="muted">Not set</div>
-            <div class="muted" id="primaryGoalProgress"></div>
+            <div class="grid2">
+              <div>
+                <label class="small">Goal</label>
+                <select class="input" id="primaryType">
+                  <option value="">Select…</option>
+                  <option value="lose_weight">Lose weight</option>
+                  <option value="build_muscle">Build muscle</option>
+                  <option value="run_5k">Run a 5K</option>
+                  <option value="bar_hang">2-min bar hang</option>
+                </select>
+              </div>
+              <div>
+                <label class="small">Minutes/session</label>
+                <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
+              </div>
+            </div>
+            <div style="margin-top:10px" class="grid2">
+              <div>
+                <label class="small">Days/week</label>
+                <input class="input" id="primaryDays" inputmode="numeric" placeholder="3" />
+              </div>
+              <div>
+                <label class="small">Secondary (optional)</label>
+                <select class="input" id="secondaryType">
+                  <option value="">None</option>
+                  <option value="steps">Steps</option>
+                  <option value="protein">Protein</option>
+                  <option value="mobility">Mobility</option>
+                  <option value="zone2">Zone 2</option>
+                </select>
+              </div>
+            </div>
+            <div class="row wrap" style="margin-top:10px">
+              <button class="btn" id="btnSaveGoals" type="button">Save goals</button>
+              <div class="muted" id="primaryGoalProgress"></div>
+            </div>
           </div>
           <div class="panel">
-            <div class="panelTitle">Secondary goal</div>
-            <div id="secondaryGoal" class="muted">None</div>
+            <div class="panelTitle">Status</div>
+            <div id="primaryGoal" class="muted">Not set</div>
+            <div class="muted" id="secondaryGoal">None</div>
           </div>
           <div class="panel">
             <div class="panelTitle">Streak</div>
@@ -73,57 +106,23 @@
         <div class="muted">Habits auto-save. Tap +1 to log completion.</div>
       </section>
 
+      <section class="card" id="cardPlan">
+        <div class="cardHeader">
+          <h2>Calendar</h2>
+          <div class="row wrap">
+            <button class="btn secondary" id="btnRegenPlan" type="button">Regenerate</button>
+          </div>
+        </div>
+        <div class="muted">Today and upcoming workouts (auto-generated from your primary goal).</div>
+        <div id="planList" class="planList"></div>
+      </section>
+
       <section class="card" id="cardRoutines">
         <div class="cardHeader">
           <h2>Routines</h2>
           <button class="btn" id="btnNewRoutine" type="button">New routine</button>
         </div>
-
-        <div class="panel" style="margin-top:10px">
-          <div class="panelTitle">Quick start (recommended)</div>
-          <div class="muted">Pick a goal + duration + equipment. We’ll generate a workout you can run immediately.</div>
-          <div class="grid2" style="margin-top:10px">
-            <div>
-              <label class="small">Goal</label>
-              <select class="input" id="qsGoal">
-                <option value="general">General fitness</option>
-                <option value="pushups">Do 30 pushups</option>
-                <option value="barhang">Hang from a bar for 2 minutes</option>
-                <option value="5k">Run a 5K</option>
-                <option value="strength">Get stronger</option>
-                <option value="hypertrophy">Build muscle</option>
-              </select>
-            </div>
-            <div>
-              <label class="small">Workout duration</label>
-              <select class="input" id="qsDuration">
-                <option value="20">20 minutes</option>
-                <option value="30" selected>30 minutes</option>
-                <option value="45">45 minutes</option>
-                <option value="60">60 minutes</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="margin-top:10px">
-            <div class="small" style="margin-bottom:6px">Equipment available</div>
-            <div class="row wrap" id="qsEquipment">
-              <label class="small"><input type="checkbox" data-eq="bodyweight" checked> Bodyweight</label>
-              <label class="small"><input type="checkbox" data-eq="dumbbells"> Dumbbells</label>
-              <label class="small"><input type="checkbox" data-eq="barbell"> Barbell</label>
-              <label class="small"><input type="checkbox" data-eq="pullupbar"> Pull-up bar</label>
-              <label class="small"><input type="checkbox" data-eq="treadmill"> Treadmill</label>
-              <label class="small"><input type="checkbox" data-eq="bike"> Bike</label>
-            </div>
-          </div>
-
-          <div class="row wrap" style="margin-top:10px">
-            <button class="btn" id="btnQuickStart" type="button">Generate & start</button>
-            <span class="muted" id="qsHint"></span>
-          </div>
-        </div>
-
-        <div class="muted" style="margin-top:12px">Or pick a saved routine below.</div>
+        <div class="muted">You can still create custom routines, but most users should use the Calendar.</div>
         <div class="routineList" id="routineList"></div>
       </section>
 

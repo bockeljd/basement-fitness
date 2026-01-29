@@ -29,27 +29,16 @@ const KEYS = {
   goals: 'bf:goals',
   theme: 'bf:theme',
   primaryGoal: 'bf:primaryGoal',
-  secondaryGoal: 'bf:secondaryGoal'
+  secondaryGoal: 'bf:secondaryGoal',
+  plan: 'bf:plan'
 };
 
 function seedIfEmpty() {
   const r = store.get(KEYS.routines, null);
   if (Array.isArray(r) && r.length) return;
 
-  const routineId = uid();
-  const sample = [
-    {
-      id: routineId,
-      name: 'Full Body (Sample)',
-      desc: 'Edit this routine to match your workout.',
-      exercises: [
-        { id: uid(), name: 'Bench Press' },
-        { id: uid(), name: 'Lat Pulldown' },
-        { id: uid(), name: 'Squat' },
-      ]
-    }
-  ];
-  store.set(KEYS.routines, sample);
+  // Start clean: no sample routines.
+  store.set(KEYS.routines, []);
   store.set(KEYS.sessions, []);
 
   // Default profile
@@ -69,6 +58,7 @@ let state = {
   secondaryGoal: null,
   goals: [],
   theme: 'light',
+  plan: { generatedAt: null, days: [] },
   timer: { remainingSec: 0, running: false, interval: null }
 };
 
@@ -81,6 +71,7 @@ function loadState() {
   state.secondaryGoal = store.get(KEYS.secondaryGoal, null);
   state.goals = store.get(KEYS.goals, []);
   state.theme = store.get(KEYS.theme, 'light');
+  state.plan = store.get(KEYS.plan, state.plan);
 }
 
 function saveRoutines() { store.set(KEYS.routines, state.routines); }
@@ -91,6 +82,7 @@ function saveGoals() { store.set(KEYS.goals, state.goals); }
 function saveTheme() { store.set(KEYS.theme, state.theme); }
 function savePrimaryGoal() { store.set(KEYS.primaryGoal, state.primaryGoal); }
 function saveSecondaryGoal() { store.set(KEYS.secondaryGoal, state.secondaryGoal); }
+function savePlan() { store.set(KEYS.plan, state.plan); }
 
 function fmtTimer(sec) {
   const s = Math.max(0, sec|0);
@@ -572,72 +564,111 @@ function renderDashboard() {
   const st = computeStreak();
   const el = $('streakText');
   if (el) el.textContent = st ? `${st} day streak` : 'No streak yet';
+
+  renderPlan();
 }
-function setPrimaryGoalWizard() {
-  const type = prompt(
-    'Primary goal type?\n- lose_weight\n- build_muscle\n- run_5k\n- bar_hang\n(enter one)',
-    state.primaryGoal?.type || 'build_muscle'
-  );
-  if (!type) return;
-  const t = String(type).trim().toLowerCase();
-  if (!['lose_weight','build_muscle','run_5k','bar_hang'].includes(t)) {
-    alert('Unsupported goal type.');
+function saveGoalsFromForm() {
+  const t = String($('primaryType')?.value || '').trim();
+  if (!t) {
+    alert('Pick a primary goal.');
     return;
   }
+  const durationMin = Number($('primaryMinutes')?.value || state.profile.durationMin || 30);
+  const daysPerWeek = Number($('primaryDays')?.value || 3);
 
-  const durationMin = Number(prompt('Minutes per workout session?', String(state.primaryGoal?.durationMin || state.profile.durationMin || 30)) || 30);
-  const daysPerWeek = Number(prompt('Days per week?', String(state.primaryGoal?.daysPerWeek || 3)) || 3);
-
-  const goal = {
+  state.primaryGoal = {
     type: t,
     durationMin: durationMin || 30,
     daysPerWeek: daysPerWeek || 3,
     createdAt: new Date().toISOString()
   };
 
-  if (t === 'lose_weight') {
-    goal.targetLbs = Number(prompt('Target pounds to lose? (e.g., 10)', String(state.primaryGoal?.targetLbs || 10)) || 10);
-    goal.days = Number(prompt('Timeframe days? (e.g., 30)', String(state.primaryGoal?.days || 30)) || 30);
-  }
-  if (t === 'run_5k') {
-    goal.canRun10Min = (prompt('Can you run 10 minutes continuously? yes/no', (state.primaryGoal?.canRun10Min ? 'yes' : 'no')) || 'no').toLowerCase().startsWith('y');
-  }
-  if (t === 'bar_hang') {
-    goal.maxHangSec = Number(prompt('Current max hang time (seconds)?', String(state.primaryGoal?.maxHangSec || 30)) || 30);
-  }
+  const st = String($('secondaryType')?.value || '').trim();
+  state.secondaryGoal = st ? { type: st, createdAt: new Date().toISOString() } : null;
 
-  state.primaryGoal = goal;
   savePrimaryGoal();
-  renderDashboard();
-}
-
-function setSecondaryGoalWizard() {
-  const type = prompt(
-    'Secondary goal (optional). Enter one:\n- steps\n- protein\n- mobility\n- zone2\nOr leave blank to clear.',
-    state.secondaryGoal?.type || ''
-  );
-  if (type === null) return;
-  const t = String(type || '').trim().toLowerCase();
-  if (!t) {
-    state.secondaryGoal = null;
-    saveSecondaryGoal();
-    renderDashboard();
-    return;
-  }
-  if (!['steps','protein','mobility','zone2'].includes(t)) {
-    alert('Unsupported secondary goal type.');
-    return;
-  }
-  state.secondaryGoal = { type: t, createdAt: new Date().toISOString() };
   saveSecondaryGoal();
+  regeneratePlan();
   renderDashboard();
 }
 
-function generateTodayFromGoals() {
+function hydrateGoalsForm() {
+  const pt = $('primaryType');
+  const pm = $('primaryMinutes');
+  const pd = $('primaryDays');
+  const st = $('secondaryType');
+
+  if (pt) pt.value = state.primaryGoal?.type || '';
+  if (pm) pm.value = String(state.primaryGoal?.durationMin || state.profile.durationMin || 30);
+  if (pd) pd.value = String(state.primaryGoal?.daysPerWeek || 3);
+  if (st) st.value = state.secondaryGoal?.type || '';
+}
+
+function ensurePlanGenerated() {
+  if (!state.primaryGoal) return false;
+  if (!state.plan || !Array.isArray(state.plan.days) || state.plan.days.length === 0) {
+    regeneratePlan();
+  }
+  return true;
+}
+
+function regeneratePlan() {
   if (!state.primaryGoal) {
     alert('Set a primary goal first.');
     return;
   }
+
+  // Build a simple 14-day plan.
+  const now = new Date();
+  const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
+  const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
+
+  const planDays = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now.getTime() + i * 86400000);
+    const isWorkoutDay = (i % cadence) === 0;
+    if (isWorkoutDay) {
+      const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+      planDays.push({
+        date: ymd(d),
+        kind: 'workout',
+        routine
+      });
+    } else {
+      planDays.push({
+        date: ymd(d),
+        kind: 'rest',
+        routine: null
+      });
+    }
+  }
+
+  state.plan = { generatedAt: new Date().toISOString(), days: planDays };
+  savePlan();
+  renderPlan();
+}
+
+function startPlannedWorkout(dateStr) {
+  ensurePlanGenerated();
+  const item = (state.plan.days || []).find(x => x.date === dateStr);
+  if (!item || !item.routine) return;
+  const r = item.routine;
+  state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
+  saveRoutines();
+  renderRoutines();
+  startRoutine(r.id);
+}
+
+function generateTodayFromGoals() {
+  // Generate or start today's planned workout.
+  if (!ensurePlanGenerated()) {
+    alert('Set a primary goal first.');
+    return;
+  }
+  const today = ymd(new Date());
+  const item = (state.plan.days || []).find(x => x.date === today);
+  if (item?.routine) return startPlannedWorkout(today);
+  // If today is rest day, just generate a one-off session.
   const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
   state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
   saveRoutines();
@@ -645,11 +676,51 @@ function generateTodayFromGoals() {
   startRoutine(r.id);
 }
 
+function renderPlan() {
+  const el = $('planList');
+  if (!el) return;
+
+  if (!state.primaryGoal) {
+    el.innerHTML = '<div class="muted">Set a primary goal to generate a plan.</div>';
+    return;
+  }
+
+  ensurePlanGenerated();
+  const days = (state.plan?.days || []).slice(0, 14);
+  const today = ymd(new Date());
+
+  el.innerHTML = '';
+  days.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'planItem';
+    const isToday = d.date === today;
+    const label = d.kind === 'workout' ? (d.routine?.name || 'Workout') : 'Rest / Recovery';
+    item.innerHTML = `
+      <div class="planMeta">
+        <div class="planDate">${isToday ? 'Today' : d.date}</div>
+        <div class="planTitle">${escapeHtml(label)}</div>
+      </div>
+      <div class="row wrap">
+        ${d.kind === 'workout' ? `<button class="btn" data-plan-action="start" data-plan-date="${d.date}">Start</button>` : ''}
+      </div>
+    `;
+    el.appendChild(item);
+  });
+}
+
 function wireDashboard() {
   $('btnAddGoal')?.addEventListener('click', addGoal);
-  $('btnSetPrimary')?.addEventListener('click', setPrimaryGoalWizard);
-  $('btnSetSecondary')?.addEventListener('click', setSecondaryGoalWizard);
+  $('btnSaveGoals')?.addEventListener('click', saveGoalsFromForm);
   $('btnGenerateToday')?.addEventListener('click', generateTodayFromGoals);
+  $('btnRegenPlan')?.addEventListener('click', regeneratePlan);
+
+  $('planList')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const act = btn.getAttribute('data-plan-action');
+    const dateStr = btn.getAttribute('data-plan-date');
+    if (act === 'start' && dateStr) startPlannedWorkout(dateStr);
+  });
 
   // event delegation
   ['goalsDaily','goalsWeekly','goalsMonthly'].forEach(id => {
@@ -912,8 +983,8 @@ function boot() {
   loadState();
   applyTheme();
   wire();
-  wireQuickStart();
   wireDashboard();
+  hydrateGoalsForm();
   $('timer').textContent = fmtTimer(0);
   renderDashboard();
   renderRoutines();
