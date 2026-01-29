@@ -811,22 +811,38 @@ function renderPlan() {
   }
 
   ensurePlanGenerated();
-  const days = (state.plan?.days || []).slice(0, 14);
+  // Show next 7 days for readability
+  const days = (state.plan?.days || []).slice(0, 7);
   const today = ymd(new Date());
+
+  const fmtDay = (ymdStr) => {
+    try {
+      const [y,m,d] = ymdStr.split('-').map(Number);
+      const dt = new Date(y, m-1, d);
+      return dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    } catch {
+      return ymdStr;
+    }
+  };
 
   el.innerHTML = '';
   days.forEach(d => {
     const item = document.createElement('div');
-    item.className = 'planItem';
     const isToday = d.date === today;
-    const label = d.kind === 'workout' ? (d.routine?.name || 'Workout') : 'Rest / Recovery';
+    item.className = `planItem${isToday ? ' today' : ''}`;
+
+    const isWorkout = d.kind === 'workout' && d.routine;
+    const badge = isWorkout ? '<span class="planBadge">Workout</span>' : '<span class="planBadge rest">Rest</span>';
+    const label = isWorkout ? (d.routine?.name || 'Workout') : 'Recovery / optional walk';
+
     item.innerHTML = `
       <div class="planMeta">
-        <div class="planDate">${isToday ? 'Today' : d.date}</div>
+        <div class="planDate">${isToday ? 'Today' : fmtDay(d.date)}</div>
         <div class="planTitle">${escapeHtml(label)}</div>
       </div>
-      <div class="row wrap">
-        ${d.kind === 'workout' ? `<button class="btn" data-plan-action="start" data-plan-date="${d.date}">Start</button>` : ''}
+      <div class="planActions">
+        ${badge}
+        ${isWorkout ? `<button class="btn" data-plan-action="start" data-plan-date="${d.date}">Start</button>` : ''}
       </div>
     `;
     el.appendChild(item);
