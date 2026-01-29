@@ -32,14 +32,34 @@
         <div class="cardHeader">
           <h2>Dashboard</h2>
           <div class="row wrap">
-            <button class="btn" id="btnAddGoal" type="button">Add goal</button>
+            <button class="btn" id="btnSetPrimary" type="button">Set primary goal</button>
+            <button class="btn secondary" id="btnSetSecondary" type="button">Set secondary</button>
+            <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
+            <button class="btn secondary" id="btnAddGoal" type="button">Add habit goal</button>
           </div>
         </div>
+
         <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">Primary goal</div>
+            <div id="primaryGoal" class="muted">Not set</div>
+            <div class="muted" id="primaryGoalProgress"></div>
+          </div>
+          <div class="panel">
+            <div class="panelTitle">Secondary goal</div>
+            <div id="secondaryGoal" class="muted">None</div>
+          </div>
+          <div class="panel">
+            <div class="panelTitle">Streak</div>
+            <div class="muted" id="streakText">—</div>
+          </div>
           <div class="panel">
             <div class="panelTitle">Today</div>
             <div id="goalsDaily" class="goalList"></div>
           </div>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
           <div class="panel">
             <div class="panelTitle">This week</div>
             <div id="goalsWeekly" class="goalList"></div>
@@ -48,12 +68,9 @@
             <div class="panelTitle">This month</div>
             <div id="goalsMonthly" class="goalList"></div>
           </div>
-          <div class="panel">
-            <div class="panelTitle">Streak</div>
-            <div class="muted" id="streakText">—</div>
-          </div>
         </div>
-        <div class="muted">Progress auto-saves. Tap +1 to log completion.</div>
+
+        <div class="muted">Habits auto-save. Tap +1 to log completion.</div>
       </section>
 
       <section class="card" id="cardRoutines">

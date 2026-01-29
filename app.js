@@ -27,7 +27,9 @@ const KEYS = {
   active: 'bf:activeSessionId',
   profile: 'bf:profile',
   goals: 'bf:goals',
-  theme: 'bf:theme'
+  theme: 'bf:theme',
+  primaryGoal: 'bf:primaryGoal',
+  secondaryGoal: 'bf:secondaryGoal'
 };
 
 function seedIfEmpty() {
@@ -63,6 +65,8 @@ let state = {
     durationMin: 30,
     equipment: ['bodyweight']
   },
+  primaryGoal: null,
+  secondaryGoal: null,
   goals: [],
   theme: 'light',
   timer: { remainingSec: 0, running: false, interval: null }
@@ -73,6 +77,8 @@ function loadState() {
   state.sessions = store.get(KEYS.sessions, []);
   state.activeSessionId = store.get(KEYS.active, null);
   state.profile = store.get(KEYS.profile, state.profile);
+  state.primaryGoal = store.get(KEYS.primaryGoal, null);
+  state.secondaryGoal = store.get(KEYS.secondaryGoal, null);
   state.goals = store.get(KEYS.goals, []);
   state.theme = store.get(KEYS.theme, 'light');
 }
@@ -83,6 +89,8 @@ function saveActive() { store.set(KEYS.active, state.activeSessionId); }
 function saveProfile() { store.set(KEYS.profile, state.profile); }
 function saveGoals() { store.set(KEYS.goals, state.goals); }
 function saveTheme() { store.set(KEYS.theme, state.theme); }
+function savePrimaryGoal() { store.set(KEYS.primaryGoal, state.primaryGoal); }
+function saveSecondaryGoal() { store.set(KEYS.secondaryGoal, state.secondaryGoal); }
 
 function fmtTimer(sec) {
   const s = Math.max(0, sec|0);
@@ -535,15 +543,113 @@ function computeStreak() {
   return streak;
 }
 function renderDashboard() {
+  // Primary / secondary
+  const pg = $('primaryGoal');
+  const pprog = $('primaryGoalProgress');
+  if (pg) {
+    if (!state.primaryGoal) {
+      pg.textContent = 'Not set';
+      if (pprog) pprog.textContent = '';
+    } else {
+      const g = state.primaryGoal;
+      pg.textContent = `${g.type.replace('_',' ')} · ${g.daysPerWeek || 3}x/week · ${g.durationMin || 30}m`;
+      if (pprog) {
+        if (g.type === 'lose_weight') pprog.textContent = `Target: -${g.targetLbs || 10} lb in ${g.days || 30} days`;
+        else if (g.type === 'run_5k') pprog.textContent = `Baseline: ${g.canRun10Min ? 'can run 10 min' : 'run/walk'}`;
+        else if (g.type === 'bar_hang') pprog.textContent = `Baseline max hang: ${g.maxHangSec || 30}s`;
+        else pprog.textContent = '';
+      }
+    }
+  }
+  const sg = $('secondaryGoal');
+  if (sg) sg.textContent = state.secondaryGoal?.type ? state.secondaryGoal.type : 'None';
+
+  // Habit goals
   renderGoalList('goalsDaily', 'daily');
   renderGoalList('goalsWeekly', 'weekly');
   renderGoalList('goalsMonthly', 'monthly');
+
   const st = computeStreak();
   const el = $('streakText');
   if (el) el.textContent = st ? `${st} day streak` : 'No streak yet';
 }
+function setPrimaryGoalWizard() {
+  const type = prompt(
+    'Primary goal type?\n- lose_weight\n- build_muscle\n- run_5k\n- bar_hang\n(enter one)',
+    state.primaryGoal?.type || 'build_muscle'
+  );
+  if (!type) return;
+  const t = String(type).trim().toLowerCase();
+  if (!['lose_weight','build_muscle','run_5k','bar_hang'].includes(t)) {
+    alert('Unsupported goal type.');
+    return;
+  }
+
+  const durationMin = Number(prompt('Minutes per workout session?', String(state.primaryGoal?.durationMin || state.profile.durationMin || 30)) || 30);
+  const daysPerWeek = Number(prompt('Days per week?', String(state.primaryGoal?.daysPerWeek || 3)) || 3);
+
+  const goal = {
+    type: t,
+    durationMin: durationMin || 30,
+    daysPerWeek: daysPerWeek || 3,
+    createdAt: new Date().toISOString()
+  };
+
+  if (t === 'lose_weight') {
+    goal.targetLbs = Number(prompt('Target pounds to lose? (e.g., 10)', String(state.primaryGoal?.targetLbs || 10)) || 10);
+    goal.days = Number(prompt('Timeframe days? (e.g., 30)', String(state.primaryGoal?.days || 30)) || 30);
+  }
+  if (t === 'run_5k') {
+    goal.canRun10Min = (prompt('Can you run 10 minutes continuously? yes/no', (state.primaryGoal?.canRun10Min ? 'yes' : 'no')) || 'no').toLowerCase().startsWith('y');
+  }
+  if (t === 'bar_hang') {
+    goal.maxHangSec = Number(prompt('Current max hang time (seconds)?', String(state.primaryGoal?.maxHangSec || 30)) || 30);
+  }
+
+  state.primaryGoal = goal;
+  savePrimaryGoal();
+  renderDashboard();
+}
+
+function setSecondaryGoalWizard() {
+  const type = prompt(
+    'Secondary goal (optional). Enter one:\n- steps\n- protein\n- mobility\n- zone2\nOr leave blank to clear.',
+    state.secondaryGoal?.type || ''
+  );
+  if (type === null) return;
+  const t = String(type || '').trim().toLowerCase();
+  if (!t) {
+    state.secondaryGoal = null;
+    saveSecondaryGoal();
+    renderDashboard();
+    return;
+  }
+  if (!['steps','protein','mobility','zone2'].includes(t)) {
+    alert('Unsupported secondary goal type.');
+    return;
+  }
+  state.secondaryGoal = { type: t, createdAt: new Date().toISOString() };
+  saveSecondaryGoal();
+  renderDashboard();
+}
+
+function generateTodayFromGoals() {
+  if (!state.primaryGoal) {
+    alert('Set a primary goal first.');
+    return;
+  }
+  const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+  state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
+  saveRoutines();
+  renderRoutines();
+  startRoutine(r.id);
+}
+
 function wireDashboard() {
   $('btnAddGoal')?.addEventListener('click', addGoal);
+  $('btnSetPrimary')?.addEventListener('click', setPrimaryGoalWizard);
+  $('btnSetSecondary')?.addEventListener('click', setSecondaryGoalWizard);
+  $('btnGenerateToday')?.addEventListener('click', generateTodayFromGoals);
 
   // event delegation
   ['goalsDaily','goalsWeekly','goalsMonthly'].forEach(id => {
@@ -603,7 +709,7 @@ function wireQuickStart() {
   });
 
   $('btnQuickStart')?.addEventListener('click', () => {
-    const r = generateRoutineFromProfile(state.profile);
+    const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
     // Add as a routine (so it can be reused) and start
     state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
     saveRoutines();
@@ -612,12 +718,21 @@ function wireQuickStart() {
   });
 }
 
-function generateRoutineFromProfile(profile) {
-  const goal = profile?.goal || 'general';
-  const dur = Number(profile?.durationMin || 30);
+function secondaryFinisher(secondaryGoal, eq) {
+  const s = secondaryGoal?.type;
+  if (!s) return [];
+  if (s === 'steps') return [{ id: uid(), name: 'Walk (10–20 min)' }];
+  if (s === 'zone2' && (eq.has('treadmill') || eq.has('bike'))) return [{ id: uid(), name: 'Zone 2 cardio (15–25 min)' }];
+  if (s === 'mobility') return [{ id: uid(), name: 'Mobility flow (8–12 min)' }];
+  if (s === 'protein') return [{ id: uid(), name: 'Protein check (hit target today)' }];
+  return [];
+}
+
+function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal = null) {
+  const goal = primaryGoal?.type || profile?.goal || 'general';
+  const dur = Number(primaryGoal?.durationMin || profile?.durationMin || 30);
   const eq = new Set(profile?.equipment || ['bodyweight']);
 
-  // Very simple, deterministic generator (no AI yet)
   // Choose a template by goal and available equipment.
   const wantsRun = eq.has('treadmill') || eq.has('bike');
   const hasPullup = eq.has('pullupbar');
@@ -629,46 +744,70 @@ function generateRoutineFromProfile(profile) {
 
   let exercises = [];
 
-  if (goal === '5k' && wantsRun) {
-    name = 'Quick Start: 5K Builder';
+  // Primary goal templates
+  if (goal === 'run_5k' || goal === '5k') {
+    name = 'Goal Session: 5K';
     exercises = [
-      { id: uid(), name: 'Warm-up walk/jog (5 min)' },
-      { id: uid(), name: 'Intervals: run 1 min / walk 1 min (10–20 min)' },
-      { id: uid(), name: 'Easy jog (5–10 min)' },
+      { id: uid(), name: 'Warm-up (5 min)' },
+      { id: uid(), name: wantsRun ? 'Intervals: run 1 min / walk 1 min (12–20 min)' : 'Intervals: run/walk (12–20 min)' },
+      { id: uid(), name: 'Easy pace (5–10 min)' },
       { id: uid(), name: 'Cool down + stretch (5 min)' },
     ];
-  } else if (goal === 'pushups') {
-    name = 'Quick Start: Pushup Focus';
-    exercises = [
-      { id: uid(), name: 'Pushups (sets across)' },
-      { id: uid(), name: 'Incline pushups (volume)' },
+  } else if (goal === 'bar_hang' || goal === 'barhang') {
+    name = 'Goal Session: 2-min Hang';
+    exercises = hasPullup ? [
+      { id: uid(), name: 'Dead hang (time) — sets across' },
+      { id: uid(), name: 'Scapular pull-ups (reps)' },
+      { id: uid(), name: 'Farmer carry / grip (time)' },
+      { id: uid(), name: 'Hollow hold (time)' },
+    ] : [
+      { id: uid(), name: 'Towel grip holds (time)' },
+      { id: uid(), name: 'Forearm extensor work (reps)' },
       { id: uid(), name: 'Plank (time)' },
     ];
-  } else if (goal === 'barhang' && hasPullup) {
-    name = 'Quick Start: Grip + Hang';
-    exercises = [
-      { id: uid(), name: 'Dead hang (time)' },
-      { id: uid(), name: 'Scapular pull-ups (reps)' },
-      { id: uid(), name: 'Farmer carry (time)' },
+  } else if (goal === 'lose_weight' || goal === 'fat_loss') {
+    name = 'Goal Session: Fat Loss (Full Body)';
+    exercises = hasDB ? [
+      { id: uid(), name: 'DB Goblet Squat' },
+      { id: uid(), name: 'DB Row' },
+      { id: uid(), name: 'DB Press' },
+      { id: uid(), name: 'Conditioning finisher (8–12 min)' },
+    ] : [
+      { id: uid(), name: 'Air Squat' },
+      { id: uid(), name: 'Pushups' },
+      { id: uid(), name: 'Hip hinge (good morning)' },
+      { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
     ];
-  } else if (goal === 'strength' && hasBB) {
-    name = 'Quick Start: Strength (Barbell)';
-    exercises = [
+  } else if (goal === 'build_muscle' || goal === 'hypertrophy') {
+    name = 'Goal Session: Build Muscle';
+    exercises = hasDB ? [
+      { id: uid(), name: 'DB Squat / Split Squat' },
+      { id: uid(), name: 'DB Bench / Floor Press' },
+      { id: uid(), name: 'One-arm DB Row' },
+      { id: uid(), name: 'DB Shoulder Press' },
+    ] : hasBB ? [
+      { id: uid(), name: 'Squat' },
+      { id: uid(), name: 'Bench Press' },
+      { id: uid(), name: 'Barbell Row' },
+      { id: uid(), name: 'Accessory (arms/shoulders)' },
+    ] : [
+      { id: uid(), name: 'Pushups (volume)' },
+      { id: uid(), name: 'Bodyweight row (if available) / band row' },
+      { id: uid(), name: 'Split squats' },
+      { id: uid(), name: 'Plank (time)' },
+    ];
+  } else {
+    name = (profile?.goal === 'strength' && hasBB) ? 'Quick Start: Strength (Barbell)' : 'Quick Start';
+    exercises = (profile?.goal === 'strength' && hasBB) ? [
       { id: uid(), name: 'Squat' },
       { id: uid(), name: 'Bench Press' },
       { id: uid(), name: 'Deadlift' },
-    ];
-  } else if ((goal === 'hypertrophy' || goal === 'general') && hasDB) {
-    name = 'Quick Start: Full Body (DB)';
-    exercises = [
+    ] : hasDB ? [
       { id: uid(), name: 'Dumbbell Goblet Squat' },
       { id: uid(), name: 'Dumbbell Bench / Floor Press' },
       { id: uid(), name: 'One-arm Dumbbell Row' },
       { id: uid(), name: 'Dumbbell Shoulder Press' },
-    ];
-  } else {
-    name = 'Quick Start: Bodyweight';
-    exercises = [
+    ] : [
       { id: uid(), name: 'Air Squat' },
       { id: uid(), name: 'Pushups' },
       { id: uid(), name: 'Hip Hinge (Good morning)' },
@@ -680,8 +819,13 @@ function generateRoutineFromProfile(profile) {
   const maxEx = dur <= 20 ? 3 : dur <= 30 ? 4 : 6;
   exercises = exercises.slice(0, maxEx);
 
+  // Inject optional secondary finisher (if time allows)
+  const fin = secondaryFinisher(secondaryGoal, eq);
+  if (fin.length && exercises.length < maxEx) exercises = [...exercises, ...fin].slice(0, maxEx);
+
+  const idGoal = (primaryGoal?.type || goal);
   return {
-    id: `quickstart:${goal}:${dur}:${Array.from(eq).sort().join('-')}`,
+    id: `gen:${idGoal}:${dur}:${Array.from(eq).sort().join('-')}`,
     name,
     desc,
     exercises
