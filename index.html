@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Basement Fitness</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">BF</div>
+        <div>
+          <div class="title">Basement Fitness</div>
+          <div class="subtitle" id="subtitle">Workout tracker</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" id="btnExport" type="button">Export</button>
+        <button class="btn secondary" id="btnImport" type="button">Import</button>
+        <button class="btn danger" id="btnReset" type="button">Reset</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="card" id="cardRoutines">
+        <div class="cardHeader">
+          <h2>Routines</h2>
+          <button class="btn" id="btnNewRoutine" type="button">New routine</button>
+        </div>
+        <div class="muted">Pick a routine to start a workout.</div>
+        <div class="routineList" id="routineList"></div>
+      </section>
+
+      <section class="card" id="cardWorkout" hidden>
+        <div class="cardHeader">
+          <h2 id="workoutTitle">Workout</h2>
+          <div class="row">
+            <button class="btn secondary" id="btnEndWorkout" type="button">End</button>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">Rest timer</div>
+            <div class="timer" id="timer">0:00</div>
+            <div class="row wrap">
+              <button class="btn" data-rest="60" type="button">+60s</button>
+              <button class="btn" data-rest="90" type="button">+90s</button>
+              <button class="btn" data-rest="120" type="button">+120s</button>
+              <button class="btn secondary" id="btnTimerStartStop" type="button">Start</button>
+              <button class="btn secondary" id="btnTimerReset" type="button">Reset</button>
+            </div>
+            <div class="muted">Tip: tap a +time button right after a set.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panelTitle">Workout notes</div>
+            <textarea id="workoutNotes" class="textarea" rows="6" placeholder="How did it feel? Any tweaks for next time?"></textarea>
+            <div class="muted">Saved automatically.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelTitle">Exercises</div>
+          <div class="exerciseList" id="exerciseList"></div>
+          <button class="btn secondary" id="btnAddExercise" type="button">Add exercise</button>
+        </div>
+
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="muted">Local-only. No accounts. Installable as a PWA.</div>
+    </footer>
+  </div>
+
+  <input id="fileImport" type="file" accept="application/json" hidden />
+  <script src="/app.js"></script>
+</body>
+</html>
