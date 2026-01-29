@@ -49,6 +49,7 @@
                   <option value="build_muscle">Build muscle</option>
                   <option value="run_5k">Run a 5K</option>
                   <option value="bar_hang">2-min bar hang</option>
+                  <option value="pushups">30 pushups</option>
                 </select>
               </div>
               <div>
@@ -72,6 +73,20 @@
                 </select>
               </div>
             </div>
+
+            <div class="grid2" style="margin-top:10px">
+              <div id="primaryBaselineWrap" hidden>
+                <label class="small" id="primaryBaselineLabel">Baseline</label>
+                <input class="input" id="primaryBaseline" inputmode="numeric" placeholder="" />
+                <div class="muted" id="primaryBaselineHint"></div>
+              </div>
+              <div id="primaryProgressWrap" hidden>
+                <label class="small" id="primaryProgressLabel">Progress</label>
+                <input class="input" id="primaryProgress" inputmode="numeric" placeholder="" />
+                <div class="muted" id="primaryProgressHint"></div>
+              </div>
+            </div>
+
             <div class="row wrap" style="margin-top:10px">
               <button class="btn" id="btnSaveGoals" type="button">Save goals</button>
               <div class="muted" id="primaryGoalProgress"></div>

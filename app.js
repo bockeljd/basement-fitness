@@ -546,10 +546,25 @@ function renderDashboard() {
       const g = state.primaryGoal;
       pg.textContent = `${g.type.replace('_',' ')} · ${g.daysPerWeek || 3}x/week · ${g.durationMin || 30}m`;
       if (pprog) {
-        if (g.type === 'lose_weight') pprog.textContent = `Target: -${g.targetLbs || 10} lb in ${g.days || 30} days`;
-        else if (g.type === 'run_5k') pprog.textContent = `Baseline: ${g.canRun10Min ? 'can run 10 min' : 'run/walk'}`;
-        else if (g.type === 'bar_hang') pprog.textContent = `Baseline max hang: ${g.maxHangSec || 30}s`;
-        else pprog.textContent = '';
+        if (g.type === 'lose_weight') {
+          const sw = g.startWeightLbs ? `Start ${g.startWeightLbs} lb` : '';
+          const cw = g.currentWeightLbs ? `Current ${g.currentWeightLbs} lb` : '';
+          pprog.textContent = [sw, cw].filter(Boolean).join(' · ');
+        } else if (g.type === 'run_5k') {
+          const base = g.canRun10Min ? 'can run 10 min' : 'run/walk';
+          const best = g.best5kMin ? `best ${g.best5kMin} min` : '';
+          pprog.textContent = ['Baseline: ' + base, best].filter(Boolean).join(' · ');
+        } else if (g.type === 'bar_hang') {
+          const base = g.maxHangSec ? `baseline ${g.maxHangSec}s` : '';
+          const best = g.bestHangSec ? `best ${g.bestHangSec}s` : '';
+          pprog.textContent = [base, best].filter(Boolean).join(' · ');
+        } else if (g.type === 'pushups') {
+          const base = g.maxPushups ? `baseline ${g.maxPushups}` : '';
+          const best = g.bestPushups ? `best ${g.bestPushups}` : '';
+          pprog.textContent = [base, best].filter(Boolean).join(' · ');
+        } else {
+          pprog.textContent = '';
+        }
       }
     }
   }
@@ -567,6 +582,52 @@ function renderDashboard() {
 
   renderPlan();
 }
+function updateGoalFieldVisibility() {
+  const t = String($('primaryType')?.value || '').trim();
+  const baseWrap = $('primaryBaselineWrap');
+  const progWrap = $('primaryProgressWrap');
+  const baseLabel = $('primaryBaselineLabel');
+  const progLabel = $('primaryProgressLabel');
+  const baseHint = $('primaryBaselineHint');
+  const progHint = $('primaryProgressHint');
+
+  if (!baseWrap || !progWrap) return;
+
+  // default hidden
+  baseWrap.hidden = true;
+  progWrap.hidden = true;
+
+  if (t === 'bar_hang') {
+    baseWrap.hidden = false;
+    progWrap.hidden = false;
+    baseLabel.textContent = 'Baseline max hang (seconds)';
+    progLabel.textContent = 'Current best hang (seconds)';
+    baseHint.textContent = 'Enter your best hang today (e.g., 30).';
+    progHint.textContent = 'Update as you improve; we’ll scale intervals from this.';
+  } else if (t === 'pushups') {
+    baseWrap.hidden = false;
+    progWrap.hidden = false;
+    baseLabel.textContent = 'Baseline max pushups (reps)';
+    progLabel.textContent = 'Current best pushups (reps)';
+    baseHint.textContent = 'Enter your current max reps (e.g., 12).';
+    progHint.textContent = 'Update as your max increases.';
+  } else if (t === 'run_5k') {
+    baseWrap.hidden = false;
+    progWrap.hidden = false;
+    baseLabel.textContent = 'Baseline: can run 10 min? (1=yes, 0=no)';
+    progLabel.textContent = 'Best 5K time (minutes, optional)';
+    baseHint.textContent = 'Use 1 if yes, 0 if no.';
+    progHint.textContent = 'Optional: enter best time in minutes when you have it.';
+  } else if (t === 'lose_weight') {
+    baseWrap.hidden = false;
+    progWrap.hidden = false;
+    baseLabel.textContent = 'Start weight (lbs)';
+    progLabel.textContent = 'Current weight (lbs)';
+    baseHint.textContent = 'Optional but recommended.';
+    progHint.textContent = 'Update periodically to track progress.';
+  }
+}
+
 function saveGoalsFromForm() {
   const t = String($('primaryType')?.value || '').trim();
   if (!t) {
@@ -576,12 +637,32 @@ function saveGoalsFromForm() {
   const durationMin = Number($('primaryMinutes')?.value || state.profile.durationMin || 30);
   const daysPerWeek = Number($('primaryDays')?.value || 3);
 
-  state.primaryGoal = {
+  const goal = {
     type: t,
     durationMin: durationMin || 30,
     daysPerWeek: daysPerWeek || 3,
     createdAt: new Date().toISOString()
   };
+
+  // goal-specific baseline + progress
+  const baselineVal = Number($('primaryBaseline')?.value || 0);
+  const progressVal = Number($('primaryProgress')?.value || 0);
+
+  if (t === 'bar_hang') {
+    if (baselineVal) goal.maxHangSec = baselineVal;
+    if (progressVal) goal.bestHangSec = progressVal;
+  } else if (t === 'pushups') {
+    if (baselineVal) goal.maxPushups = baselineVal;
+    if (progressVal) goal.bestPushups = progressVal;
+  } else if (t === 'run_5k') {
+    goal.canRun10Min = Boolean(baselineVal);
+    if (progressVal) goal.best5kMin = progressVal;
+  } else if (t === 'lose_weight') {
+    if (baselineVal) goal.startWeightLbs = baselineVal;
+    if (progressVal) goal.currentWeightLbs = progressVal;
+  }
+
+  state.primaryGoal = goal;
 
   const st = String($('secondaryType')?.value || '').trim();
   state.secondaryGoal = st ? { type: st, createdAt: new Date().toISOString() } : null;
@@ -597,11 +678,34 @@ function hydrateGoalsForm() {
   const pm = $('primaryMinutes');
   const pd = $('primaryDays');
   const st = $('secondaryType');
+  const base = $('primaryBaseline');
+  const prog = $('primaryProgress');
 
   if (pt) pt.value = state.primaryGoal?.type || '';
   if (pm) pm.value = String(state.primaryGoal?.durationMin || state.profile.durationMin || 30);
   if (pd) pd.value = String(state.primaryGoal?.daysPerWeek || 3);
   if (st) st.value = state.secondaryGoal?.type || '';
+
+  // baseline/progress fields
+  const t = state.primaryGoal?.type;
+  if (t === 'bar_hang') {
+    if (base) base.value = String(state.primaryGoal?.maxHangSec || '');
+    if (prog) prog.value = String(state.primaryGoal?.bestHangSec || '');
+  } else if (t === 'pushups') {
+    if (base) base.value = String(state.primaryGoal?.maxPushups || '');
+    if (prog) prog.value = String(state.primaryGoal?.bestPushups || '');
+  } else if (t === 'run_5k') {
+    if (base) base.value = state.primaryGoal?.canRun10Min ? '1' : '0';
+    if (prog) prog.value = String(state.primaryGoal?.best5kMin || '');
+  } else if (t === 'lose_weight') {
+    if (base) base.value = String(state.primaryGoal?.startWeightLbs || '');
+    if (prog) prog.value = String(state.primaryGoal?.currentWeightLbs || '');
+  } else {
+    if (base) base.value = '';
+    if (prog) prog.value = '';
+  }
+
+  updateGoalFieldVisibility();
 }
 
 function ensurePlanGenerated() {
@@ -711,6 +815,7 @@ function renderPlan() {
 function wireDashboard() {
   $('btnAddGoal')?.addEventListener('click', addGoal);
   $('btnSaveGoals')?.addEventListener('click', saveGoalsFromForm);
+  $('primaryType')?.addEventListener('change', updateGoalFieldVisibility);
   $('btnGenerateToday')?.addEventListener('click', generateTodayFromGoals);
   $('btnRegenPlan')?.addEventListener('click', regeneratePlan);
 
@@ -826,17 +931,23 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
     ];
   } else if (goal === 'bar_hang' || goal === 'barhang') {
     name = 'Goal Session: 2-min Hang';
+
+    const baseline = Number(primaryGoal?.bestHangSec || primaryGoal?.maxHangSec || 30);
+    const work = Math.max(10, Math.round(baseline * 0.6));
+    const sets = baseline >= 60 ? 6 : 5;
+
     exercises = hasPullup ? [
-      { id: uid(), name: 'Dead hang (time) — sets across' },
-      { id: uid(), name: 'Scapular pull-ups (reps)' },
-      { id: uid(), name: 'Farmer carry / grip (time)' },
-      { id: uid(), name: 'Hollow hold (time)' },
+      { id: uid(), name: `Dead hang — ${sets} x ${work}s (rest 60–90s)` },
+      { id: uid(), name: 'Scapular pull-ups — 3 x 8' },
+      { id: uid(), name: 'Farmer carry / grip — 3 x 45s' },
+      { id: uid(), name: 'Hollow hold — 3 x 25s' },
     ] : [
-      { id: uid(), name: 'Towel grip holds (time)' },
-      { id: uid(), name: 'Forearm extensor work (reps)' },
-      { id: uid(), name: 'Plank (time)' },
+      { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
+      { id: uid(), name: 'Forearm extensor work — 3 x 20' },
+      { id: uid(), name: 'Plank — 3 x 30s' },
     ];
-  } else if (goal === 'lose_weight' || goal === 'fat_loss') {
+  } else if (goal === 'lose_weight' || goal === 'fat_loss') { 
+
     name = 'Goal Session: Fat Loss (Full Body)';
     exercises = hasDB ? [
       { id: uid(), name: 'DB Goblet Squat' },
@@ -848,6 +959,15 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       { id: uid(), name: 'Pushups' },
       { id: uid(), name: 'Hip hinge (good morning)' },
       { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
+    ];
+  } else if (goal === 'pushups') {
+    name = 'Goal Session: Pushups';
+    const baseline = Number(primaryGoal?.bestPushups || primaryGoal?.maxPushups || 10);
+    const rep = Math.max(3, Math.floor(baseline * 0.6));
+    exercises = [
+      { id: uid(), name: `Pushups — 6 x ${rep} (rest 60s)` },
+      { id: uid(), name: 'Incline pushups — 3 x 12' },
+      { id: uid(), name: 'Plank — 3 x 30s' },
     ];
   } else if (goal === 'build_muscle' || goal === 'hypertrophy') {
     name = 'Goal Session: Build Muscle';
