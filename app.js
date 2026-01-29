@@ -24,7 +24,8 @@ const store = {
 const KEYS = {
   routines: 'bf:routines',
   sessions: 'bf:sessions',
-  active: 'bf:activeSessionId'
+  active: 'bf:activeSessionId',
+  profile: 'bf:profile'
 };
 
 function seedIfEmpty() {
@@ -46,12 +47,20 @@ function seedIfEmpty() {
   ];
   store.set(KEYS.routines, sample);
   store.set(KEYS.sessions, []);
+
+  // Default profile
+  store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
 }
 
 let state = {
   routines: [],
   sessions: [],
   activeSessionId: null,
+  profile: {
+    goal: 'general',
+    durationMin: 30,
+    equipment: ['bodyweight']
+  },
   timer: { remainingSec: 0, running: false, interval: null }
 };
 
@@ -59,11 +68,13 @@ function loadState() {
   state.routines = store.get(KEYS.routines, []);
   state.sessions = store.get(KEYS.sessions, []);
   state.activeSessionId = store.get(KEYS.active, null);
+  state.profile = store.get(KEYS.profile, state.profile);
 }
 
 function saveRoutines() { store.set(KEYS.routines, state.routines); }
 function saveSessions() { store.set(KEYS.sessions, state.sessions); }
 function saveActive() { store.set(KEYS.active, state.activeSessionId); }
+function saveProfile() { store.set(KEYS.profile, state.profile); }
 
 function fmtTimer(sec) {
   const s = Math.max(0, sec|0);
@@ -400,6 +411,123 @@ function escapeHtml(str) {
 }
 
 // Events
+function wireQuickStart() {
+  // Initialize UI from stored profile
+  const goalSel = $('qsGoal');
+  const durSel = $('qsDuration');
+  if (goalSel) goalSel.value = state.profile.goal || 'general';
+  if (durSel) durSel.value = String(state.profile.durationMin || 30);
+
+  // equipment checkboxes
+  document.querySelectorAll('#qsEquipment input[type="checkbox"][data-eq]').forEach(cb => {
+    const k = cb.getAttribute('data-eq');
+    cb.checked = (state.profile.equipment || []).includes(k);
+    cb.addEventListener('change', () => {
+      const eq = new Set(state.profile.equipment || []);
+      if (cb.checked) eq.add(k);
+      else eq.delete(k);
+      // always keep at least bodyweight
+      if (eq.size === 0) eq.add('bodyweight');
+      state.profile.equipment = Array.from(eq);
+      saveProfile();
+    });
+  });
+
+  if (goalSel) goalSel.addEventListener('change', () => {
+    state.profile.goal = goalSel.value;
+    saveProfile();
+  });
+  if (durSel) durSel.addEventListener('change', () => {
+    state.profile.durationMin = Number(durSel.value || 30);
+    saveProfile();
+  });
+
+  $('btnQuickStart')?.addEventListener('click', () => {
+    const r = generateRoutineFromProfile(state.profile);
+    // Add as a routine (so it can be reused) and start
+    state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
+    saveRoutines();
+    renderRoutines();
+    startRoutine(r.id);
+  });
+}
+
+function generateRoutineFromProfile(profile) {
+  const goal = profile?.goal || 'general';
+  const dur = Number(profile?.durationMin || 30);
+  const eq = new Set(profile?.equipment || ['bodyweight']);
+
+  // Very simple, deterministic generator (no AI yet)
+  // Choose a template by goal and available equipment.
+  const wantsRun = eq.has('treadmill') || eq.has('bike');
+  const hasPullup = eq.has('pullupbar');
+  const hasDB = eq.has('dumbbells');
+  const hasBB = eq.has('barbell');
+
+  let name = 'Quick Start';
+  let desc = `Goal: ${goal}, Duration: ${dur}m, Equipment: ${Array.from(eq).join(', ')}`;
+
+  let exercises = [];
+
+  if (goal === '5k' && wantsRun) {
+    name = 'Quick Start: 5K Builder';
+    exercises = [
+      { id: uid(), name: 'Warm-up walk/jog (5 min)' },
+      { id: uid(), name: 'Intervals: run 1 min / walk 1 min (10–20 min)' },
+      { id: uid(), name: 'Easy jog (5–10 min)' },
+      { id: uid(), name: 'Cool down + stretch (5 min)' },
+    ];
+  } else if (goal === 'pushups') {
+    name = 'Quick Start: Pushup Focus';
+    exercises = [
+      { id: uid(), name: 'Pushups (sets across)' },
+      { id: uid(), name: 'Incline pushups (volume)' },
+      { id: uid(), name: 'Plank (time)' },
+    ];
+  } else if (goal === 'barhang' && hasPullup) {
+    name = 'Quick Start: Grip + Hang';
+    exercises = [
+      { id: uid(), name: 'Dead hang (time)' },
+      { id: uid(), name: 'Scapular pull-ups (reps)' },
+      { id: uid(), name: 'Farmer carry (time)' },
+    ];
+  } else if (goal === 'strength' && hasBB) {
+    name = 'Quick Start: Strength (Barbell)';
+    exercises = [
+      { id: uid(), name: 'Squat' },
+      { id: uid(), name: 'Bench Press' },
+      { id: uid(), name: 'Deadlift' },
+    ];
+  } else if ((goal === 'hypertrophy' || goal === 'general') && hasDB) {
+    name = 'Quick Start: Full Body (DB)';
+    exercises = [
+      { id: uid(), name: 'Dumbbell Goblet Squat' },
+      { id: uid(), name: 'Dumbbell Bench / Floor Press' },
+      { id: uid(), name: 'One-arm Dumbbell Row' },
+      { id: uid(), name: 'Dumbbell Shoulder Press' },
+    ];
+  } else {
+    name = 'Quick Start: Bodyweight';
+    exercises = [
+      { id: uid(), name: 'Air Squat' },
+      { id: uid(), name: 'Pushups' },
+      { id: uid(), name: 'Hip Hinge (Good morning)' },
+      { id: uid(), name: 'Plank (time)' },
+    ];
+  }
+
+  // Trim based on duration (rough heuristic)
+  const maxEx = dur <= 20 ? 3 : dur <= 30 ? 4 : 6;
+  exercises = exercises.slice(0, maxEx);
+
+  return {
+    id: `quickstart:${goal}:${dur}:${Array.from(eq).sort().join('-')}`,
+    name,
+    desc,
+    exercises
+  };
+}
+
 function wire() {
   $('btnNewRoutine').addEventListener('click', newRoutine);
   $('btnAddExercise').addEventListener('click', addExercise);
@@ -465,6 +593,7 @@ function boot() {
   seedIfEmpty();
   loadState();
   wire();
+  wireQuickStart();
   $('timer').textContent = fmtTimer(0);
   renderRoutines();
   renderWorkout();

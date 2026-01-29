@@ -32,7 +32,52 @@
           <h2>Routines</h2>
           <button class="btn" id="btnNewRoutine" type="button">New routine</button>
         </div>
-        <div class="muted">Pick a routine to start a workout.</div>
+
+        <div class="panel" style="margin-top:10px">
+          <div class="panelTitle">Quick start (recommended)</div>
+          <div class="muted">Pick a goal + duration + equipment. We’ll generate a workout you can run immediately.</div>
+          <div class="grid2" style="margin-top:10px">
+            <div>
+              <label class="small">Goal</label>
+              <select class="input" id="qsGoal">
+                <option value="general">General fitness</option>
+                <option value="pushups">Do 30 pushups</option>
+                <option value="barhang">Hang from a bar for 2 minutes</option>
+                <option value="5k">Run a 5K</option>
+                <option value="strength">Get stronger</option>
+                <option value="hypertrophy">Build muscle</option>
+              </select>
+            </div>
+            <div>
+              <label class="small">Workout duration</label>
+              <select class="input" id="qsDuration">
+                <option value="20">20 minutes</option>
+                <option value="30" selected>30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:10px">
+            <div class="small" style="margin-bottom:6px">Equipment available</div>
+            <div class="row wrap" id="qsEquipment">
+              <label class="small"><input type="checkbox" data-eq="bodyweight" checked> Bodyweight</label>
+              <label class="small"><input type="checkbox" data-eq="dumbbells"> Dumbbells</label>
+              <label class="small"><input type="checkbox" data-eq="barbell"> Barbell</label>
+              <label class="small"><input type="checkbox" data-eq="pullupbar"> Pull-up bar</label>
+              <label class="small"><input type="checkbox" data-eq="treadmill"> Treadmill</label>
+              <label class="small"><input type="checkbox" data-eq="bike"> Bike</label>
+            </div>
+          </div>
+
+          <div class="row wrap" style="margin-top:10px">
+            <button class="btn" id="btnQuickStart" type="button">Generate & start</button>
+            <span class="muted" id="qsHint"></span>
+          </div>
+        </div>
+
+        <div class="muted" style="margin-top:12px">Or pick a saved routine below.</div>
         <div class="routineList" id="routineList"></div>
       </section>
 
