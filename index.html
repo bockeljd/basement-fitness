@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="theme-color" content="#f6f7fb" />
   <title>Basement Fitness</title>
   <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="icon" href="/icons/icon-192.png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -20,6 +19,7 @@
         </div>
       </div>
       <div class="actions">
+        <button class="btn secondary" id="btnTheme" type="button">Theme</button>
         <button class="btn secondary" id="btnExport" type="button">Export</button>
         <button class="btn secondary" id="btnImport" type="button">Import</button>
         <button class="btn danger" id="btnReset" type="button">Reset</button>
@@ -27,6 +27,35 @@
     </header>
 
     <main class="main">
+
+      <section class="card" id="cardDashboard">
+        <div class="cardHeader">
+          <h2>Dashboard</h2>
+          <div class="row wrap">
+            <button class="btn" id="btnAddGoal" type="button">Add goal</button>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">Today</div>
+            <div id="goalsDaily" class="goalList"></div>
+          </div>
+          <div class="panel">
+            <div class="panelTitle">This week</div>
+            <div id="goalsWeekly" class="goalList"></div>
+          </div>
+          <div class="panel">
+            <div class="panelTitle">This month</div>
+            <div id="goalsMonthly" class="goalList"></div>
+          </div>
+          <div class="panel">
+            <div class="panelTitle">Streak</div>
+            <div class="muted" id="streakText">—</div>
+          </div>
+        </div>
+        <div class="muted">Progress auto-saves. Tap +1 to log completion.</div>
+      </section>
+
       <section class="card" id="cardRoutines">
         <div class="cardHeader">
           <h2>Routines</h2>

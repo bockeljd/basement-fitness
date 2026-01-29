@@ -25,7 +25,9 @@ const KEYS = {
   routines: 'bf:routines',
   sessions: 'bf:sessions',
   active: 'bf:activeSessionId',
-  profile: 'bf:profile'
+  profile: 'bf:profile',
+  goals: 'bf:goals',
+  theme: 'bf:theme'
 };
 
 function seedIfEmpty() {
@@ -61,6 +63,8 @@ let state = {
     durationMin: 30,
     equipment: ['bodyweight']
   },
+  goals: [],
+  theme: 'light',
   timer: { remainingSec: 0, running: false, interval: null }
 };
 
@@ -69,12 +73,16 @@ function loadState() {
   state.sessions = store.get(KEYS.sessions, []);
   state.activeSessionId = store.get(KEYS.active, null);
   state.profile = store.get(KEYS.profile, state.profile);
+  state.goals = store.get(KEYS.goals, []);
+  state.theme = store.get(KEYS.theme, 'light');
 }
 
 function saveRoutines() { store.set(KEYS.routines, state.routines); }
 function saveSessions() { store.set(KEYS.sessions, state.sessions); }
 function saveActive() { store.set(KEYS.active, state.activeSessionId); }
 function saveProfile() { store.set(KEYS.profile, state.profile); }
+function saveGoals() { store.set(KEYS.goals, state.goals); }
+function saveTheme() { store.set(KEYS.theme, state.theme); }
 
 function fmtTimer(sec) {
   const s = Math.max(0, sec|0);
@@ -400,6 +408,158 @@ function addRest(sec) {
   startTimer();
 }
 
+// Dashboard (daily/weekly/monthly goals)
+function startOfDay(d) {
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function ymd(d) {
+  const x = startOfDay(d);
+  const yyyy = x.getFullYear();
+  const mm = String(x.getMonth()+1).padStart(2,'0');
+  const dd = String(x.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function weekKey(d) {
+  // ISO-ish week key: YYYY-Www (rough, good enough for UX)
+  const x = startOfDay(d);
+  const jan1 = new Date(x.getFullYear(), 0, 1);
+  const days = Math.floor((x - jan1) / 86400000);
+  const w = Math.floor((days + jan1.getDay()) / 7) + 1;
+  return `${x.getFullYear()}-W${String(w).padStart(2,'0')}`;
+}
+function monthKey(d) {
+  const x = startOfDay(d);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`;
+}
+function goalPeriodKey(goal, now=new Date()) {
+  if (goal.period === 'daily') return ymd(now);
+  if (goal.period === 'weekly') return weekKey(now);
+  return monthKey(now);
+}
+function currentProgress(goal, now=new Date()) {
+  goal.progress = goal.progress || {};
+  const k = goalPeriodKey(goal, now);
+  return Number(goal.progress[k] || 0);
+}
+function setProgress(goalId, val, now=new Date()) {
+  const g = state.goals.find(x => x.id === goalId);
+  if (!g) return;
+  g.progress = g.progress || {};
+  const k = goalPeriodKey(g, now);
+  g.progress[k] = Math.max(0, Number(val || 0));
+  saveGoals();
+}
+function incProgress(goalId, delta=1) {
+  const g = state.goals.find(x => x.id === goalId);
+  if (!g) return;
+  const cur = currentProgress(g);
+  setProgress(goalId, cur + delta);
+  renderDashboard();
+}
+function addGoal() {
+  const title = prompt('Goal name? (e.g., Workouts, Protein days, Steps, Pushups)');
+  if (!title) return;
+  const period = prompt('Period? Enter daily / weekly / monthly', 'daily');
+  const p = String(period || 'daily').toLowerCase();
+  if (!['daily','weekly','monthly'].includes(p)) {
+    alert('Period must be daily, weekly, or monthly.');
+    return;
+  }
+  const targetRaw = prompt('Target number? (e.g., 1 per day, 4 per week, 12 per month)', '1');
+  const target = Number(targetRaw || 1);
+  if (!target || Number.isNaN(target) || target <= 0) {
+    alert('Target must be a positive number.');
+    return;
+  }
+
+  state.goals.unshift({
+    id: uid(),
+    title: title.trim(),
+    period: p,
+    target,
+    progress: {}
+  });
+  saveGoals();
+  renderDashboard();
+}
+function deleteGoal(goalId) {
+  if (!confirm('Delete goal?')) return;
+  state.goals = state.goals.filter(g => g.id !== goalId);
+  saveGoals();
+  renderDashboard();
+}
+function renderGoalList(elId, period) {
+  const el = $(elId);
+  if (!el) return;
+  const now = new Date();
+  const goals = (state.goals || []).filter(g => g.period === period);
+  if (!goals.length) {
+    el.innerHTML = `<div class="muted">No ${period} goals yet.</div>`;
+    return;
+  }
+  el.innerHTML = '';
+  goals.forEach(g => {
+    const cur = currentProgress(g, now);
+    const pct = Math.max(0, Math.min(100, (cur / g.target) * 100));
+    const item = document.createElement('div');
+    item.className = 'goalItem';
+    item.innerHTML = `
+      <div style="flex:1;min-width:180px">
+        <div style="font-weight:900">${escapeHtml(g.title)}</div>
+        <div class="small">${cur} / ${g.target} (${g.period})</div>
+        <div class="progressBar" style="margin-top:8px"><div class="progressFill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="row wrap">
+        <button class="btn" data-goal-action="inc" data-goal-id="${g.id}">+1</button>
+        <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}">-1</button>
+        <button class="btn danger" data-goal-action="del" data-goal-id="${g.id}">Del</button>
+      </div>
+    `;
+    el.appendChild(item);
+  });
+}
+function computeStreak() {
+  // streak = consecutive days with at least 1 ended workout session
+  const sessions = (state.sessions || []).filter(s => s.endedAt);
+  const days = new Set(sessions.map(s => ymd(new Date(s.endedAt))));
+  let streak = 0;
+  let d = startOfDay(new Date());
+  // if no workout today, allow streak to be based on yesterday
+  if (!days.has(ymd(d))) d = new Date(d.getTime() - 86400000);
+  while (days.has(ymd(d))) {
+    streak += 1;
+    d = new Date(d.getTime() - 86400000);
+  }
+  return streak;
+}
+function renderDashboard() {
+  renderGoalList('goalsDaily', 'daily');
+  renderGoalList('goalsWeekly', 'weekly');
+  renderGoalList('goalsMonthly', 'monthly');
+  const st = computeStreak();
+  const el = $('streakText');
+  if (el) el.textContent = st ? `${st} day streak` : 'No streak yet';
+}
+function wireDashboard() {
+  $('btnAddGoal')?.addEventListener('click', addGoal);
+
+  // event delegation
+  ['goalsDaily','goalsWeekly','goalsMonthly'].forEach(id => {
+    $(id)?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const act = btn.getAttribute('data-goal-action');
+      const gid = btn.getAttribute('data-goal-id');
+      if (!act || !gid) return;
+      if (act === 'inc') incProgress(gid, 1);
+      if (act === 'dec') incProgress(gid, -1);
+      if (act === 'del') deleteGoal(gid);
+    });
+  });
+}
+
 // Helpers
 function escapeHtml(str) {
   return String(str)
@@ -533,6 +693,8 @@ function wire() {
   $('btnAddExercise').addEventListener('click', addExercise);
   $('btnEndWorkout').addEventListener('click', endWorkout);
 
+  $('btnTheme')?.addEventListener('click', toggleTheme);
+
   $('btnTimerStartStop').addEventListener('click', () => {
     state.timer.running ? stopTimer() : startTimer();
   });
@@ -589,12 +751,27 @@ function wire() {
   });
 }
 
+function applyTheme() {
+  const theme = state.theme || 'light';
+  if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+}
+
+function toggleTheme() {
+  state.theme = (state.theme === 'dark') ? 'light' : 'dark';
+  saveTheme();
+  applyTheme();
+}
+
 function boot() {
   seedIfEmpty();
   loadState();
+  applyTheme();
   wire();
   wireQuickStart();
+  wireDashboard();
   $('timer').textContent = fmtTimer(0);
+  renderDashboard();
   renderRoutines();
   renderWorkout();
 }
