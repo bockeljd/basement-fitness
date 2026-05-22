@@ -30,129 +30,400 @@ const KEYS = {
   theme: 'bf:theme',
   primaryGoal: 'bf:primaryGoal',
   secondaryGoal: 'bf:secondaryGoal',
-  plan: 'bf:plan'
+  plan: 'bf:plan',
+  workoutLibrary: 'bf:workoutLibrary'
 };
 
 // Curated Workout Ideas Library
 const WORKOUT_LIBRARY = [
   {
-    id: "idea-fullbody-db",
-    name: "Full Body Dumbbell Power",
-    desc: "Build muscular strength and density across your entire body using only a pair of dumbbells.",
-    category: "strength",
-    duration: 40,
-    difficulty: "Intermediate",
-    exercises: [
-      { name: "DB Goblet Squats", reps: "3 sets x 10-12 reps" },
-      { name: "DB Floor Press", reps: "3 sets x 10-12 reps" },
-      { name: "One-Arm Dumbbell Row", reps: "3 sets x 12 reps each" },
-      { name: "DB Shoulder Press", reps: "3 sets x 10-12 reps" },
-      { name: "DB Romanian Deadlifts", reps: "3 sets x 12 reps" }
+    "id": "idea-fullbody-db",
+    "name": "Full Body Dumbbell Power",
+    "desc": "Build muscular strength and density across your entire body using only a pair of dumbbells.",
+    "category": "strength",
+    "duration": 40,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Goblet Squats",
+        "reps": "3 sets x 10-12 reps"
+      },
+      {
+        "name": "DB Floor Press",
+        "reps": "3 sets x 10-12 reps"
+      },
+      {
+        "name": "One-Arm Dumbbell Row",
+        "reps": "3 sets x 12 reps each"
+      },
+      {
+        "name": "DB Shoulder Press",
+        "reps": "3 sets x 10-12 reps"
+      },
+      {
+        "name": "DB Romanian Deadlifts",
+        "reps": "3 sets x 12 reps"
+      }
     ]
   },
   {
-    id: "idea-bodyweight-burn",
-    name: "Bodyweight Inferno",
-    desc: "High-intensity cardio and core-burning full body routine that requires zero equipment.",
-    category: "bodyweight",
-    duration: 25,
-    difficulty: "Beginner",
-    exercises: [
-      { name: "Air Squats", reps: "3 sets x 15-20 reps" },
-      { name: "Push-ups (or Incline Push-ups)", reps: "3 sets x 10-12 reps" },
-      { name: "Walking Lunges", reps: "3 sets x 12 reps each" },
-      { name: "Mountain Climbers", reps: "3 sets x 30 sec" },
-      { name: "Plank Hold", reps: "3 sets x 45 sec" }
+    "id": "idea-bodyweight-burn",
+    "name": "Bodyweight Inferno",
+    "desc": "High-intensity cardio and core-burning full body routine that requires zero equipment.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Air Squats",
+        "reps": "3 sets x 15-20 reps"
+      },
+      {
+        "name": "Push-ups (or Incline Push-ups)",
+        "reps": "3 sets x 10-12 reps"
+      },
+      {
+        "name": "Walking Lunges",
+        "reps": "3 sets x 12 reps each"
+      },
+      {
+        "name": "Mountain Climbers",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Plank Hold",
+        "reps": "3 sets x 45 sec"
+      }
     ]
   },
   {
-    id: "idea-core-crusher",
-    name: "Core Shredder 150",
-    desc: "A rapid, fire-inducing abdominal routine designed to strengthen your midsection.",
-    category: "core",
-    duration: 15,
-    difficulty: "Beginner",
-    exercises: [
-      { name: "Crunches", reps: "3 sets x 15-20 reps" },
-      { name: "Bicycle Crunches", reps: "3 sets x 15 reps each" },
-      { name: "Hollow Body Hold", reps: "3 sets x 30 sec" },
-      { name: "Russian Twists", reps: "3 sets x 20 reps" },
-      { name: "Reverse Crunches", reps: "3 sets x 12 reps" }
+    "id": "idea-core-crusher",
+    "name": "Core Shredder 150",
+    "desc": "A rapid, fire-inducing abdominal routine designed to strengthen your midsection.",
+    "category": "core",
+    "duration": 15,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Crunches",
+        "reps": "3 sets x 15-20 reps"
+      },
+      {
+        "name": "Bicycle Crunches",
+        "reps": "3 sets x 15 reps each"
+      },
+      {
+        "name": "Hollow Body Hold",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Russian Twists",
+        "reps": "3 sets x 20 reps"
+      },
+      {
+        "name": "Reverse Crunches",
+        "reps": "3 sets x 12 reps"
+      }
     ]
   },
   {
-    id: "idea-barbell-strength",
-    name: "Compound Power (Barbell)",
-    desc: "Heavy compound lifting routine focused on building raw foundational strength and size.",
-    category: "strength",
-    duration: 45,
-    difficulty: "Advanced",
-    exercises: [
-      { name: "Barbell Back Squat", reps: "4 sets x 5 reps" },
-      { name: "Barbell Bench Press", reps: "4 sets x 5 reps" },
-      { name: "Barbell Deadlift", reps: "3 sets x 5 reps" },
-      { name: "Barbell Overhead Press", reps: "3 sets x 6 reps" },
-      { name: "Barbell Row", reps: "3 sets x 8 reps" }
+    "id": "idea-barbell-strength",
+    "name": "Compound Power (Barbell)",
+    "desc": "Heavy compound lifting routine focused on building raw foundational strength and size.",
+    "category": "strength",
+    "duration": 45,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Barbell Back Squat",
+        "reps": "4 sets x 5 reps"
+      },
+      {
+        "name": "Barbell Bench Press",
+        "reps": "4 sets x 5 reps"
+      },
+      {
+        "name": "Barbell Deadlift",
+        "reps": "3 sets x 5 reps"
+      },
+      {
+        "name": "Barbell Overhead Press",
+        "reps": "3 sets x 6 reps"
+      },
+      {
+        "name": "Barbell Row",
+        "reps": "3 sets x 8 reps"
+      }
     ]
   },
   {
-    id: "idea-hiit-sweat",
-    name: "HIIT Metcon Sweat",
-    desc: "Metabolic conditioning circuits to burn maximum fat and build athletic conditioning.",
-    category: "hiit",
-    duration: 20,
-    difficulty: "Intermediate",
-    exercises: [
-      { name: "Burpees", reps: "4 sets x 10 reps" },
-      { name: "Jump Squats", reps: "4 sets x 12-15 reps" },
-      { name: "Push-up to Plank Jacks", reps: "4 sets x 10 reps" },
-      { name: "High Knees", reps: "4 sets x 40 sec" },
-      { name: "Plank Hold", reps: "4 sets x 45 sec" }
+    "id": "idea-hiit-sweat",
+    "name": "HIIT Metcon Sweat",
+    "desc": "Metabolic conditioning circuits to burn maximum fat and build athletic conditioning.",
+    "category": "hiit",
+    "duration": 20,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "Burpees",
+        "reps": "4 sets x 10 reps"
+      },
+      {
+        "name": "Jump Squats",
+        "reps": "4 sets x 12-15 reps"
+      },
+      {
+        "name": "Push-up to Plank Jacks",
+        "reps": "4 sets x 10 reps"
+      },
+      {
+        "name": "High Knees",
+        "reps": "4 sets x 40 sec"
+      },
+      {
+        "name": "Plank Hold",
+        "reps": "4 sets x 45 sec"
+      }
     ]
   },
   {
-    id: "idea-upper-pump",
-    name: "Upper Body Hypertrophy",
-    desc: "Focused volume and pump routine targeting chest, back, shoulders, and arms.",
-    category: "strength",
-    duration: 30,
-    difficulty: "Intermediate",
-    exercises: [
-      { name: "DB Flat Bench Press", reps: "3 sets x 12 reps" },
-      { name: "DB One-Arm Row", reps: "3 sets x 12 reps each" },
-      { name: "DB Lateral Raises", reps: "3 sets x 15 reps" },
-      { name: "DB Bicep Curls", reps: "3 sets x 12 reps" },
-      { name: "DB Overhead Tricep Extensions", reps: "3 sets x 12 reps" }
+    "id": "idea-upper-pump",
+    "name": "Upper Body Hypertrophy",
+    "desc": "Focused volume and pump routine targeting chest, back, shoulders, and arms.",
+    "category": "strength",
+    "duration": 30,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Flat Bench Press",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB One-Arm Row",
+        "reps": "3 sets x 12 reps each"
+      },
+      {
+        "name": "DB Lateral Raises",
+        "reps": "3 sets x 15 reps"
+      },
+      {
+        "name": "DB Bicep Curls",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Overhead Tricep Extensions",
+        "reps": "3 sets x 12 reps"
+      }
     ]
   },
   {
-    id: "idea-legs-glutes",
-    name: "Legs & Glutes Sculpt",
-    desc: "Lower body isolation and strength routines for building powerful quadriceps, hamstrings, and glutes.",
-    category: "strength",
-    duration: 35,
-    difficulty: "Intermediate",
-    exercises: [
-      { name: "DB Goblet Squats", reps: "3 sets x 12 reps" },
-      { name: "DB Romanian Deadlifts", reps: "3 sets x 12 reps" },
-      { name: "DB Bulgarian Split Squats", reps: "3 sets x 10 reps each" },
-      { name: "Weighted Glute Bridges", reps: "3 sets x 15 reps" },
-      { name: "Calf Raises", reps: "3 sets x 20 reps" }
+    "id": "idea-legs-glutes",
+    "name": "Legs & Glutes Sculpt",
+    "desc": "Lower body isolation and strength routines for building powerful quadriceps, hamstrings, and glutes.",
+    "category": "strength",
+    "duration": 35,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Goblet Squats",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Romanian Deadlifts",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Bulgarian Split Squats",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Weighted Glute Bridges",
+        "reps": "3 sets x 15 reps"
+      },
+      {
+        "name": "Calf Raises",
+        "reps": "3 sets x 20 reps"
+      }
     ]
   },
   {
-    id: "idea-recovery-flow",
-    name: "Active Recovery & Flow",
-    desc: "Gentle mobility flow and cardio walk to speed up recovery and release joint tension.",
-    category: "bodyweight",
-    duration: 30,
-    difficulty: "Beginner",
-    exercises: [
-      { name: "World's Greatest Stretch", reps: "2 sets x 5 reps each" },
-      { name: "Cat-Cow Stretch", reps: "2 sets x 10 reps" },
-      { name: "90/90 Hip Flow", reps: "2 sets x 6 reps each" },
-      { name: "Cobra to Child's Pose Flow", reps: "2 sets x 8 reps" },
-      { name: "Light Jog / Walk", reps: "15 min slow pace" }
+    "id": "idea-recovery-flow",
+    "name": "Active Recovery & Flow",
+    "desc": "Gentle mobility flow and cardio walk to speed up recovery and release joint tension.",
+    "category": "bodyweight",
+    "duration": 30,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "World's Greatest Stretch",
+        "reps": "2 sets x 5 reps each"
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "90/90 Hip Flow",
+        "reps": "2 sets x 6 reps each"
+      },
+      {
+        "name": "Cobra to Child's Pose Flow",
+        "reps": "2 sets x 8 reps"
+      },
+      {
+        "name": "Light Jog / Walk",
+        "reps": "15 min slow pace"
+      }
+    ]
+  },
+  {
+    "id": "idea-cardio-core-hiit",
+    "name": "Cardio & Core HIIT Burner",
+    "desc": "Fast-paced cardiovascular and abdominal circuit designed to elevate heart rate and build core strength.",
+    "category": "hiit",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Jumping Jacks",
+        "reps": "3 sets x 45 sec"
+      },
+      {
+        "name": "Mountain Climbers",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Plank Shoulder Taps",
+        "reps": "3 sets x 12 reps each"
+      },
+      {
+        "name": "Bicycle Crunches",
+        "reps": "3 sets x 15 reps each"
+      },
+      {
+        "name": "High Knees",
+        "reps": "3 sets x 30 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-db-leg-crusher",
+    "name": "Dumbbell Leg Crusher",
+    "desc": "Focused lower body strength training targeting the quads, hamstrings, and calves with heavy dumbbell movements.",
+    "category": "strength",
+    "duration": 35,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Romanian Deadlifts",
+        "reps": "4 sets x 10 reps"
+      },
+      {
+        "name": "DB Goblet Squats",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Bulgarian Split Squats",
+        "reps": "3 sets x 8 reps each"
+      },
+      {
+        "name": "DB Weighted Calf Raises",
+        "reps": "3 sets x 15 reps"
+      },
+      {
+        "name": "Bodyweight Glute Bridges",
+        "reps": "3 sets x 15 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-db-upper-sculpt",
+    "name": "Upper Body Dumbbell Sculpt",
+    "desc": "Target your arms, shoulders, and chest using controlled, high-volume dumbbell movements.",
+    "category": "strength",
+    "duration": 30,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Flat Bench Press",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB One-Arm Rows",
+        "reps": "3 sets x 12 reps each"
+      },
+      {
+        "name": "DB Shoulder Press",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "DB Bicep Curls",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Overhead Tricep Extensions",
+        "reps": "3 sets x 12 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-yoga-flex-flow",
+    "name": "Power Yoga & Flexibility Flow",
+    "desc": "Enhance flexibility, joint mobility, and core balance with a bodyweight flow.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Down Dog to Cobra",
+        "reps": "3 sets x 5 reps"
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "Warrior I & II Pose",
+        "reps": "3 sets x 30 sec hold each side"
+      },
+      {
+        "name": "Crescent Lunge",
+        "reps": "3 sets x 30 sec hold each side"
+      },
+      {
+        "name": "Child's Pose Hold",
+        "reps": "1 set x 60 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-barbell-hypertrophy",
+    "name": "Barbell Hypertrophy Upper",
+    "desc": "Advanced upper body workout focused on building size and raw power with heavy barbell compounds.",
+    "category": "strength",
+    "duration": 40,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Barbell Bench Press",
+        "reps": "4 sets x 8 reps"
+      },
+      {
+        "name": "Barbell Bent-Over Row",
+        "reps": "4 sets x 8 reps"
+      },
+      {
+        "name": "Barbell Overhead Press",
+        "reps": "3 sets x 8 reps"
+      },
+      {
+        "name": "Barbell Bicep Curls",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "Barbell Skull Crushers",
+        "reps": "3 sets x 10 reps"
+      }
     ]
   }
 ];
@@ -267,7 +538,8 @@ let state = {
   plan: { generatedAt: null, days: [] },
   timer: { remainingSec: 0, running: false, interval: null },
   activeTab: 'dashboard',
-  generatedRoutine: null
+  generatedRoutine: null,
+  workoutLibrary: []
 };
 
 function seedIfEmpty() {
@@ -317,6 +589,7 @@ function loadState() {
   state.goals = store.get(KEYS.goals, []);
   state.theme = store.get(KEYS.theme, 'light');
   state.plan = store.get(KEYS.plan, state.plan);
+  state.workoutLibrary = store.get(KEYS.workoutLibrary, WORKOUT_LIBRARY);
 }
 
 function saveRoutines() { store.set(KEYS.routines, state.routines); }
@@ -1523,23 +1796,70 @@ function generateCustomWorkout(duration, focus, equipment, difficulty) {
   }, 1800);
 }
 
+// Synchronize Workout Library from static JSON
+async function syncWorkoutLibrary(force = false) {
+  const syncStatus = $('syncWorkoutsStatus');
+  if (syncStatus && force) syncStatus.textContent = 'Syncing...';
+  
+  try {
+    const res = await fetch('/workouts.json');
+    if (!res.ok) throw new Error('Fetch failed');
+    const fetched = await res.json();
+    if (!Array.isArray(fetched)) throw new Error('Invalid workouts format');
+    
+    // Merge, avoiding duplicates
+    const mergedMap = new Map();
+    // Pre-populate with fallback list
+    WORKOUT_LIBRARY.forEach(w => mergedMap.set(w.id, w));
+    // Overwrite with locally stored
+    const cached = store.get(KEYS.workoutLibrary, []);
+    cached.forEach(w => mergedMap.set(w.id, w));
+    // Overwrite with newly fetched
+    fetched.forEach(w => mergedMap.set(w.id, w));
+    
+    const finalLibrary = Array.from(mergedMap.values());
+    store.set(KEYS.workoutLibrary, finalLibrary);
+    state.workoutLibrary = finalLibrary;
+    
+    renderWorkoutIdeas();
+    
+    if (syncStatus) {
+      syncStatus.textContent = `Sync successful! ${fetched.length} templates loaded. Total: ${finalLibrary.length} workouts.`;
+      setTimeout(() => { syncStatus.textContent = ''; }, 5000);
+    }
+  } catch (err) {
+    console.warn('Failed to sync workouts from static json:', err);
+    if (syncStatus && force) {
+      syncStatus.textContent = `Sync failed: ${err.message}. Using offline cache.`;
+      setTimeout(() => { syncStatus.textContent = ''; }, 5000);
+    }
+    // ensure state is populated
+    if (!state.workoutLibrary || state.workoutLibrary.length === 0) {
+      state.workoutLibrary = store.get(KEYS.workoutLibrary, WORKOUT_LIBRARY);
+      renderWorkoutIdeas();
+    }
+  }
+}
+
 // Workout Ideas rendering
 function renderWorkoutIdeas() {
   const container = $('ideasGrid');
   if (!container) return;
   container.innerHTML = '';
 
-  WORKOUT_LIBRARY.forEach(idea => {
+  const library = state.workoutLibrary && state.workoutLibrary.length > 0 ? state.workoutLibrary : WORKOUT_LIBRARY;
+
+  library.forEach(idea => {
     const card = document.createElement('div');
     card.className = 'idea-card';
     
-    const displayCategory = idea.category.charAt(0).toUpperCase() + idea.category.slice(1);
+    const displayCat = idea.category.charAt(0).toUpperCase() + idea.category.slice(1);
     
     const exercisesSummary = idea.exercises.map(ex => `<div class="idea-ex-item"><span class="idea-ex-name">${escapeHtml(ex.name)}</span><span class="idea-ex-reps">${escapeHtml(ex.reps)}</span></div>`).join('');
     
     card.innerHTML = `
       <div class="idea-header">
-        <span class="category-badge ${idea.category}">${displayCategory}</span>
+        <span class="category-badge ${idea.category}">${displayCat}</span>
         <div class="row" style="gap:4px">
           <span class="meta-badge">⏱️ ${idea.duration}m</span>
           <span class="meta-badge">💪 ${idea.difficulty}</span>
@@ -1563,7 +1883,7 @@ function renderWorkoutIdeas() {
   container.querySelectorAll('.start-idea-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const ideaId = btn.getAttribute('data-id');
-      const idea = WORKOUT_LIBRARY.find(i => i.id === ideaId);
+      const idea = library.find(i => i.id === ideaId);
       if (!idea) return;
 
       // Map library exercises to standard routine structure (including sets/reps inside naming)
@@ -1810,6 +2130,10 @@ function wire() {
 
   $('btnReset')?.addEventListener('click', resetAll);
 
+  $('btnSyncWorkouts')?.addEventListener('click', () => {
+    syncWorkoutLibrary(true);
+  });
+
   // Keyboard support for rest timer
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') stopTimer();
@@ -1862,6 +2186,9 @@ function boot() {
   } else {
     switchTab('dashboard');
   }
+  
+  // Trigger background sync of workouts library
+  syncWorkoutLibrary();
 }
 
 boot();

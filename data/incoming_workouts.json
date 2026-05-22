@@ -1,0 +1,77 @@
+[
+  {
+    "id": "idea-cardio-core-hiit",
+    "name": "Cardio & Core HIIT Burner",
+    "desc": "Fast-paced cardiovascular and abdominal circuit designed to elevate heart rate and build core strength.",
+    "category": "hiit",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      { "name": "Jumping Jacks", "reps": "3 sets x 45 sec" },
+      { "name": "Mountain Climbers", "reps": "3 sets x 30 sec" },
+      { "name": "Plank Shoulder Taps", "reps": "3 sets x 12 reps each" },
+      { "name": "Bicycle Crunches", "reps": "3 sets x 15 reps each" },
+      { "name": "High Knees", "reps": "3 sets x 30 sec" }
+    ]
+  },
+  {
+    "id": "idea-db-leg-crusher",
+    "name": "Dumbbell Leg Crusher",
+    "desc": "Focused lower body strength training targeting the quads, hamstrings, and calves with heavy dumbbell movements.",
+    "category": "strength",
+    "duration": 35,
+    "difficulty": "Intermediate",
+    "exercises": [
+      { "name": "DB Romanian Deadlifts", "reps": "4 sets x 10 reps" },
+      { "name": "DB Goblet Squats", "reps": "3 sets x 12 reps" },
+      { "name": "DB Bulgarian Split Squats", "reps": "3 sets x 8 reps each" },
+      { "name": "DB Weighted Calf Raises", "reps": "3 sets x 15 reps" },
+      { "name": "Bodyweight Glute Bridges", "reps": "3 sets x 15 reps" }
+    ]
+  },
+  {
+    "id": "idea-db-upper-sculpt",
+    "name": "Upper Body Dumbbell Sculpt",
+    "desc": "Target your arms, shoulders, and chest using controlled, high-volume dumbbell movements.",
+    "category": "strength",
+    "duration": 30,
+    "difficulty": "Intermediate",
+    "exercises": [
+      { "name": "DB Flat Bench Press", "reps": "3 sets x 12 reps" },
+      { "name": "DB One-Arm Rows", "reps": "3 sets x 12 reps each" },
+      { "name": "DB Shoulder Press", "reps": "3 sets x 10 reps" },
+      { "name": "DB Bicep Curls", "reps": "3 sets x 12 reps" },
+      { "name": "DB Overhead Tricep Extensions", "reps": "3 sets x 12 reps" }
+    ]
+  },
+  {
+    "id": "idea-yoga-flex-flow",
+    "name": "Power Yoga & Flexibility Flow",
+    "desc": "Enhance flexibility, joint mobility, and core balance with a bodyweight flow.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      { "name": "Down Dog to Cobra", "reps": "3 sets x 5 reps" },
+      { "name": "Cat-Cow Stretch", "reps": "3 sets x 10 reps" },
+      { "name": "Warrior I & II Pose", "reps": "3 sets x 30 sec hold each side" },
+      { "name": "Crescent Lunge", "reps": "3 sets x 30 sec hold each side" },
+      { "name": "Child's Pose Hold", "reps": "1 set x 60 sec" }
+    ]
+  },
+  {
+    "id": "idea-barbell-hypertrophy",
+    "name": "Barbell Hypertrophy Upper",
+    "desc": "Advanced upper body workout focused on building size and raw power with heavy barbell compounds.",
+    "category": "strength",
+    "duration": 40,
+    "difficulty": "Advanced",
+    "exercises": [
+      { "name": "Barbell Bench Press", "reps": "4 sets x 8 reps" },
+      { "name": "Barbell Bent-Over Row", "reps": "4 sets x 8 reps" },
+      { "name": "Barbell Overhead Press", "reps": "3 sets x 8 reps" },
+      { "name": "Barbell Bicep Curls", "reps": "3 sets x 10 reps" },
+      { "name": "Barbell Skull Crushers", "reps": "3 sets x 10 reps" }
+    ]
+  }
+]
