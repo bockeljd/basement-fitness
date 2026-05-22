@@ -29,9 +29,6 @@
       </div>
       <div class="actions">
         <button class="btn secondary" id="btnTheme" type="button">Theme</button>
-        <button class="btn secondary" id="btnExport" type="button">Export</button>
-        <button class="btn secondary" id="btnImport" type="button">Import</button>
-        <button class="btn danger" id="btnReset" type="button">Reset</button>
       </div>
     </header>
 
@@ -53,6 +50,10 @@
         <span class="tab-icon">📋</span>
         <span class="tab-text">Routines</span>
       </button>
+      <button class="tab-btn" data-tab="settings" type="button">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-text">Settings</span>
+      </button>
       <button class="tab-btn active-workout-tab" data-tab="workout" id="tabActiveWorkout" style="display: none;" type="button">
         <span class="tab-icon pulsing-dot"></span>
         <span class="tab-text">Active Workout</span>
@@ -65,97 +66,24 @@
       <div id="panel-dashboard" class="tab-panel active">
         <section class="card" id="cardDashboard">
           <div class="cardHeader">
-            <h2>Dashboard</h2>
+            <h2>Dashboard <span id="streakBadge" class="streak-badge" style="display: none;"></span></h2>
             <div class="row wrap">
               <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
               <button class="btn secondary" id="btnAddGoal" type="button">Add habit goal</button>
             </div>
           </div>
 
-          <div class="grid2">
-            <div class="panel">
-              <div class="panelTitle">Primary goal</div>
-              <div class="grid2">
-                <div>
-                  <label class="small">Goal</label>
-                  <select class="input" id="primaryType">
-                    <option value="">Select…</option>
-                    <option value="lose_weight">Lose weight</option>
-                    <option value="build_muscle">Build muscle</option>
-                    <option value="run_5k">Run a 5K</option>
-                    <option value="bar_hang">2-min bar hang</option>
-                    <option value="pushups">30 pushups</option>
-                    <option value="custom">Custom</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="small">Minutes/session</label>
-                  <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
-                </div>
-              </div>
-              <div style="margin-top:10px" class="grid2">
-                <div>
-                  <label class="small">Days/week</label>
-                  <input class="input" id="primaryDays" inputmode="numeric" placeholder="3" />
-                </div>
-                <div>
-                  <label class="small">Secondary (optional)</label>
-                  <select class="input" id="secondaryType">
-                    <option value="">None</option>
-                    <option value="steps">Steps</option>
-                    <option value="protein">Protein</option>
-                    <option value="mobility">Mobility</option>
-                    <option value="zone2">Zone 2</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid2" style="margin-top:10px">
-                <div id="primaryCustomWrap" hidden>
-                  <label class="small">Custom goal</label>
-                  <input class="input" id="primaryCustomText" placeholder='e.g., "Lose 10 lbs in 30 days"' />
-                  <div class="muted">We’ll still build workouts, but customization is limited for custom goals.</div>
-                </div>
-                <div id="primaryBaselineWrap" hidden>
-                  <label class="small" id="primaryBaselineLabel">Baseline</label>
-                  <input class="input" id="primaryBaseline" inputmode="numeric" placeholder="" />
-                  <div class="muted" id="primaryBaselineHint"></div>
-                </div>
-                <div id="primaryProgressWrap" hidden>
-                  <label class="small" id="primaryProgressLabel">Progress</label>
-                  <input class="input" id="primaryProgress" inputmode="numeric" placeholder="" />
-                  <div class="muted" id="primaryProgressHint"></div>
-                </div>
-              </div>
-
-              <div class="row wrap" style="margin-top:10px">
-                <button class="btn" id="btnSaveGoals" type="button">Save goals</button>
-                <div class="muted" id="primaryGoalProgress"></div>
-              </div>
-            </div>
-            
-            <div class="panel">
-              <div class="panelTitle">Status</div>
-              <div id="primaryGoal" class="muted" style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Not set</div>
-              <div class="muted" id="secondaryGoal" style="font-weight: 600; font-size: 13px;">None</div>
-            </div>
-            
-            <div class="panel">
-              <div class="panelTitle">Streak</div>
-              <div class="muted" id="streakText" style="font-weight: 700; font-size: 15px;">—</div>
-            </div>
-            
+          <div class="grid3">
             <div class="panel">
               <div class="panelTitle">Today</div>
               <div id="goalsDaily" class="goalList"></div>
             </div>
-          </div>
-
-          <div class="grid2" style="margin-top:12px">
+            
             <div class="panel">
               <div class="panelTitle">This week</div>
               <div id="goalsWeekly" class="goalList"></div>
             </div>
+            
             <div class="panel">
               <div class="panelTitle">This month</div>
               <div id="goalsMonthly" class="goalList"></div>
@@ -341,6 +269,97 @@
             <div class="panelTitle">Exercises</div>
             <div class="exerciseList" id="exerciseList"></div>
             <button class="btn secondary" id="btnAddExercise" type="button" style="margin-top: 12px; width: 100%; justify-content: center; display: flex;">+ Add Custom Exercise</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab 6: Settings Panel -->
+      <div id="panel-settings" class="tab-panel">
+        <section class="card" id="cardSettings">
+          <div class="cardHeader">
+            <h2>Settings</h2>
+          </div>
+          
+          <div class="grid2">
+            <!-- Goal Configuration -->
+            <div class="panel">
+              <div class="panelTitle">Goal configuration</div>
+              <div class="grid2">
+                <div>
+                  <label class="small">Goal</label>
+                  <select class="input" id="primaryType">
+                    <option value="">Select…</option>
+                    <option value="lose_weight">Lose weight</option>
+                    <option value="build_muscle">Build muscle</option>
+                    <option value="run_5k">Run a 5K</option>
+                    <option value="bar_hang">2-min bar hang</option>
+                    <option value="pushups">30 pushups</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="small">Minutes/session</label>
+                  <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
+                </div>
+              </div>
+              <div style="margin-top:10px" class="grid2">
+                <div>
+                  <label class="small">Days/week</label>
+                  <input class="input" id="primaryDays" inputmode="numeric" placeholder="3" />
+                </div>
+                <div>
+                  <label class="small">Secondary (optional)</label>
+                  <select class="input" id="secondaryType">
+                    <option value="">None</option>
+                    <option value="steps">Steps</option>
+                    <option value="protein">Protein</option>
+                    <option value="mobility">Mobility</option>
+                    <option value="zone2">Zone 2</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div id="primaryCustomWrap" hidden>
+                  <label class="small">Custom goal</label>
+                  <input class="input" id="primaryCustomText" placeholder='e.g., "Lose 10 lbs in 30 days"' />
+                  <div class="muted">We’ll still build workouts, but customization is limited for custom goals.</div>
+                </div>
+                <div id="primaryBaselineWrap" hidden>
+                  <label class="small" id="primaryBaselineLabel">Baseline</label>
+                  <input class="input" id="primaryBaseline" inputmode="numeric" placeholder="" />
+                  <div class="muted" id="primaryBaselineHint"></div>
+                </div>
+                <div id="primaryProgressWrap" hidden>
+                  <label class="small" id="primaryProgressLabel">Progress</label>
+                  <input class="input" id="primaryProgress" inputmode="numeric" placeholder="" />
+                  <div class="muted" id="primaryProgressHint"></div>
+                </div>
+              </div>
+
+              <div class="row wrap" style="margin-top:10px">
+                <button class="btn" id="btnSaveGoals" type="button">Save goals</button>
+                <div class="muted" id="primaryGoalProgress"></div>
+              </div>
+            </div>
+
+            <!-- Current Goal Status (so it's visible in settings when updated/saved) -->
+            <div class="panel">
+              <div class="panelTitle">Current Goal Status</div>
+              <div id="primaryGoal" class="muted" style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Not set</div>
+              <div class="muted" id="secondaryGoal" style="font-weight: 600; font-size: 13px;">None</div>
+            </div>
+
+            <!-- Data Management (moved from header for clean UI) -->
+            <div class="panel">
+              <div class="panelTitle">Data management</div>
+              <p class="muted" style="margin-bottom: 12px;">Export or import your local workout history, or reset the application state.</p>
+              <div class="row wrap">
+                <button class="btn secondary" id="btnExport" type="button">Export Data</button>
+                <button class="btn secondary" id="btnImport" type="button">Import Data</button>
+                <button class="btn danger" id="btnReset" type="button">Reset All</button>
+              </div>
+            </div>
           </div>
         </section>
       </div>

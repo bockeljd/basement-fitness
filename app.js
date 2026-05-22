@@ -786,6 +786,21 @@ function goalPeriodKey(goal, now=new Date()) {
   return monthKey(now);
 }
 function currentProgress(goal, now=new Date()) {
+  const titleLower = (goal.title || '').toLowerCase();
+  if (titleLower.includes('workout') || titleLower.includes('exercise')) {
+    const k = goalPeriodKey(goal, now);
+    const completedSessions = (state.sessions || []).filter(s => {
+      if (!s.endedAt) return false;
+      try {
+        const endedDate = new Date(s.endedAt);
+        return goalPeriodKey(goal, endedDate) === k;
+      } catch {
+        return false;
+      }
+    });
+    return completedSessions.length;
+  }
+
   goal.progress = goal.progress || {};
   const k = goalPeriodKey(goal, now);
   return Number(goal.progress[k] || 0);
@@ -801,6 +816,8 @@ function setProgress(goalId, val, now=new Date()) {
 function incProgress(goalId, delta=1) {
   const g = state.goals.find(x => x.id === goalId);
   if (!g) return;
+  const titleLower = (g.title || '').toLowerCase();
+  if (titleLower.includes('workout') || titleLower.includes('exercise')) return;
   const cur = currentProgress(g);
   setProgress(goalId, cur + delta);
   renderDashboard();
@@ -852,6 +869,16 @@ function renderGoalList(elId, period) {
     const pct = Math.max(0, Math.min(100, (cur / g.target) * 100));
     const item = document.createElement('div');
     item.className = 'goalItem';
+    
+    const titleLower = (g.title || '').toLowerCase();
+    const isAuto = titleLower.includes('workout') || titleLower.includes('exercise');
+    const actionsHtml = isAuto
+      ? `<span class="badge-auto">Auto</span>`
+      : `
+        <button class="btn" data-goal-action="inc" data-goal-id="${g.id}" type="button">+1</button>
+        <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}" type="button">-1</button>
+      `;
+
     item.innerHTML = `
       <div style="flex:1;min-width:180px">
         <div style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
@@ -859,8 +886,7 @@ function renderGoalList(elId, period) {
         <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
       </div>
       <div class="row wrap">
-        <button class="btn" data-goal-action="inc" data-goal-id="${g.id}" type="button">+1</button>
-        <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}" type="button">-1</button>
+        ${actionsHtml}
         <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
       </div>
     `;
@@ -920,8 +946,15 @@ function renderDashboard() {
   renderGoalList('goalsMonthly', 'monthly');
 
   const st = computeStreak();
-  const el = $('streakText');
-  if (el) el.textContent = st ? `${st} day streak 🔥` : 'No active streak';
+  const badge = $('streakBadge');
+  if (badge) {
+    if (st > 0) {
+      badge.textContent = `🔥 ${st} day streak`;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
 
   renderPlan();
 }

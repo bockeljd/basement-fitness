@@ -899,3 +899,49 @@ select.input {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Three-column Dashboard Grid */
+.grid3 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 860px) {
+  .grid3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Streak Badge Next to Header */
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+/* Auto Goal Badge */
+.badge-auto {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  align-self: center;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
