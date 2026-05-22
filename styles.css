@@ -945,3 +945,202 @@ select.input {
   align-self: center;
   border: 1px solid rgba(99, 102, 241, 0.15);
 }
+
+/* KPI Dashboard Grid */
+.kpi-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.kpi-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.kpi-card.highlight {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.04), rgba(99, 102, 241, 0.01));
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.08);
+}
+
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpi-icon {
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--card2);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.kpi-card.highlight .kpi-icon {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-value {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kpi-bar {
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(71, 85, 105, 0.08);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+[data-theme="dark"] .kpi-bar {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.kpi-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent-gradient);
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+/* Habit Checklist Layout */
+.habit-checklist {
+  display: grid;
+  gap: 8px;
+}
+
+.habit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.habit-item:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.habit-item.completed {
+  background: rgba(16, 185, 129, 0.03);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .habit-item.completed {
+  background: rgba(52, 211, 153, 0.04);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+
+.habit-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.habit-checkbox-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: transparent;
+  font-size: 11px;
+  font-weight: 900;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.habit-checkbox-btn:hover {
+  border-color: var(--accent);
+}
+
+.habit-item.completed .habit-checkbox-btn {
+  background: var(--good);
+  border-color: var(--good);
+  color: white;
+}
+
+.habit-item.completed .habit-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* Activity Feed */
+.activity-feed {
+  display: grid;
+  gap: 8px;
+}
+
+.activity-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activity-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+

@@ -1095,6 +1095,19 @@ function incProgress(goalId, delta=1) {
   setProgress(goalId, cur + delta);
   renderDashboard();
 }
+function toggleGoal(goalId) {
+  const g = state.goals.find(x => x.id === goalId);
+  if (!g) return;
+  const titleLower = (g.title || '').toLowerCase();
+  if (titleLower.includes('workout') || titleLower.includes('exercise')) return;
+  const cur = currentProgress(g);
+  if (cur >= g.target) {
+    setProgress(goalId, 0);
+  } else {
+    setProgress(goalId, g.target);
+  }
+  renderDashboard();
+}
 function addGoal() {
   const title = prompt('Goal name? (e.g., Workouts, Protein days, Steps, Pushups)');
   if (!title) return;
@@ -1141,7 +1154,6 @@ function renderGoalList(elId, period) {
     const cur = currentProgress(g, now);
     const pct = Math.max(0, Math.min(100, (cur / g.target) * 100));
     const item = document.createElement('div');
-    item.className = 'goalItem';
     
     const titleLower = (g.title || '').toLowerCase();
     const isAuto = titleLower.includes('workout') || titleLower.includes('exercise');
@@ -1152,17 +1164,35 @@ function renderGoalList(elId, period) {
         <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}" type="button">-1</button>
       `;
 
-    item.innerHTML = `
-      <div style="flex:1;min-width:180px">
-        <div style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
-        <div class="small">${cur} / ${g.target} (${g.period})</div>
-        <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
-      </div>
-      <div class="row wrap">
-        ${actionsHtml}
-        <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
-      </div>
-    `;
+    if (period === 'daily') {
+      item.className = `habit-item ${cur >= g.target ? 'completed' : ''}`;
+      item.innerHTML = `
+        <div class="habit-info">
+          <button class="habit-checkbox-btn" data-goal-action="toggle" data-goal-id="${g.id}" type="button">✓</button>
+          <div>
+            <div class="habit-title" style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
+            <div class="small">${cur} / ${g.target}</div>
+          </div>
+        </div>
+        <div class="row wrap" style="align-items: center; gap: 8px;">
+          ${actionsHtml}
+          <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
+        </div>
+      `;
+    } else {
+      item.className = 'goalItem';
+      item.innerHTML = `
+        <div style="flex:1;min-width:180px">
+          <div style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
+          <div class="small">${cur} / ${g.target} (${g.period})</div>
+          <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="row wrap">
+          ${actionsHtml}
+          <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
+        </div>
+      `;
+    }
     el.appendChild(item);
   });
 }
@@ -1177,6 +1207,119 @@ function computeStreak() {
     d = new Date(d.getTime() - 86400000);
   }
   return streak;
+}
+function getSessionDurationMin(session) {
+  if (session.startedAt && session.endedAt) {
+    const elapsedMs = new Date(session.endedAt) - new Date(session.startedAt);
+    const elapsedMin = Math.floor(elapsedMs / 60000);
+    if (elapsedMin > 0) {
+      return elapsedMin;
+    }
+  }
+  const r = activeRoutine(session) || (state.workoutLibrary || []).find(w => w.id === session.routineId);
+  if (r) {
+    if (r.duration) return Number(r.duration);
+    if (r.id && r.id.startsWith('gen:')) {
+      const parts = r.id.split(':');
+      if (parts[2]) {
+        const dVal = Number(parts[2]);
+        if (!isNaN(dVal) && dVal > 0) return dVal;
+      }
+    }
+    const m = r.name ? r.name.match(/\((\d+)m\)/) : null;
+    if (m && m[1]) {
+      return Number(m[1]);
+    }
+  }
+  return Number(state.primaryGoal?.durationMin || state.profile?.durationMin || 30);
+}
+function getWeeklyWorkoutsTarget() {
+  const g = (state.goals || []).find(x => x.period === 'weekly' && (x.title.toLowerCase().includes('workout') || x.title.toLowerCase().includes('exercise')));
+  if (g) return g.target;
+  if (state.primaryGoal && state.primaryGoal.daysPerWeek) return state.primaryGoal.daysPerWeek;
+  return 3;
+}
+function getWeeklyWorkoutsCompleted() {
+  const currentWeekVal = weekKey(new Date());
+  const completedThisWeek = (state.sessions || []).filter(s => {
+    if (!s.endedAt) return false;
+    try {
+      return weekKey(new Date(s.endedAt)) === currentWeekVal;
+    } catch {
+      return false;
+    }
+  });
+  return completedThisWeek.length;
+}
+function getWeeklyMinutesCompleted() {
+  const currentWeekVal = weekKey(new Date());
+  const completedThisWeek = (state.sessions || []).filter(s => {
+    if (!s.endedAt) return false;
+    try {
+      return weekKey(new Date(s.endedAt)) === currentWeekVal;
+    } catch {
+      return false;
+    }
+  });
+  return completedThisWeek.reduce((sum, s) => sum + getSessionDurationMin(s), 0);
+}
+function getWeeklyVolumeTarget() {
+  const targetWorkouts = getWeeklyWorkoutsTarget();
+  const sessionDur = Number(state.primaryGoal?.durationMin || state.profile?.durationMin || 30);
+  return targetWorkouts * sessionDur;
+}
+function renderRecentActivity() {
+  const el = $('activityFeed');
+  if (!el) return;
+  const completedSessions = (state.sessions || []).filter(s => s.endedAt);
+  if (!completedSessions.length) {
+    el.innerHTML = '<div class="muted">No workouts completed yet. Start your first session!</div>';
+    return;
+  }
+  const recent = completedSessions.slice(0, 5);
+  el.innerHTML = '';
+  recent.forEach(s => {
+    const r = activeRoutine(s) || (state.workoutLibrary || []).find(w => w.id === s.routineId);
+    const routineName = r ? r.name : 'Custom Workout';
+    const dateStr = new Date(s.endedAt).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const minutes = getSessionDurationMin(s);
+    let exercisesCount = 0;
+    let totalSets = 0;
+    if (s.entries) {
+      Object.keys(s.entries).forEach(exId => {
+        const sets = s.entries[exId] || [];
+        if (sets.length > 0) {
+          exercisesCount++;
+          totalSets += sets.length;
+        }
+      });
+    }
+    const card = document.createElement('div');
+    card.className = 'activity-card';
+    let notesHtml = '';
+    if (s.notes && s.notes.trim()) {
+      notesHtml = `<div class="small italic muted" style="margin-top: 4px; border-left: 2px solid var(--accent); padding-left: 8px;">"${escapeHtml(s.notes.trim())}"</div>`;
+    }
+    card.innerHTML = `
+      <div class="activity-meta">
+        <span style="font-weight: 800; font-family: 'Outfit', sans-serif; color: var(--text);">${escapeHtml(routineName)}</span>
+        <span class="small" style="color: var(--muted);">${dateStr}</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;" class="small">
+        <span>⏱️ <strong>${minutes}</strong> min</span>
+        <span>💪 <strong>${exercisesCount}</strong> exercises</span>
+        <span>🏋️ <strong>${totalSets}</strong> sets</span>
+      </div>
+      ${notesHtml}
+    `;
+    el.appendChild(card);
+  });
 }
 function renderDashboard() {
   const pg = $('primaryGoal');
@@ -1214,15 +1357,92 @@ function renderDashboard() {
   const sg = $('secondaryGoal');
   if (sg) sg.textContent = state.secondaryGoal?.type ? state.secondaryGoal.type : 'None';
 
+  const workoutsCompleted = getWeeklyWorkoutsCompleted();
+  const workoutsTarget = getWeeklyWorkoutsTarget();
+  const workoutsPct = Math.max(0, Math.min(100, (workoutsCompleted / workoutsTarget) * 100));
+  const kpiWorkoutsVal = $('kpiWorkoutsVal');
+  const kpiWorkoutsFill = $('kpiWorkoutsFill');
+  if (kpiWorkoutsVal) kpiWorkoutsVal.textContent = `${workoutsCompleted}/${workoutsTarget}`;
+  if (kpiWorkoutsFill) kpiWorkoutsFill.style.width = `${workoutsPct}%`;
+
+  const streak = computeStreak();
+  const streakPct = Math.max(0, Math.min(100, (streak / 7) * 100));
+  const kpiStreakVal = $('kpiStreakVal');
+  const kpiStreakFill = $('kpiStreakFill');
+  if (kpiStreakVal) kpiStreakVal.textContent = `${streak} Day${streak === 1 ? '' : 's'}`;
+  if (kpiStreakFill) kpiStreakFill.style.width = `${streakPct}%`;
+
+  const minutesCompleted = getWeeklyMinutesCompleted();
+  const minutesTarget = getWeeklyVolumeTarget();
+  const minutesPct = Math.max(0, Math.min(100, (minutesCompleted / minutesTarget) * 100));
+  const kpiMinutesVal = $('kpiMinutesVal');
+  const kpiMinutesFill = $('kpiMinutesFill');
+  if (kpiMinutesVal) kpiMinutesVal.textContent = `${minutesCompleted}/${minutesTarget} Min`;
+  if (kpiMinutesFill) kpiMinutesFill.style.width = `${minutesPct}%`;
+
+  const kpiPrimaryLabel = $('kpiPrimaryLabel');
+  const kpiPrimaryVal = $('kpiPrimaryVal');
+  const kpiPrimaryFill = $('kpiPrimaryFill');
+  if (state.primaryGoal) {
+    const g = state.primaryGoal;
+    let label = 'Primary Goal';
+    let valText = 'Active';
+    let pct = 0;
+    if (g.type === 'lose_weight') {
+      label = 'Weight Loss';
+      const start = g.startWeightLbs || 180;
+      const current = g.currentWeightLbs || start;
+      const lost = start - current;
+      valText = lost >= 0 ? `-${lost.toFixed(1)} lb` : `+${Math.abs(lost).toFixed(1)} lb`;
+      valText += ` (Start: ${start})`;
+      pct = Math.max(0, Math.min(100, (lost / 10) * 100));
+    } else if (g.type === 'run_5k') {
+      label = '5K Run';
+      if (g.best5kMin) {
+        valText = `${g.best5kMin} min`;
+        pct = 100;
+      } else {
+        valText = g.canRun10Min ? 'Run 10m' : 'Run/Walk';
+        pct = g.canRun10Min ? 50 : 20;
+      }
+    } else if (g.type === 'bar_hang') {
+      label = 'Bar Hang';
+      const curHang = g.bestHangSec || g.maxHangSec || 0;
+      valText = `${curHang}s / 120s`;
+      pct = Math.max(0, Math.min(100, (curHang / 120) * 100));
+    } else if (g.type === 'pushups') {
+      label = 'Pushups';
+      const curPushups = g.bestPushups || g.maxPushups || 0;
+      valText = `${curPushups} / 30 reps`;
+      pct = Math.max(0, Math.min(100, (curPushups / 30) * 100));
+    } else if (g.type === 'build_muscle') {
+      label = 'Build Muscle';
+      valText = `${workoutsCompleted}/${workoutsTarget} workouts`;
+      pct = workoutsPct;
+    } else if (g.type === 'custom') {
+      label = 'Goal';
+      valText = g.customText || 'Active';
+      pct = workoutsPct;
+    } else {
+      label = g.type ? g.type.replace('_', ' ') : 'Primary Goal';
+    }
+    if (kpiPrimaryLabel) kpiPrimaryLabel.textContent = label;
+    if (kpiPrimaryVal) kpiPrimaryVal.textContent = valText;
+    if (kpiPrimaryFill) kpiPrimaryFill.style.width = `${pct}%`;
+  } else {
+    if (kpiPrimaryLabel) kpiPrimaryLabel.textContent = 'Primary Goal';
+    if (kpiPrimaryVal) kpiPrimaryVal.textContent = 'Not Set';
+    if (kpiPrimaryFill) kpiPrimaryFill.style.width = '0%';
+  }
+
   renderGoalList('goalsDaily', 'daily');
   renderGoalList('goalsWeekly', 'weekly');
   renderGoalList('goalsMonthly', 'monthly');
 
-  const st = computeStreak();
   const badge = $('streakBadge');
   if (badge) {
-    if (st > 0) {
-      badge.textContent = `🔥 ${st} day streak`;
+    if (streak > 0) {
+      badge.textContent = `🔥 ${streak} day streak`;
       badge.style.display = 'inline-flex';
     } else {
       badge.style.display = 'none';
@@ -1230,6 +1450,7 @@ function renderDashboard() {
   }
 
   renderPlan();
+  renderRecentActivity();
 }
 function updateGoalFieldVisibility() {
   const t = String($('primaryType')?.value || '').trim();
@@ -1580,6 +1801,7 @@ function wireDashboard() {
       if (!act || !gid) return;
       if (act === 'inc') incProgress(gid, 1);
       if (act === 'dec') incProgress(gid, -1);
+      if (act === 'toggle') toggleGoal(gid);
       if (act === 'del') deleteGoal(gid);
     });
   });

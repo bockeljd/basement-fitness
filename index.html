@@ -73,24 +73,83 @@
             </div>
           </div>
 
+          <!-- KPI Hero Grid -->
+          <div class="kpi-grid">
+            <!-- Workouts KPI -->
+            <div class="kpi-card" id="kpiWorkouts">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Workouts (Week)</span>
+                <span class="kpi-icon">🏋️‍♂️</span>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-value" id="kpiWorkoutsVal">0/0</span>
+                <div class="kpi-bar"><div class="kpi-fill" id="kpiWorkoutsFill"></div></div>
+              </div>
+            </div>
+            
+            <!-- Streak KPI -->
+            <div class="kpi-card" id="kpiStreak">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Active Streak</span>
+                <span class="kpi-icon">🔥</span>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-value" id="kpiStreakVal">0 Days</span>
+                <div class="kpi-bar"><div class="kpi-fill" id="kpiStreakFill"></div></div>
+              </div>
+            </div>
+            
+            <!-- Duration KPI -->
+            <div class="kpi-card" id="kpiMinutes">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Duration (Week)</span>
+                <span class="kpi-icon">⏱️</span>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-value" id="kpiMinutesVal">0 Min</span>
+                <div class="kpi-bar"><div class="kpi-fill" id="kpiMinutesFill"></div></div>
+              </div>
+            </div>
+            
+            <!-- Primary Goal Highlight KPI -->
+            <div class="kpi-card highlight" id="kpiPrimary">
+              <div class="kpi-card-header">
+                <span class="kpi-label" id="kpiPrimaryLabel">Primary Goal</span>
+                <span class="kpi-icon">🎯</span>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-value" id="kpiPrimaryVal">Not Set</span>
+                <div class="kpi-bar"><div class="kpi-fill" id="kpiPrimaryFill"></div></div>
+              </div>
+            </div>
+          </div>
+
           <div class="grid3">
             <div class="panel">
-              <div class="panelTitle">Today</div>
-              <div id="goalsDaily" class="goalList"></div>
+              <div class="panelTitle">Today's Habits</div>
+              <div id="goalsDaily" class="habit-checklist"></div>
             </div>
             
             <div class="panel">
-              <div class="panelTitle">This week</div>
+              <div class="panelTitle">This Week's Goals</div>
               <div id="goalsWeekly" class="goalList"></div>
             </div>
             
             <div class="panel">
-              <div class="panelTitle">This month</div>
+              <div class="panelTitle">This Month's Goals</div>
               <div id="goalsMonthly" class="goalList"></div>
             </div>
           </div>
 
-          <div class="muted" style="margin-top: 12px;">Habits auto-save. Tap +1 to log completion.</div>
+          <div class="muted" style="margin-top: 12px;">Habits auto-save. Tap checklists or buttons to log completions.</div>
+        </section>
+
+        <section class="card" id="cardActivity" style="margin-top: 16px;">
+          <div class="cardHeader">
+            <h2>Recent Activity</h2>
+          </div>
+          <div class="muted" style="margin-bottom: 10px;">Your recently completed workouts and history.</div>
+          <div id="activityFeed" class="activity-feed"></div>
         </section>
 
         <section class="card" id="cardPlan" style="margin-top: 16px;">
