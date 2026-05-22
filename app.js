@@ -272,14 +272,39 @@ let state = {
 
 function seedIfEmpty() {
   const r = store.get(KEYS.routines, null);
-  if (Array.isArray(r) && r.length) return;
+  const hasRoutines = Array.isArray(r) && r.length;
 
-  // Start clean
-  store.set(KEYS.routines, []);
-  store.set(KEYS.sessions, []);
+  if (!hasRoutines) {
+    store.set(KEYS.routines, []);
+    store.set(KEYS.sessions, []);
+    store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
+  }
 
-  // Default profile
-  store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
+  // Seed default goals if they don't exist
+  const g = store.get(KEYS.goals, null);
+  if (!Array.isArray(g) || g.length === 0) {
+    const defaultGoals = [
+      { id: 'goal-daily-hydration', title: 'Hydration (8 cups)', period: 'daily', target: 8, progress: {} },
+      { id: 'goal-daily-meals', title: 'Healthy Meals', period: 'daily', target: 3, progress: {} },
+      { id: 'goal-weekly-workouts', title: 'Workouts', period: 'weekly', target: 3, progress: {} },
+      { id: 'goal-weekly-steps', title: 'Steps (10k / day)', period: 'weekly', target: 7, progress: {} }
+    ];
+    store.set(KEYS.goals, defaultGoals);
+  }
+
+  // Seed a default primary goal if none exists so the calendar is populated out of the box
+  const pg = store.get(KEYS.primaryGoal, null);
+  if (!pg) {
+    const defaultPrimary = {
+      type: 'lose_weight',
+      durationMin: 30,
+      daysPerWeek: 3,
+      createdAt: new Date().toISOString(),
+      startWeightLbs: 180,
+      currentWeightLbs: 180
+    };
+    store.set(KEYS.primaryGoal, defaultPrimary);
+  }
 }
 
 function loadState() {
@@ -703,6 +728,10 @@ function tick() {
 
 function startTimer() {
   if (state.timer.running) return;
+  if (state.timer.remainingSec <= 0) {
+    state.timer.remainingSec = 90; // Default to 90 seconds (1:30)
+    $('timer').textContent = fmtTimer(state.timer.remainingSec);
+  }
   state.timer.running = true;
   state.timer.interval = setInterval(tick, 1000);
   $('btnTimerStartStop').textContent = 'Pause';
@@ -1042,10 +1071,73 @@ function hydrateGoalsForm() {
 
 function ensurePlanGenerated() {
   if (!state.primaryGoal) return false;
-  if (!state.plan || !Array.isArray(state.plan.days) || state.plan.days.length === 0) {
-    regeneratePlan();
+  
+  const today = ymd(new Date());
+  
+  // Clean up any past days
+  if (state.plan && Array.isArray(state.plan.days)) {
+    state.plan.days = state.plan.days.filter(d => d.date >= today);
+  } else {
+    state.plan = { generatedAt: new Date().toISOString(), days: [] };
+  }
+  
+  // If remaining plan days is less than 7, extend it to 14 days
+  if (state.plan.days.length < 7) {
+    extendPlan();
   }
   return true;
+}
+
+function extendPlan() {
+  if (!state.primaryGoal) return;
+  
+  state.plan = state.plan || { generatedAt: new Date().toISOString(), days: [] };
+  state.plan.days = state.plan.days || [];
+  
+  const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
+  const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
+  
+  if (state.plan.days.length === 0) {
+    state.plan.generatedAt = new Date().toISOString();
+  }
+  
+  let genDate = new Date(state.plan.generatedAt);
+  if (isNaN(genDate.getTime())) {
+    genDate = new Date();
+    state.plan.generatedAt = genDate.toISOString();
+  }
+  
+  while (state.plan.days.length < 14) {
+    let nextDate;
+    if (state.plan.days.length > 0) {
+      const lastDayStr = state.plan.days[state.plan.days.length - 1].date;
+      const [y, m, d] = lastDayStr.split('-').map(Number);
+      nextDate = new Date(y, m - 1, d + 1);
+    } else {
+      nextDate = new Date();
+    }
+    
+    const dateStr = ymd(nextDate);
+    const daysSinceStart = Math.round((nextDate - genDate) / 86400000);
+    const isWorkoutDay = (daysSinceStart % cadence) === 0;
+    
+    if (isWorkoutDay) {
+      const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+      state.plan.days.push({
+        date: dateStr,
+        kind: 'workout',
+        routine
+      });
+    } else {
+      state.plan.days.push({
+        date: dateStr,
+        kind: 'rest',
+        routine: null
+      });
+    }
+  }
+  
+  savePlan();
 }
 
 function regeneratePlan() {
