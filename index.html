@@ -6,7 +6,16 @@
   <meta name="theme-color" content="#f6f7fb" />
   <title>Basement Fitness</title>
   <link rel="manifest" href="/manifest.webmanifest" />
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="/styles.css" />
+  
+  <!-- Canvas Confetti for premium feedback -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
 </head>
 <body>
   <div class="app">
@@ -26,163 +35,316 @@
       </div>
     </header>
 
+    <!-- SPA Tab Navigation -->
+    <nav class="tabbar" id="tabbar">
+      <button class="tab-btn active" data-tab="dashboard" type="button">
+        <span class="tab-icon">📊</span>
+        <span class="tab-text">Dashboard</span>
+      </button>
+      <button class="tab-btn" data-tab="generator" type="button">
+        <span class="tab-icon">⚡</span>
+        <span class="tab-text">Generator</span>
+      </button>
+      <button class="tab-btn" data-tab="ideas" type="button">
+        <span class="tab-icon">💡</span>
+        <span class="tab-text">Workout Ideas</span>
+      </button>
+      <button class="tab-btn" data-tab="routines" type="button">
+        <span class="tab-icon">📋</span>
+        <span class="tab-text">Routines</span>
+      </button>
+      <button class="tab-btn active-workout-tab" data-tab="workout" id="tabActiveWorkout" style="display: none;" type="button">
+        <span class="tab-icon pulsing-dot"></span>
+        <span class="tab-text">Active Workout</span>
+      </button>
+    </nav>
+
     <main class="main">
-
-      <section class="card" id="cardDashboard">
-        <div class="cardHeader">
-          <h2>Dashboard</h2>
-          <div class="row wrap">
-            <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
-            <button class="btn secondary" id="btnAddGoal" type="button">Add habit goal</button>
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div class="panel">
-            <div class="panelTitle">Primary goal</div>
-            <div class="grid2">
-              <div>
-                <label class="small">Goal</label>
-                <select class="input" id="primaryType">
-                  <option value="">Select…</option>
-                  <option value="lose_weight">Lose weight</option>
-                  <option value="build_muscle">Build muscle</option>
-                  <option value="run_5k">Run a 5K</option>
-                  <option value="bar_hang">2-min bar hang</option>
-                  <option value="pushups">30 pushups</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-              <div>
-                <label class="small">Minutes/session</label>
-                <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
-              </div>
-            </div>
-            <div style="margin-top:10px" class="grid2">
-              <div>
-                <label class="small">Days/week</label>
-                <input class="input" id="primaryDays" inputmode="numeric" placeholder="3" />
-              </div>
-              <div>
-                <label class="small">Secondary (optional)</label>
-                <select class="input" id="secondaryType">
-                  <option value="">None</option>
-                  <option value="steps">Steps</option>
-                  <option value="protein">Protein</option>
-                  <option value="mobility">Mobility</option>
-                  <option value="zone2">Zone 2</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid2" style="margin-top:10px">
-              <div id="primaryCustomWrap" hidden>
-                <label class="small">Custom goal</label>
-                <input class="input" id="primaryCustomText" placeholder='e.g., "Lose 10 lbs in 30 days"' />
-                <div class="muted">We’ll still build workouts, but customization is limited for custom goals.</div>
-              </div>
-              <div id="primaryBaselineWrap" hidden>
-                <label class="small" id="primaryBaselineLabel">Baseline</label>
-                <input class="input" id="primaryBaseline" inputmode="numeric" placeholder="" />
-                <div class="muted" id="primaryBaselineHint"></div>
-              </div>
-              <div id="primaryProgressWrap" hidden>
-                <label class="small" id="primaryProgressLabel">Progress</label>
-                <input class="input" id="primaryProgress" inputmode="numeric" placeholder="" />
-                <div class="muted" id="primaryProgressHint"></div>
-              </div>
-            </div>
-
-            <div class="row wrap" style="margin-top:10px">
-              <button class="btn" id="btnSaveGoals" type="button">Save goals</button>
-              <div class="muted" id="primaryGoalProgress"></div>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panelTitle">Status</div>
-            <div id="primaryGoal" class="muted">Not set</div>
-            <div class="muted" id="secondaryGoal">None</div>
-          </div>
-          <div class="panel">
-            <div class="panelTitle">Streak</div>
-            <div class="muted" id="streakText">—</div>
-          </div>
-          <div class="panel">
-            <div class="panelTitle">Today</div>
-            <div id="goalsDaily" class="goalList"></div>
-          </div>
-        </div>
-
-        <div class="grid2" style="margin-top:12px">
-          <div class="panel">
-            <div class="panelTitle">This week</div>
-            <div id="goalsWeekly" class="goalList"></div>
-          </div>
-          <div class="panel">
-            <div class="panelTitle">This month</div>
-            <div id="goalsMonthly" class="goalList"></div>
-          </div>
-        </div>
-
-        <div class="muted">Habits auto-save. Tap +1 to log completion.</div>
-      </section>
-
-      <section class="card" id="cardPlan">
-        <div class="cardHeader">
-          <h2>Calendar</h2>
-          <div class="row wrap">
-            <button class="btn secondary" id="btnRegenPlan" type="button">Regenerate</button>
-          </div>
-        </div>
-        <div class="muted">Today and upcoming workouts (auto-generated from your primary goal).</div>
-        <div id="planList" class="planList"></div>
-      </section>
-
-      <section class="card" id="cardRoutines">
-        <div class="cardHeader">
-          <h2>Routines</h2>
-          <button class="btn" id="btnNewRoutine" type="button">New routine</button>
-        </div>
-        <div class="muted">You can still create custom routines, but most users should use the Calendar.</div>
-        <div class="routineList" id="routineList"></div>
-      </section>
-
-      <section class="card" id="cardWorkout" hidden>
-        <div class="cardHeader">
-          <h2 id="workoutTitle">Workout</h2>
-          <div class="row">
-            <button class="btn secondary" id="btnEndWorkout" type="button">End</button>
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div class="panel">
-            <div class="panelTitle">Rest timer</div>
-            <div class="timer" id="timer">0:00</div>
+      
+      <!-- Tab 1: Dashboard Panel -->
+      <div id="panel-dashboard" class="tab-panel active">
+        <section class="card" id="cardDashboard">
+          <div class="cardHeader">
+            <h2>Dashboard</h2>
             <div class="row wrap">
-              <button class="btn" data-rest="60" type="button">+60s</button>
-              <button class="btn" data-rest="90" type="button">+90s</button>
-              <button class="btn" data-rest="120" type="button">+120s</button>
-              <button class="btn secondary" id="btnTimerStartStop" type="button">Start</button>
-              <button class="btn secondary" id="btnTimerReset" type="button">Reset</button>
+              <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
+              <button class="btn secondary" id="btnAddGoal" type="button">Add habit goal</button>
             </div>
-            <div class="muted">Tip: tap a +time button right after a set.</div>
           </div>
 
-          <div class="panel">
-            <div class="panelTitle">Workout notes</div>
-            <textarea id="workoutNotes" class="textarea" rows="6" placeholder="How did it feel? Any tweaks for next time?"></textarea>
-            <div class="muted">Saved automatically.</div>
+          <div class="grid2">
+            <div class="panel">
+              <div class="panelTitle">Primary goal</div>
+              <div class="grid2">
+                <div>
+                  <label class="small">Goal</label>
+                  <select class="input" id="primaryType">
+                    <option value="">Select…</option>
+                    <option value="lose_weight">Lose weight</option>
+                    <option value="build_muscle">Build muscle</option>
+                    <option value="run_5k">Run a 5K</option>
+                    <option value="bar_hang">2-min bar hang</option>
+                    <option value="pushups">30 pushups</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="small">Minutes/session</label>
+                  <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
+                </div>
+              </div>
+              <div style="margin-top:10px" class="grid2">
+                <div>
+                  <label class="small">Days/week</label>
+                  <input class="input" id="primaryDays" inputmode="numeric" placeholder="3" />
+                </div>
+                <div>
+                  <label class="small">Secondary (optional)</label>
+                  <select class="input" id="secondaryType">
+                    <option value="">None</option>
+                    <option value="steps">Steps</option>
+                    <option value="protein">Protein</option>
+                    <option value="mobility">Mobility</option>
+                    <option value="zone2">Zone 2</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div id="primaryCustomWrap" hidden>
+                  <label class="small">Custom goal</label>
+                  <input class="input" id="primaryCustomText" placeholder='e.g., "Lose 10 lbs in 30 days"' />
+                  <div class="muted">We’ll still build workouts, but customization is limited for custom goals.</div>
+                </div>
+                <div id="primaryBaselineWrap" hidden>
+                  <label class="small" id="primaryBaselineLabel">Baseline</label>
+                  <input class="input" id="primaryBaseline" inputmode="numeric" placeholder="" />
+                  <div class="muted" id="primaryBaselineHint"></div>
+                </div>
+                <div id="primaryProgressWrap" hidden>
+                  <label class="small" id="primaryProgressLabel">Progress</label>
+                  <input class="input" id="primaryProgress" inputmode="numeric" placeholder="" />
+                  <div class="muted" id="primaryProgressHint"></div>
+                </div>
+              </div>
+
+              <div class="row wrap" style="margin-top:10px">
+                <button class="btn" id="btnSaveGoals" type="button">Save goals</button>
+                <div class="muted" id="primaryGoalProgress"></div>
+              </div>
+            </div>
+            
+            <div class="panel">
+              <div class="panelTitle">Status</div>
+              <div id="primaryGoal" class="muted" style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Not set</div>
+              <div class="muted" id="secondaryGoal" style="font-weight: 600; font-size: 13px;">None</div>
+            </div>
+            
+            <div class="panel">
+              <div class="panelTitle">Streak</div>
+              <div class="muted" id="streakText" style="font-weight: 700; font-size: 15px;">—</div>
+            </div>
+            
+            <div class="panel">
+              <div class="panelTitle">Today</div>
+              <div id="goalsDaily" class="goalList"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="panel">
-          <div class="panelTitle">Exercises</div>
-          <div class="exerciseList" id="exerciseList"></div>
-          <button class="btn secondary" id="btnAddExercise" type="button">Add exercise</button>
-        </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="panel">
+              <div class="panelTitle">This week</div>
+              <div id="goalsWeekly" class="goalList"></div>
+            </div>
+            <div class="panel">
+              <div class="panelTitle">This month</div>
+              <div id="goalsMonthly" class="goalList"></div>
+            </div>
+          </div>
 
-      </section>
+          <div class="muted" style="margin-top: 12px;">Habits auto-save. Tap +1 to log completion.</div>
+        </section>
+
+        <section class="card" id="cardPlan" style="margin-top: 16px;">
+          <div class="cardHeader">
+            <h2>Calendar</h2>
+            <div class="row wrap">
+              <button class="btn secondary" id="btnRegenPlan" type="button">Regenerate</button>
+            </div>
+          </div>
+          <div class="muted">Today and upcoming workouts (auto-generated from your primary goal).</div>
+          <div id="planList" class="planList"></div>
+        </section>
+      </div>
+
+      <!-- Tab 2: Workout Generator Panel -->
+      <div id="panel-generator" class="tab-panel">
+        <section class="card" id="cardGenerator">
+          <div class="cardHeader">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 900;">Workout Generator</h2>
+              <div class="muted">Generate a custom, science-backed workout tailored to your time and gear.</div>
+            </div>
+          </div>
+          
+          <div class="panel" style="margin-top: 10px;">
+            <form id="generatorForm" class="generator-form">
+              <div class="form-group">
+                <label class="small" style="font-weight: 700;">1. How much time do you have?</label>
+                <div class="pill-group" id="genDuration">
+                  <button type="button" class="pill-btn" data-value="15">15 Min</button>
+                  <button type="button" class="pill-btn active" data-value="30">30 Min</button>
+                  <button type="button" class="pill-btn" data-value="45">45 Min</button>
+                  <button type="button" class="pill-btn" data-value="60">60 Min</button>
+                </div>
+              </div>
+              
+              <div class="form-group" style="margin-top: 15px;">
+                <label class="small" style="font-weight: 700;">2. What is your focus today?</label>
+                <div class="pill-group" id="genFocus">
+                  <button type="button" class="pill-btn active" data-value="fullbody">Full Body</button>
+                  <button type="button" class="pill-btn" data-value="upper">Upper Body</button>
+                  <button type="button" class="pill-btn" data-value="lower">Lower Body</button>
+                  <button type="button" class="pill-btn" data-value="core">Core Focus</button>
+                  <button type="button" class="pill-btn" data-value="cardio">Cardio Focus</button>
+                </div>
+              </div>
+              
+              <div class="form-group" style="margin-top: 15px;">
+                <label class="small" style="font-weight: 700;">3. What equipment do you have?</label>
+                <div class="checkbox-grid" id="genEquipment">
+                  <label class="checkbox-container">
+                    <input type="checkbox" data-eq="bodyweight" checked disabled />
+                    <span class="checkbox-checkmark"></span>
+                    <span class="checkbox-label">Bodyweight (Always enabled)</span>
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" data-eq="dumbbells" />
+                    <span class="checkbox-checkmark"></span>
+                    <span class="checkbox-label">Dumbbells</span>
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" data-eq="barbell" />
+                    <span class="checkbox-checkmark"></span>
+                    <span class="checkbox-label">Barbell</span>
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" data-eq="pullupbar" />
+                    <span class="checkbox-checkmark"></span>
+                    <span class="checkbox-label">Pull-up Bar</span>
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" data-eq="treadmill" />
+                    <span class="checkbox-checkmark"></span>
+                    <span class="checkbox-label">Treadmill / Bike</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="form-group" style="margin-top: 15px;">
+                <label class="small" style="font-weight: 700;">4. Set Intensity Level</label>
+                <div class="pill-group" id="genDifficulty">
+                  <button type="button" class="pill-btn" data-value="beginner">Beginner</button>
+                  <button type="button" class="pill-btn active" data-value="intermediate">Intermediate</button>
+                  <button type="button" class="pill-btn" data-value="advanced">Advanced</button>
+                </div>
+              </div>
+              
+              <button type="button" class="btn primary-gradient btn-large" id="btnRunGenerator" style="margin-top: 20px; width: 100%; justify-content: center; display: flex; font-size: 16px;">
+                <span>⚡ Generate Workout</span>
+              </button>
+            </form>
+          </div>
+          
+          <!-- Generator Loading State -->
+          <div id="generatorLoading" class="panel text-center" style="display: none; padding: 40px 20px; margin-top: 15px;">
+            <div class="spinner"></div>
+            <div style="font-weight: 900; margin-top: 15px; font-size: 16px;">Crafting custom routine...</div>
+            <div class="small" id="generatorStatus" style="margin-top: 5px;">Selecting optimal exercises...</div>
+          </div>
+          
+          <!-- Generator Result Preview -->
+          <div id="generatorPreview" class="panel" style="display: none; margin-top: 16px;">
+            <div class="preview-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+              <div>
+                <h3 id="previewWorkoutName" style="margin: 0; font-size: 18px; font-weight: 900; color: var(--accent);">Generated Routine</h3>
+                <p id="previewWorkoutDesc" class="small" style="margin: 4px 0 0;"></p>
+              </div>
+              <button class="btn primary-gradient" id="btnStartGeneratedWorkout" type="button">Start Session</button>
+            </div>
+            <hr class="divider" style="margin: 12px 0; border: none; border-top: 1px solid var(--border);" />
+            <div id="previewExercisesList" class="preview-exercises" style="display: grid; gap: 10px;"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab 3: Workout Ideas (Library) Panel -->
+      <div id="panel-ideas" class="tab-panel">
+        <section class="card" id="cardIdeas">
+          <div class="cardHeader">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 900;">Workout Ideas Library</h2>
+              <div class="muted">Select from our expert-curated workout templates to get started instantly.</div>
+            </div>
+          </div>
+          
+          <div class="ideas-grid" id="ideasGrid" style="display: grid; gap: 16px; margin-top: 14px;">
+            <!-- Populate dynamically via javascript -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab 4: My Routines Panel -->
+      <div id="panel-routines" class="tab-panel">
+        <section class="card" id="cardRoutines">
+          <div class="cardHeader">
+            <h2>Custom Routines</h2>
+            <button class="btn" id="btnNewRoutine" type="button">New routine</button>
+          </div>
+          <div class="muted">You can create custom routines, or use the Workout Ideas & Generator tabs.</div>
+          <div class="routineList" id="routineList"></div>
+        </section>
+      </div>
+
+      <!-- Tab 5: Active Workout Tracker Panel -->
+      <div id="panel-workout" class="tab-panel">
+        <section class="card" id="cardWorkout">
+          <div class="cardHeader">
+            <h2 id="workoutTitle" style="font-size: 18px; font-weight: 900;">Workout</h2>
+            <div class="row">
+              <button class="btn danger" id="btnEndWorkout" type="button">End Workout</button>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="panel">
+              <div class="panelTitle">Rest timer</div>
+              <div class="timer" id="timer">0:00</div>
+              <div class="row wrap">
+                <button class="btn" data-rest="60" type="button">+60s</button>
+                <button class="btn" data-rest="90" type="button">+90s</button>
+                <button class="btn" data-rest="120" type="button">+120s</button>
+                <button class="btn secondary" id="btnTimerStartStop" type="button">Start</button>
+                <button class="btn secondary" id="btnTimerReset" type="button">Reset</button>
+              </div>
+              <div class="muted">Tip: tap a +time button right after a set to auto-start.</div>
+            </div>
+
+            <div class="panel">
+              <div class="panelTitle">Workout notes</div>
+              <textarea id="workoutNotes" class="textarea" rows="6" placeholder="How did it feel? Any highlights or improvements?"></textarea>
+              <div class="muted">Saved automatically in local history.</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top: 14px;">
+            <div class="panelTitle">Exercises</div>
+            <div class="exerciseList" id="exerciseList"></div>
+            <button class="btn secondary" id="btnAddExercise" type="button" style="margin-top: 12px; width: 100%; justify-content: center; display: flex;">+ Add Custom Exercise</button>
+          </div>
+        </section>
+      </div>
+      
     </main>
 
     <footer class="footer">

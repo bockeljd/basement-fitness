@@ -33,17 +33,223 @@ const KEYS = {
   plan: 'bf:plan'
 };
 
-function seedIfEmpty() {
-  const r = store.get(KEYS.routines, null);
-  if (Array.isArray(r) && r.length) return;
+// Curated Workout Ideas Library
+const WORKOUT_LIBRARY = [
+  {
+    id: "idea-fullbody-db",
+    name: "Full Body Dumbbell Power",
+    desc: "Build muscular strength and density across your entire body using only a pair of dumbbells.",
+    category: "strength",
+    duration: 40,
+    difficulty: "Intermediate",
+    exercises: [
+      { name: "DB Goblet Squats", reps: "3 sets x 10-12 reps" },
+      { name: "DB Floor Press", reps: "3 sets x 10-12 reps" },
+      { name: "One-Arm Dumbbell Row", reps: "3 sets x 12 reps each" },
+      { name: "DB Shoulder Press", reps: "3 sets x 10-12 reps" },
+      { name: "DB Romanian Deadlifts", reps: "3 sets x 12 reps" }
+    ]
+  },
+  {
+    id: "idea-bodyweight-burn",
+    name: "Bodyweight Inferno",
+    desc: "High-intensity cardio and core-burning full body routine that requires zero equipment.",
+    category: "bodyweight",
+    duration: 25,
+    difficulty: "Beginner",
+    exercises: [
+      { name: "Air Squats", reps: "3 sets x 15-20 reps" },
+      { name: "Push-ups (or Incline Push-ups)", reps: "3 sets x 10-12 reps" },
+      { name: "Walking Lunges", reps: "3 sets x 12 reps each" },
+      { name: "Mountain Climbers", reps: "3 sets x 30 sec" },
+      { name: "Plank Hold", reps: "3 sets x 45 sec" }
+    ]
+  },
+  {
+    id: "idea-core-crusher",
+    name: "Core Shredder 150",
+    desc: "A rapid, fire-inducing abdominal routine designed to strengthen your midsection.",
+    category: "core",
+    duration: 15,
+    difficulty: "Beginner",
+    exercises: [
+      { name: "Crunches", reps: "3 sets x 15-20 reps" },
+      { name: "Bicycle Crunches", reps: "3 sets x 15 reps each" },
+      { name: "Hollow Body Hold", reps: "3 sets x 30 sec" },
+      { name: "Russian Twists", reps: "3 sets x 20 reps" },
+      { name: "Reverse Crunches", reps: "3 sets x 12 reps" }
+    ]
+  },
+  {
+    id: "idea-barbell-strength",
+    name: "Compound Power (Barbell)",
+    desc: "Heavy compound lifting routine focused on building raw foundational strength and size.",
+    category: "strength",
+    duration: 45,
+    difficulty: "Advanced",
+    exercises: [
+      { name: "Barbell Back Squat", reps: "4 sets x 5 reps" },
+      { name: "Barbell Bench Press", reps: "4 sets x 5 reps" },
+      { name: "Barbell Deadlift", reps: "3 sets x 5 reps" },
+      { name: "Barbell Overhead Press", reps: "3 sets x 6 reps" },
+      { name: "Barbell Row", reps: "3 sets x 8 reps" }
+    ]
+  },
+  {
+    id: "idea-hiit-sweat",
+    name: "HIIT Metcon Sweat",
+    desc: "Metabolic conditioning circuits to burn maximum fat and build athletic conditioning.",
+    category: "hiit",
+    duration: 20,
+    difficulty: "Intermediate",
+    exercises: [
+      { name: "Burpees", reps: "4 sets x 10 reps" },
+      { name: "Jump Squats", reps: "4 sets x 12-15 reps" },
+      { name: "Push-up to Plank Jacks", reps: "4 sets x 10 reps" },
+      { name: "High Knees", reps: "4 sets x 40 sec" },
+      { name: "Plank Hold", reps: "4 sets x 45 sec" }
+    ]
+  },
+  {
+    id: "idea-upper-pump",
+    name: "Upper Body Hypertrophy",
+    desc: "Focused volume and pump routine targeting chest, back, shoulders, and arms.",
+    category: "strength",
+    duration: 30,
+    difficulty: "Intermediate",
+    exercises: [
+      { name: "DB Flat Bench Press", reps: "3 sets x 12 reps" },
+      { name: "DB One-Arm Row", reps: "3 sets x 12 reps each" },
+      { name: "DB Lateral Raises", reps: "3 sets x 15 reps" },
+      { name: "DB Bicep Curls", reps: "3 sets x 12 reps" },
+      { name: "DB Overhead Tricep Extensions", reps: "3 sets x 12 reps" }
+    ]
+  },
+  {
+    id: "idea-legs-glutes",
+    name: "Legs & Glutes Sculpt",
+    desc: "Lower body isolation and strength routines for building powerful quadriceps, hamstrings, and glutes.",
+    category: "strength",
+    duration: 35,
+    difficulty: "Intermediate",
+    exercises: [
+      { name: "DB Goblet Squats", reps: "3 sets x 12 reps" },
+      { name: "DB Romanian Deadlifts", reps: "3 sets x 12 reps" },
+      { name: "DB Bulgarian Split Squats", reps: "3 sets x 10 reps each" },
+      { name: "Weighted Glute Bridges", reps: "3 sets x 15 reps" },
+      { name: "Calf Raises", reps: "3 sets x 20 reps" }
+    ]
+  },
+  {
+    id: "idea-recovery-flow",
+    name: "Active Recovery & Flow",
+    desc: "Gentle mobility flow and cardio walk to speed up recovery and release joint tension.",
+    category: "bodyweight",
+    duration: 30,
+    difficulty: "Beginner",
+    exercises: [
+      { name: "World's Greatest Stretch", reps: "2 sets x 5 reps each" },
+      { name: "Cat-Cow Stretch", reps: "2 sets x 10 reps" },
+      { name: "90/90 Hip Flow", reps: "2 sets x 6 reps each" },
+      { name: "Cobra to Child's Pose Flow", reps: "2 sets x 8 reps" },
+      { name: "Light Jog / Walk", reps: "15 min slow pace" }
+    ]
+  }
+];
 
-  // Start clean: no sample routines.
-  store.set(KEYS.routines, []);
-  store.set(KEYS.sessions, []);
-
-  // Default profile
-  store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
-}
+// Generator Exercise Database Pool
+const EXERCISE_POOL = {
+  fullbody: {
+    bodyweight: [
+      { name: "Air Squats", reps: "15-20 reps", info: "Focus on depth and keeping chest up." },
+      { name: "Push-ups", reps: "10-15 reps", info: "Maintain a straight line from head to heels." },
+      { name: "Walking Lunges", reps: "10 reps each", info: "Step forward and lower hips until knees are 90 degrees." },
+      { name: "Mountain Climbers", reps: "30 seconds", info: "Keep hips low and drive knees to chest." },
+      { name: "Plank Hold", reps: "30-60 seconds", info: "Engage core and squeeze glutes." }
+    ],
+    dumbbells: [
+      { name: "Dumbbell Goblet Squats", reps: "10-12 reps", info: "Hold dumbbell vertically at chest level." },
+      { name: "Dumbbell Floor Press", reps: "10-12 reps", info: "Press weights up from the floor, elbows touch ground." },
+      { name: "Dumbbell Rows", reps: "10-12 reps", info: "Bend at hips and pull dumbbells to ribs." },
+      { name: "Dumbbell Shoulder Press", reps: "10-12 reps", info: "Press dumbbells vertically over shoulders." },
+      { name: "Dumbbell Romanian Deadlifts", reps: "12 reps", info: "Hinge at hips, slight bend in knees." }
+    ],
+    barbell: [
+      { name: "Barbell Back Squat", reps: "8-10 reps", info: "Keep chest tall, descend below parallel." },
+      { name: "Barbell Bench Press", reps: "8-10 reps", info: "Lower bar to mid-chest, press up." },
+      { name: "Barbell Row", reps: "10 reps", info: "Pull bar to lower sternum with bent-over posture." },
+      { name: "Barbell Romanian Deadlift", reps: "10 reps", info: "Push hips back, feel stretch in hamstrings." }
+    ]
+  },
+  upper: {
+    bodyweight: [
+      { name: "Push-ups", reps: "12-15 reps", info: "Vary hand width to shift chest/tricep focus." },
+      { name: "Pike Push-ups", reps: "8-10 reps", info: "Elevate hips, lower head toward hands to target shoulders." },
+      { name: "Bench Dips", reps: "12 reps", info: "Use a chair or bench, keep hips close to edge." },
+      { name: "Plank Shoulder Taps", reps: "20 taps", info: "Tap opposite shoulder without shifting hips." }
+    ],
+    dumbbells: [
+      { name: "Dumbbell Bench Press", reps: "10-12 reps", info: "Press weights from chest level, control descent." },
+      { name: "Dumbbell Row", reps: "10-12 reps", info: "Support body on bench/knee, row to hip." },
+      { name: "Dumbbell Lateral Raise", reps: "12-15 reps", info: "Raise arms out to sides, lead with elbows." },
+      { name: "Dumbbell Overhead Shoulder Press", reps: "10 reps", info: "Press up, control down." },
+      { name: "Dumbbell Bicep Curls", reps: "12 reps", info: "Keep elbows pinned to sides." }
+    ],
+    barbell: [
+      { name: "Barbell Bench Press", reps: "8-10 reps", info: "Press bar straight up with controlled tempo." },
+      { name: "Barbell Row", reps: "8-10 reps", info: "Squeeze shoulder blades at top." },
+      { name: "Barbell Overhead Press", reps: "8 reps", info: "Press barbell overhead, brace core." }
+    ]
+  },
+  lower: {
+    bodyweight: [
+      { name: "Air Squats", reps: "20 reps", info: "Keep heels flat, stand up fully." },
+      { name: "Reverse Lunges", reps: "12 reps each", info: "Step backward and lower knee near floor." },
+      { name: "Bulgarian Split Squats", reps: "10 reps each", info: "Rear foot elevated on bench." },
+      { name: "Single-Leg Glute Bridges", reps: "12 reps each", info: "Drive through heel, lift hips." }
+    ],
+    dumbbells: [
+      { name: "Dumbbell Goblet Squats", reps: "12 reps", info: "Deep squat holding DB at chest." },
+      { name: "Dumbbell Romanian Deadlifts", reps: "12 reps", info: "Hold DBs in front, hinge at hips." },
+      { name: "Dumbbell Reverse Lunges", reps: "10 reps each", info: "Hold DBs at sides, step back." },
+      { name: "Dumbbell Calf Raises", reps: "20 reps", info: "Hold DBs, rise up onto toes." }
+    ],
+    barbell: [
+      { name: "Barbell Back Squat", reps: "8 reps", info: "Push knees out, drive up through mid-foot." },
+      { name: "Barbell Front Squat", reps: "8 reps", info: "Bar on front shoulders, elbows high." },
+      { name: "Barbell Romanian Deadlift", reps: "10 reps", info: "Hinge hips back, brace core." }
+    ]
+  },
+  core: {
+    bodyweight: [
+      { name: "Crunches", reps: "20 reps", info: "Exhale on crunch, squeeze abs." },
+      { name: "Bicycle Crunches", reps: "15 reps each", info: "Bring elbow to opposite knee." },
+      { name: "Hollow Hold", reps: "30 seconds", info: "Press lower back flat into ground." },
+      { name: "Russian Twists", reps: "20 taps", info: "Rotate torso side to side." },
+      { name: "Reverse Crunches", reps: "15 reps", info: "Lift hips off floor using lower abs." }
+    ],
+    dumbbells: [
+      { name: "Dumbbell Russian Twists", reps: "20 taps", info: "Hold a dumbbell with both hands." },
+      { name: "Dumbbell Plank Pull-Throughs", reps: "10 reps", info: "Pull DB across under body in plank." },
+      { name: "Dumbbell Side Bends", reps: "15 reps each", info: "Stand upright, lower DB down side of leg." }
+    ],
+    barbell: [
+      { name: "Barbell Rollouts", reps: "8 reps", info: "Kneel, roll bar out and pull back using core." }
+    ]
+  },
+  cardio: {
+    bodyweight: [
+      { name: "Jumping Jacks", reps: "45 seconds", info: "Steady rapid pace." },
+      { name: "Burpees", reps: "10 reps", info: "Chest to ground, jump at top." },
+      { name: "High Knees", reps: "45 seconds", info: "Drive knees up high, run in place." },
+      { name: "Jump Squats", reps: "12 reps", info: "Explode up, land softly." }
+    ],
+    treadmill: [
+      { name: "Treadmill Brisk Walk / Jog", reps: "15 min moderate pace", info: "Zone 2 cardio speed." },
+      { name: "Treadmill Hill Intervals", reps: "5 rounds of 1m fast / 1m walk", info: "Increase incline on treadmill." }
+    ]
+  }
+};
 
 let state = {
   routines: [],
@@ -59,8 +265,22 @@ let state = {
   goals: [],
   theme: 'light',
   plan: { generatedAt: null, days: [] },
-  timer: { remainingSec: 0, running: false, interval: null }
+  timer: { remainingSec: 0, running: false, interval: null },
+  activeTab: 'dashboard',
+  generatedRoutine: null
 };
+
+function seedIfEmpty() {
+  const r = store.get(KEYS.routines, null);
+  if (Array.isArray(r) && r.length) return;
+
+  // Start clean
+  store.set(KEYS.routines, []);
+  store.set(KEYS.sessions, []);
+
+  // Default profile
+  store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
+}
 
 function loadState() {
   state.routines = store.get(KEYS.routines, []);
@@ -95,9 +315,42 @@ function setSubtitle(text) {
   $('subtitle').textContent = text;
 }
 
+// SPA Routing: Switch Tabs
+function switchTab(tabId) {
+  state.activeTab = tabId;
+  
+  // Update Tab buttons
+  document.querySelectorAll('#tabbar button[data-tab]').forEach(btn => {
+    if (btn.getAttribute('data-tab') === tabId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Update Tab panels
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    if (panel.id === `panel-${tabId}`) {
+      panel.classList.add('active');
+    } else {
+      panel.classList.remove('active');
+    }
+  });
+
+  // Scroll to top of app
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function renderRoutines() {
   const el = $('routineList');
+  if (!el) return;
   el.innerHTML = '';
+  
+  if (state.routines.length === 0) {
+    el.innerHTML = '<div class="muted">No custom routines created yet. Use "New routine" above to build one.</div>';
+    return;
+  }
+
   state.routines.forEach(r => {
     const item = document.createElement('div');
     item.className = 'routineItem';
@@ -107,8 +360,8 @@ function renderRoutines() {
         <div class="routineDesc">${escapeHtml(r.desc || '')}</div>
       </div>
       <div class="row">
-        <button class="btn" data-action="start" data-id="${r.id}">Start</button>
-        <button class="btn secondary" data-action="edit" data-id="${r.id}">Edit</button>
+        <button class="btn" data-action="start" data-id="${r.id}" type="button">Start</button>
+        <button class="btn secondary" data-action="edit" data-id="${r.id}" type="button">Edit</button>
       </div>
     `;
     el.appendChild(item);
@@ -131,18 +384,26 @@ function ensureSessionShape(s) {
 
 function renderWorkout() {
   const s = activeSession();
-  const card = $('cardWorkout');
+  const activeTabBtn = $('tabActiveWorkout');
+  
   if (!s) {
-    card.hidden = true;
-    $('cardRoutines').hidden = false;
+    if (activeTabBtn) activeTabBtn.style.display = 'none';
+    if (state.activeTab === 'workout') {
+      switchTab('dashboard');
+    }
     setSubtitle('Workout tracker');
     return;
   }
+  
   ensureSessionShape(s);
-
   const r = activeRoutine(s);
-  $('cardRoutines').hidden = true;
-  card.hidden = false;
+  
+  // Show Active Workout Tab
+  if (activeTabBtn) {
+    activeTabBtn.style.display = 'flex';
+    const timerText = state.timer.remainingSec > 0 ? ` (${fmtTimer(state.timer.remainingSec)})` : '';
+    activeTabBtn.querySelector('.tab-text').textContent = `Live Session${timerText}`;
+  }
 
   $('workoutTitle').textContent = r ? `Workout — ${r.name}` : 'Workout';
   setSubtitle(`Session started ${new Date(s.startedAt).toLocaleString()}`);
@@ -153,6 +414,10 @@ function renderWorkout() {
   list.innerHTML = '';
 
   const exercises = (r?.exercises || []);
+  if (exercises.length === 0) {
+    list.innerHTML = '<div class="muted">No exercises in this workout. Tap "Add Custom Exercise" below to start.</div>';
+  }
+
   exercises.forEach(ex => {
     const exEl = document.createElement('div');
     exEl.className = 'exercise';
@@ -166,15 +431,15 @@ function renderWorkout() {
           <div class="small">${sets.length} sets logged</div>
         </div>
         <div class="row">
-          <button class="btn secondary" data-action="renameExercise" data-ex="${ex.id}">Rename</button>
-          <button class="btn danger" data-action="removeExercise" data-ex="${ex.id}">Remove</button>
+          <button class="btn secondary" data-action="renameExercise" data-ex="${ex.id}" type="button">Rename</button>
+          <button class="btn danger" data-action="removeExercise" data-ex="${ex.id}" type="button">Remove</button>
         </div>
       </div>
       <div class="sets" id="sets-${ex.id}"></div>
       <div class="row wrap" style="margin-top:10px">
-        <input class="input" inputmode="decimal" placeholder="Weight" data-field="w" data-ex="${ex.id}" />
-        <input class="input" inputmode="numeric" placeholder="Reps" data-field="r" data-ex="${ex.id}" />
-        <button class="btn" data-action="logSet" data-ex="${ex.id}">Log set</button>
+        <input class="input" style="width: 100px;" inputmode="decimal" placeholder="Weight" data-field="w" data-ex="${ex.id}" />
+        <input class="input" style="width: 80px;" inputmode="numeric" placeholder="Reps" data-field="r" data-ex="${ex.id}" />
+        <button class="btn" data-action="logSet" data-ex="${ex.id}" type="button">Log set</button>
       </div>
     `;
 
@@ -183,12 +448,12 @@ function renderWorkout() {
     // render sets list
     const setsEl = exEl.querySelector(`#sets-${CSS.escape(ex.id)}`);
     setsEl.innerHTML = sets.map((st, idx) => {
-      const ts = st.ts ? new Date(st.ts).toLocaleTimeString() : '';
+      const ts = st.ts ? new Date(st.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
       return `
         <div class="setRow">
-          <div class="small">#${idx+1} · ${escapeHtml(String(st.w ?? ''))} lb</div>
+          <div class="small" style="font-weight:700">Set #${idx+1} · ${escapeHtml(String(st.w ?? ''))} lb</div>
           <div class="small">${escapeHtml(String(st.r ?? ''))} reps · ${escapeHtml(ts)}</div>
-          <button class="btn danger" data-action="deleteSet" data-ex="${ex.id}" data-idx="${idx}">Del</button>
+          <button class="btn danger" style="padding: 4px 8px; font-size: 11px;" data-action="deleteSet" data-ex="${ex.id}" data-idx="${idx}" type="button">Del</button>
         </div>
       `;
     }).join('');
@@ -211,18 +476,49 @@ function startRoutine(routineId) {
   state.activeSessionId = s.id;
   saveSessions();
   saveActive();
+  
+  // Switch to Active Workout tab
+  switchTab('workout');
   renderWorkout();
+  
+  // Confetti!
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+  }
 }
 
 function endWorkout() {
   const s = activeSession();
   if (!s) return;
-  s.endedAt = new Date().toISOString();
-  state.activeSessionId = null;
-  saveSessions();
-  saveActive();
-  stopTimer();
-  renderWorkout();
+  
+  if (confirm('Are you ready to complete and log this workout session?')) {
+    s.endedAt = new Date().toISOString();
+    state.activeSessionId = null;
+    saveSessions();
+    saveActive();
+    stopTimer();
+    
+    // Increment completion goals if a primary/habits setup matches
+    // (Existing goals progress increment code, for user custom goals)
+    const routineObj = activeRoutine(s);
+    if (routineObj) {
+      // Find a goal matching "Workouts" or "Exercise" to auto-increment progress
+      const matchingGoal = state.goals.find(g => g.title.toLowerCase().includes('workout') || g.title.toLowerCase().includes('exercise'));
+      if (matchingGoal) {
+        incProgress(matchingGoal.id, 1);
+      }
+    }
+    
+    // Switch to Dashboard
+    switchTab('dashboard');
+    renderWorkout();
+    renderDashboard();
+    
+    // Success completion confetti!
+    if (typeof confetti === 'function') {
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    }
+  }
 }
 
 function addExercise() {
@@ -286,7 +582,8 @@ function logSet(exId) {
   if (wInput) wInput.value = w;
   if (rInput) rInput.value = '';
 
-  // start a default rest timer
+  // start a default rest timer (90 seconds)
+  resetTimer();
   addRest(90);
   renderWorkout();
 }
@@ -351,7 +648,7 @@ function importData(file) {
       saveActive();
       renderRoutines();
       renderWorkout();
-      alert('Imported.');
+      alert('Imported successfully.');
     } catch (e) {
       alert('Import failed.');
     }
@@ -375,10 +672,32 @@ function tick() {
   if (!state.timer.running) return;
   state.timer.remainingSec = Math.max(0, state.timer.remainingSec - 1);
   $('timer').textContent = fmtTimer(state.timer.remainingSec);
+  
+  // Update Live Session tab title text with timer
+  const activeTabBtn = $('tabActiveWorkout');
+  if (activeTabBtn && state.activeSessionId) {
+    const timerText = state.timer.remainingSec > 0 ? ` (${fmtTimer(state.timer.remainingSec)})` : '';
+    activeTabBtn.querySelector('.tab-text').textContent = `Live Session${timerText}`;
+  }
+
   if (state.timer.remainingSec <= 0) {
     stopTimer();
-    // subtle beep using vibration if available
+    // Vibrate/beep alert
     if (navigator.vibrate) navigator.vibrate([120, 50, 120]);
+    // HTML5 Audio beep
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880; // High pitch beep
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+      // AudioContext blocked or not supported
+    }
   }
 }
 
@@ -422,7 +741,6 @@ function ymd(d) {
   return `${yyyy}-${mm}-${dd}`;
 }
 function weekKey(d) {
-  // ISO-ish week key: YYYY-Www (rough, good enough for UX)
   const x = startOfDay(d);
   const jan1 = new Date(x.getFullYear(), 0, 1);
   const days = Math.floor((x - jan1) / 86400000);
@@ -507,26 +825,24 @@ function renderGoalList(elId, period) {
     item.className = 'goalItem';
     item.innerHTML = `
       <div style="flex:1;min-width:180px">
-        <div style="font-weight:900">${escapeHtml(g.title)}</div>
+        <div style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
         <div class="small">${cur} / ${g.target} (${g.period})</div>
-        <div class="progressBar" style="margin-top:8px"><div class="progressFill" style="width:${pct}%"></div></div>
+        <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
       </div>
       <div class="row wrap">
-        <button class="btn" data-goal-action="inc" data-goal-id="${g.id}">+1</button>
-        <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}">-1</button>
-        <button class="btn danger" data-goal-action="del" data-goal-id="${g.id}">Del</button>
+        <button class="btn" data-goal-action="inc" data-goal-id="${g.id}" type="button">+1</button>
+        <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}" type="button">-1</button>
+        <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
       </div>
     `;
     el.appendChild(item);
   });
 }
 function computeStreak() {
-  // streak = consecutive days with at least 1 ended workout session
   const sessions = (state.sessions || []).filter(s => s.endedAt);
   const days = new Set(sessions.map(s => ymd(new Date(s.endedAt))));
   let streak = 0;
   let d = startOfDay(new Date());
-  // if no workout today, allow streak to be based on yesterday
   if (!days.has(ymd(d))) d = new Date(d.getTime() - 86400000);
   while (days.has(ymd(d))) {
     streak += 1;
@@ -535,7 +851,6 @@ function computeStreak() {
   return streak;
 }
 function renderDashboard() {
-  // Primary / secondary
   const pg = $('primaryGoal');
   const pprog = $('primaryGoalProgress');
   if (pg) {
@@ -571,14 +886,13 @@ function renderDashboard() {
   const sg = $('secondaryGoal');
   if (sg) sg.textContent = state.secondaryGoal?.type ? state.secondaryGoal.type : 'None';
 
-  // Habit goals
   renderGoalList('goalsDaily', 'daily');
   renderGoalList('goalsWeekly', 'weekly');
   renderGoalList('goalsMonthly', 'monthly');
 
   const st = computeStreak();
   const el = $('streakText');
-  if (el) el.textContent = st ? `${st} day streak` : 'No streak yet';
+  if (el) el.textContent = st ? `${st} day streak 🔥` : 'No active streak';
 
   renderPlan();
 }
@@ -594,7 +908,6 @@ function updateGoalFieldVisibility() {
 
   if (!baseWrap || !progWrap) return;
 
-  // default hidden
   baseWrap.hidden = true;
   progWrap.hidden = true;
   if (customWrap) customWrap.hidden = true;
@@ -660,12 +973,11 @@ function saveGoalsFromForm() {
     goal.customText = txt;
   }
 
-  // goal-specific baseline + progress
   const baselineVal = Number($('primaryBaseline')?.value || 0);
   const progressVal = Number($('primaryProgress')?.value || 0);
 
   if (t === 'custom') {
-    // no structured baseline/progress yet
+    // no structured baseline/progress
   } else if (t === 'bar_hang') {
     if (baselineVal) goal.maxHangSec = baselineVal;
     if (progressVal) goal.bestHangSec = progressVal;
@@ -704,7 +1016,6 @@ function hydrateGoalsForm() {
   if (pd) pd.value = String(state.primaryGoal?.daysPerWeek || 3);
   if (st) st.value = state.secondaryGoal?.type || '';
 
-  // baseline/progress fields
   const t = state.primaryGoal?.type;
   if (t === 'bar_hang') {
     if (base) base.value = String(state.primaryGoal?.maxHangSec || '');
@@ -739,11 +1050,10 @@ function ensurePlanGenerated() {
 
 function regeneratePlan() {
   if (!state.primaryGoal) {
-    alert('Set a primary goal first.');
     return;
   }
 
-  // Build a simple 14-day plan.
+  // Build 14-day calendar plan
   const now = new Date();
   const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
   const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
@@ -785,7 +1095,6 @@ function startPlannedWorkout(dateStr) {
 }
 
 function generateTodayFromGoals() {
-  // Generate or start today's planned workout.
   if (!ensurePlanGenerated()) {
     alert('Set a primary goal first.');
     return;
@@ -793,7 +1102,8 @@ function generateTodayFromGoals() {
   const today = ymd(new Date());
   const item = (state.plan.days || []).find(x => x.date === today);
   if (item?.routine) return startPlannedWorkout(today);
-  // If today is rest day, just generate a one-off session.
+  
+  // If rest day, generate a custom session
   const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
   state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
   saveRoutines();
@@ -811,7 +1121,6 @@ function renderPlan() {
   }
 
   ensurePlanGenerated();
-  // Show next 7 days for readability
   const days = (state.plan?.days || []).slice(0, 7);
   const today = ymd(new Date());
 
@@ -833,7 +1142,7 @@ function renderPlan() {
 
     const isWorkout = d.kind === 'workout' && d.routine;
     const badge = isWorkout ? '<span class="planBadge">Workout</span>' : '<span class="planBadge rest">Rest</span>';
-    const label = isWorkout ? (d.routine?.name || 'Workout') : 'Recovery / optional walk';
+    const label = isWorkout ? (d.routine?.name || 'Workout') : 'Recovery / Optional Walk';
 
     item.innerHTML = `
       <div class="planMeta">
@@ -842,7 +1151,7 @@ function renderPlan() {
       </div>
       <div class="planActions">
         ${badge}
-        ${isWorkout ? `<button class="btn" data-plan-action="start" data-plan-date="${d.date}">Start</button>` : ''}
+        ${isWorkout ? `<button class="btn" data-plan-action="start" data-plan-date="${d.date}" type="button">Start</button>` : ''}
       </div>
     `;
     el.appendChild(item);
@@ -864,7 +1173,6 @@ function wireDashboard() {
     if (act === 'start' && dateStr) startPlannedWorkout(dateStr);
   });
 
-  // event delegation
   ['goalsDaily','goalsWeekly','goalsMonthly'].forEach(id => {
     $(id)?.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
@@ -879,7 +1187,6 @@ function wireDashboard() {
   });
 }
 
-// Helpers
 function escapeHtml(str) {
   return String(str)
     .replaceAll('&', '&amp;')
@@ -889,15 +1196,287 @@ function escapeHtml(str) {
     .replaceAll("'", '&#039;');
 }
 
-// Events
+// Workout Generator Code Wiring & Logic
+function wireGenerator() {
+  const container = $('panel-generator');
+  if (!container) return;
+
+  // Toggle buttons in groups
+  container.querySelectorAll('.pill-group').forEach(group => {
+    group.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill-btn');
+      if (!btn) return;
+      group.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Run generator
+  $('btnRunGenerator')?.addEventListener('click', () => {
+    // Collect Form inputs
+    const duration = container.querySelector('#genDuration .pill-btn.active').getAttribute('data-value');
+    const focus = container.querySelector('#genFocus .pill-btn.active').getAttribute('data-value');
+    const difficulty = container.querySelector('#genDifficulty .pill-btn.active').getAttribute('data-value');
+    
+    const equipment = ['bodyweight'];
+    container.querySelectorAll('#genEquipment input[type="checkbox"]').forEach(cb => {
+      if (cb.checked && cb.getAttribute('data-eq') !== 'bodyweight') {
+        equipment.push(cb.getAttribute('data-eq'));
+      }
+    });
+
+    generateCustomWorkout(Number(duration), focus, equipment, difficulty);
+  });
+
+  // Start generated workout
+  $('btnStartGeneratedWorkout')?.addEventListener('click', () => {
+    if (!state.generatedRoutine) return;
+    
+    // Add generated workout to routines state
+    state.routines = [state.generatedRoutine, ...state.routines.filter(r => r.id !== state.generatedRoutine.id)];
+    saveRoutines();
+    renderRoutines();
+    
+    // Launch workout
+    startRoutine(state.generatedRoutine.id);
+  });
+}
+
+function generateCustomWorkout(duration, focus, equipment, difficulty) {
+  // Hide form and results, show loader
+  $('generatorForm').style.display = 'none';
+  $('generatorPreview').style.display = 'none';
+  const loader = $('generatorLoading');
+  const statusEl = $('generatorStatus');
+  loader.style.display = 'block';
+
+  // Interactive step-by-step loading messages
+  const steps = [
+    { text: "Scanning exercise pool...", ms: 400 },
+    { text: "Analyzing available equipment...", ms: 800 },
+    { text: "Selecting optimal target movements...", ms: 1200 },
+    { text: "Calibrating target sets and reps...", ms: 1500 }
+  ];
+
+  steps.forEach(step => {
+    setTimeout(() => {
+      statusEl.textContent = step.text;
+    }, step.ms);
+  });
+
+  setTimeout(() => {
+    // Process generator algorithm
+    const eqSet = new Set(equipment);
+    
+    // Determine movement structure and selects exercises
+    let exercises = [];
+    const pool = EXERCISE_POOL[focus] || EXERCISE_POOL.fullbody;
+    
+    // 1. Gather all matched exercises from focus pool
+    let matchPool = [];
+    
+    // Always include bodyweight
+    if (pool.bodyweight) matchPool.push(...pool.bodyweight.map(ex => ({ ...ex, source: 'bodyweight' })));
+    
+    // Include others if checked
+    if (eqSet.has('dumbbells') && pool.dumbbells) {
+      matchPool.push(...pool.dumbbells.map(ex => ({ ...ex, source: 'dumbbells' })));
+    }
+    if (eqSet.has('barbell') && pool.barbell) {
+      matchPool.push(...pool.barbell.map(ex => ({ ...ex, source: 'barbell' })));
+    }
+
+    // Determine count based on duration (15m: 3, 30m: 4, 45m: 5, 60m: 6)
+    const exerciseCount = duration <= 15 ? 3 : duration <= 30 ? 4 : duration <= 45 ? 5 : 6;
+
+    // Structured selection (rather than pure random) to ensure balanced workout
+    let selected = [];
+    
+    // If equipment has dumbbells/barbell, try to mix compound and bodyweight
+    const weights = matchPool.filter(e => e.source === 'dumbbells' || e.source === 'barbell');
+    const bodyweight = matchPool.filter(e => e.source === 'bodyweight');
+
+    // Alternate selections to build a smart workout
+    for (let i = 0; i < exerciseCount; i++) {
+      let pick = null;
+      if (i % 2 === 0 && weights.length > 0) {
+        // Pick weight exercise
+        const idx = Math.floor(Math.random() * weights.length);
+        pick = weights.splice(idx, 1)[0];
+      } else if (bodyweight.length > 0) {
+        // Pick bodyweight exercise
+        const idx = Math.floor(Math.random() * bodyweight.length);
+        pick = bodyweight.splice(idx, 1)[0];
+      } else if (weights.length > 0) {
+        // Fallback weight
+        const idx = Math.floor(Math.random() * weights.length);
+        pick = weights.splice(idx, 1)[0];
+      }
+      
+      if (pick) selected.push(pick);
+    }
+
+    // Inject Pull-up Bar if checked
+    if (eqSet.has('pullupbar') && (focus === 'fullbody' || focus === 'upper') && selected.length > 0) {
+      // Replace last exercise or insert pullups
+      const pullupEx = { name: "Pull-ups (or Chin-ups)", reps: "3 sets x max reps", info: "Hang from bar, pull chest to bar, control down." };
+      if (selected.length >= exerciseCount) {
+        selected[selected.length - 1] = pullupEx;
+      } else {
+        selected.push(pullupEx);
+      }
+    }
+    
+    // Inject Cardio Machine if checked
+    if (eqSet.has('treadmill') && focus === 'cardio' && selected.length > 0) {
+      const machineEx = { name: "Treadmill or Bike Interval", reps: "15 min interval", info: "Alternate 1m moderate, 1m fast pace." };
+      selected[0] = machineEx; // Put cardiorespiratory first
+    }
+
+    // 2. Adjust sets/reps scaling based on intensity difficulty
+    let setMultiplier = 3;
+    let difficultyBadge = "Intermediate";
+    if (difficulty === 'beginner') {
+      setMultiplier = 2;
+      difficultyBadge = "Beginner";
+    } else if (difficulty === 'advanced') {
+      setMultiplier = 4;
+      difficultyBadge = "Advanced";
+    }
+
+    exercises = selected.map(ex => {
+      // Parse out reps format
+      let formattedReps = ex.reps;
+      if (ex.reps.includes('sets')) {
+        formattedReps = ex.reps.replace(/^\d+ sets/, `${setMultiplier} sets`);
+      } else {
+        formattedReps = `${setMultiplier} sets x ${ex.reps}`;
+      }
+      
+      // Combine name with reps details for compatibility with existing tracking model
+      return {
+        id: uid(),
+        name: `${ex.name} (${formattedReps})`,
+        info: ex.info
+      };
+    });
+
+    const displayFocus = focus.charAt(0).toUpperCase() + focus.slice(1);
+    const routineId = `gen:${focus}:${duration}:${difficulty}:${uid()}`;
+    
+    state.generatedRoutine = {
+      id: routineId,
+      name: `Custom ${displayFocus} (${duration}m)`,
+      desc: `Generated: ${difficultyBadge} · Focus: ${displayFocus} · Equip: ${equipment.join(', ')}`,
+      exercises: exercises
+    };
+
+    // Render Preview
+    $('previewWorkoutName').textContent = state.generatedRoutine.name;
+    $('previewWorkoutDesc').textContent = state.generatedRoutine.desc;
+    
+    const previewList = $('previewExercisesList');
+    previewList.innerHTML = '';
+    
+    exercises.forEach(ex => {
+      const item = document.createElement('div');
+      item.className = 'routineItem';
+      item.style.padding = '10px 14px';
+      item.innerHTML = `
+        <div>
+          <div style="font-weight: 800; font-size:14.5px;">${escapeHtml(ex.name)}</div>
+          <div class="small">${escapeHtml(ex.info || 'Control movement and focus on form.')}</div>
+        </div>
+      `;
+      previewList.appendChild(item);
+    });
+
+    // Toggle View State
+    loader.style.display = 'none';
+    $('generatorForm').style.display = 'flex';
+    $('generatorPreview').style.display = 'block';
+  }, 1800);
+}
+
+// Workout Ideas rendering
+function renderWorkoutIdeas() {
+  const container = $('ideasGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  WORKOUT_LIBRARY.forEach(idea => {
+    const card = document.createElement('div');
+    card.className = 'idea-card';
+    
+    const displayCategory = idea.category.charAt(0).toUpperCase() + idea.category.slice(1);
+    
+    const exercisesSummary = idea.exercises.map(ex => `<div class="idea-ex-item"><span class="idea-ex-name">${escapeHtml(ex.name)}</span><span class="idea-ex-reps">${escapeHtml(ex.reps)}</span></div>`).join('');
+    
+    card.innerHTML = `
+      <div class="idea-header">
+        <span class="category-badge ${idea.category}">${displayCategory}</span>
+        <div class="row" style="gap:4px">
+          <span class="meta-badge">⏱️ ${idea.duration}m</span>
+          <span class="meta-badge">💪 ${idea.difficulty}</span>
+        </div>
+      </div>
+      <h3 class="idea-title" style="margin-top: 0;">${escapeHtml(idea.name)}</h3>
+      <p class="idea-desc">${escapeHtml(idea.desc)}</p>
+      
+      <div class="idea-exercises-list">
+        ${exercisesSummary}
+      </div>
+      
+      <button class="btn primary-gradient start-idea-btn" style="margin-top:auto; width:100%; justify-content:center;" data-id="${idea.id}" type="button">
+        Start Workout
+      </button>
+    `;
+    container.appendChild(card);
+  });
+
+  // Wire click events
+  container.querySelectorAll('.start-idea-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ideaId = btn.getAttribute('data-id');
+      const idea = WORKOUT_LIBRARY.find(i => i.id === ideaId);
+      if (!idea) return;
+
+      // Map library exercises to standard routine structure (including sets/reps inside naming)
+      const exercises = idea.exercises.map(ex => ({
+        id: uid(),
+        name: `${ex.name} (${ex.reps})`
+      }));
+
+      const newRoutine = {
+        id: `lib:${idea.id}:${uid()}`,
+        name: idea.name,
+        desc: `${idea.difficulty} · Category: ${displayCategory(idea.category)}`,
+        exercises: exercises
+      };
+
+      // Add to routines list
+      state.routines = [newRoutine, ...state.routines.filter(r => r.id !== newRoutine.id)];
+      saveRoutines();
+      renderRoutines();
+
+      // Launch workout
+      startRoutine(newRoutine.id);
+    });
+  });
+}
+
+function displayCategory(cat) {
+  if (cat === 'hiit') return 'HIIT';
+  return cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
+// Quick Start widgets (Dashboard)
 function wireQuickStart() {
-  // Initialize UI from stored profile
   const goalSel = $('qsGoal');
   const durSel = $('qsDuration');
   if (goalSel) goalSel.value = state.profile.goal || 'general';
   if (durSel) durSel.value = String(state.profile.durationMin || 30);
 
-  // equipment checkboxes
   document.querySelectorAll('#qsEquipment input[type="checkbox"][data-eq]').forEach(cb => {
     const k = cb.getAttribute('data-eq');
     cb.checked = (state.profile.equipment || []).includes(k);
@@ -905,7 +1484,6 @@ function wireQuickStart() {
       const eq = new Set(state.profile.equipment || []);
       if (cb.checked) eq.add(k);
       else eq.delete(k);
-      // always keep at least bodyweight
       if (eq.size === 0) eq.add('bodyweight');
       state.profile.equipment = Array.from(eq);
       saveProfile();
@@ -923,7 +1501,6 @@ function wireQuickStart() {
 
   $('btnQuickStart')?.addEventListener('click', () => {
     const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
-    // Add as a routine (so it can be reused) and start
     state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
     saveRoutines();
     renderRoutines();
@@ -946,7 +1523,6 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
   const dur = Number(primaryGoal?.durationMin || profile?.durationMin || 30);
   const eq = new Set(profile?.equipment || ['bodyweight']);
 
-  // Choose a template by goal and available equipment.
   const wantsRun = eq.has('treadmill') || eq.has('bike');
   const hasPullup = eq.has('pullupbar');
   const hasDB = eq.has('dumbbells');
@@ -954,10 +1530,8 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
   let name = 'Quick Start';
   let desc = `Goal: ${goal}, Duration: ${dur}m, Equipment: ${Array.from(eq).join(', ')}`;
-
   let exercises = [];
 
-  // Primary goal templates
   if (goal === 'run_5k' || goal === '5k') {
     name = 'Goal Session: 5K';
     exercises = [
@@ -968,11 +1542,9 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
     ];
   } else if (goal === 'bar_hang' || goal === 'barhang') {
     name = 'Goal Session: 2-min Hang';
-
     const baseline = Number(primaryGoal?.bestHangSec || primaryGoal?.maxHangSec || 30);
     const work = Math.max(10, Math.round(baseline * 0.6));
     const sets = baseline >= 60 ? 6 : 5;
-
     exercises = hasPullup ? [
       { id: uid(), name: `Dead hang — ${sets} x ${work}s (rest 60–90s)` },
       { id: uid(), name: 'Scapular pull-ups — 3 x 8' },
@@ -984,7 +1556,6 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       { id: uid(), name: 'Plank — 3 x 30s' },
     ];
   } else if (goal === 'lose_weight' || goal === 'fat_loss') { 
-
     name = 'Goal Session: Fat Loss (Full Body)';
     exercises = hasDB ? [
       { id: uid(), name: 'DB Goblet Squat' },
@@ -1020,7 +1591,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       { id: uid(), name: 'Accessory (arms/shoulders)' },
     ] : [
       { id: uid(), name: 'Pushups (volume)' },
-      { id: uid(), name: 'Bodyweight row (if available) / band row' },
+      { id: uid(), name: 'Bodyweight row / band row' },
       { id: uid(), name: 'Split squats' },
       { id: uid(), name: 'Plank (time)' },
     ];
@@ -1043,11 +1614,9 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
     ];
   }
 
-  // Trim based on duration (rough heuristic)
   const maxEx = dur <= 20 ? 3 : dur <= 30 ? 4 : 6;
   exercises = exercises.slice(0, maxEx);
 
-  // Inject optional secondary finisher (if time allows)
   const fin = secondaryFinisher(secondaryGoal, eq);
   if (fin.length && exercises.length < maxEx) exercises = [...exercises, ...fin].slice(0, maxEx);
 
@@ -1061,29 +1630,28 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 }
 
 function wire() {
-  $('btnNewRoutine').addEventListener('click', newRoutine);
-  $('btnAddExercise').addEventListener('click', addExercise);
-  $('btnEndWorkout').addEventListener('click', endWorkout);
-
+  $('btnNewRoutine')?.addEventListener('click', newRoutine);
+  $('btnAddExercise')?.addEventListener('click', addExercise);
+  $('btnEndWorkout')?.addEventListener('click', endWorkout);
   $('btnTheme')?.addEventListener('click', toggleTheme);
 
-  $('btnTimerStartStop').addEventListener('click', () => {
+  $('btnTimerStartStop')?.addEventListener('click', () => {
     state.timer.running ? stopTimer() : startTimer();
   });
-  $('btnTimerReset').addEventListener('click', resetTimer);
+  $('btnTimerReset')?.addEventListener('click', resetTimer);
 
   document.querySelectorAll('[data-rest]').forEach(btn => {
     btn.addEventListener('click', () => addRest(Number(btn.getAttribute('data-rest') || '0')));
   });
 
-  $('workoutNotes').addEventListener('input', (e) => {
+  $('workoutNotes')?.addEventListener('input', (e) => {
     const s = activeSession();
     if (!s) return;
     s.notes = e.target.value;
     saveSessions();
   });
 
-  $('routineList').addEventListener('click', (e) => {
+  $('routineList')?.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     const action = btn.getAttribute('data-action');
@@ -1092,7 +1660,7 @@ function wire() {
     if (action === 'edit') editRoutine(id);
   });
 
-  $('exerciseList').addEventListener('click', (e) => {
+  $('exerciseList')?.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     const action = btn.getAttribute('data-action');
@@ -1107,19 +1675,27 @@ function wire() {
     }
   });
 
-  $('btnExport').addEventListener('click', exportData);
-  $('btnImport').addEventListener('click', () => $('fileImport').click());
-  $('fileImport').addEventListener('change', (e) => {
+  $('btnExport')?.addEventListener('click', exportData);
+  $('btnImport')?.addEventListener('click', () => $('fileImport')?.click());
+  $('fileImport')?.addEventListener('change', (e) => {
     const f = e.target.files?.[0];
     if (f) importData(f);
     e.target.value = '';
   });
 
-  $('btnReset').addEventListener('click', resetAll);
+  $('btnReset')?.addEventListener('click', resetAll);
 
-  // enable keyboard shortcuts
+  // Keyboard support for rest timer
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') stopTimer();
+  });
+
+  // SPA Tab Buttons
+  document.querySelectorAll('#tabbar button[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.getAttribute('data-tab');
+      switchTab(tabId);
+    });
   });
 }
 
@@ -1139,13 +1715,28 @@ function boot() {
   seedIfEmpty();
   loadState();
   applyTheme();
+  
+  // Wire events
   wire();
   wireDashboard();
-  hydrateGoalsForm();
-  $('timer').textContent = fmtTimer(0);
+  wireGenerator();
+  
+  // Render views
+  renderWorkoutIdeas();
   renderDashboard();
   renderRoutines();
   renderWorkout();
+  
+  hydrateGoalsForm();
+  
+  $('timer').textContent = fmtTimer(0);
+  
+  // Auto-switch to active session tab if in progress
+  if (state.activeSessionId) {
+    switchTab('workout');
+  } else {
+    switchTab('dashboard');
+  }
 }
 
 boot();
