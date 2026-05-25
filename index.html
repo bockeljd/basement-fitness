@@ -144,9 +144,27 @@
           <div class="muted" style="margin-top: 12px;">Habits auto-save. Tap checklists or buttons to log completions.</div>
         </section>
 
+        <!-- Performance Analytics Section -->
+        <section class="card" id="cardAnalytics" style="margin-top: 16px;">
+          <div class="cardHeader">
+            <h2>Performance Analytics</h2>
+            <div class="pill-group" id="analyticsToggle" style="margin: 0;">
+              <button type="button" class="pill-btn active" data-chart="consistency">Consistency</button>
+              <button type="button" class="pill-btn" data-chart="weight">Weight Trend</button>
+            </div>
+          </div>
+          <div class="muted" id="analyticsMutedDesc">Weekly workout completions for the last 7 weeks.</div>
+          <div class="panel" style="margin-top: 12px; display: flex; justify-content: center; position: relative;">
+            <div id="analyticsChartContainer" style="width: 100%; height: 160px;">
+              <!-- Dynamic SVG goes here -->
+            </div>
+          </div>
+        </section>
+
         <section class="card" id="cardActivity" style="margin-top: 16px;">
           <div class="cardHeader">
             <h2>Recent Activity</h2>
+            <button class="btn secondary" id="btnShowAllLogs" type="button">Show All Logs</button>
           </div>
           <div class="muted" style="margin-bottom: 10px;">Your recently completed workouts and history.</div>
           <div id="activityFeed" class="activity-feed"></div>
@@ -304,17 +322,57 @@
           </div>
 
           <div class="grid2">
-            <div class="panel">
-              <div class="panelTitle">Rest timer</div>
-              <div class="timer" id="timer">0:00</div>
+            <div class="panel" id="timerPanel" style="transition: all 0.3s ease;">
+              <div class="panelTitle" id="timerPanelTitle">Rest timer</div>
+              
+              <!-- Timer Mode Toggle Tabs -->
+              <div class="timer-modes-tabs" style="display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <button class="timer-mode-btn active" data-mode="countdown" type="button">Countdown</button>
+                <button class="timer-mode-btn" data-mode="countup" type="button">Count Up</button>
+                <button class="timer-mode-btn" data-mode="tabata" type="button">Tabata</button>
+              </div>
+
+              <!-- Countdown controls -->
+              <div id="timer-countdown-controls" class="timer-control-section" style="margin-bottom: 10px;">
+                <div class="row wrap">
+                  <button class="btn" data-rest="60" type="button">+60s</button>
+                  <button class="btn" data-rest="90" type="button">+90s</button>
+                  <button class="btn" data-rest="120" type="button">+120s</button>
+                </div>
+              </div>
+
+              <!-- Tabata setup inputs (hidden by default, only shown in Tabata mode) -->
+              <div id="timer-tabata-setup" class="timer-control-section" style="display: none; margin-bottom: 12px;">
+                <div class="grid3" style="gap: 8px; margin-bottom: 8px;">
+                  <div>
+                    <label class="small" style="font-weight: 600;">Work (s)</label>
+                    <input type="number" id="tabataWork" class="input" value="20" min="5" max="300" />
+                  </div>
+                  <div>
+                    <label class="small" style="font-weight: 600;">Rest (s)</label>
+                    <input type="number" id="tabataRest" class="input" value="10" min="0" max="300" />
+                  </div>
+                  <div>
+                    <label class="small" style="font-weight: 600;">Rounds</label>
+                    <input type="number" id="tabataRounds" class="input" value="8" min="1" max="99" />
+                  </div>
+                </div>
+                <div style="font-size: 11px;" class="muted">Standard Tabata: 8 rounds of 20s Work / 10s Rest (5s Prep).</div>
+              </div>
+
+              <!-- Tabata State / Round feedback displays -->
+              <div id="timer-tabata-status" style="display: none; text-align: center; margin-bottom: 10px; align-items: center; justify-content: center; gap: 8px;">
+                <span id="tabataPhaseBadge" class="category-badge strength" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;">PREP</span>
+                <span id="tabataRoundText" style="font-weight: 800; font-size: 13px;">Round 1/8</span>
+              </div>
+
+              <div class="timer" id="timer" style="margin-top: 6px; margin-bottom: 14px;">0:00</div>
+              
               <div class="row wrap">
-                <button class="btn" data-rest="60" type="button">+60s</button>
-                <button class="btn" data-rest="90" type="button">+90s</button>
-                <button class="btn" data-rest="120" type="button">+120s</button>
                 <button class="btn secondary" id="btnTimerStartStop" type="button">Start</button>
                 <button class="btn secondary" id="btnTimerReset" type="button">Reset</button>
               </div>
-              <div class="muted">Tip: tap a +time button right after a set to auto-start.</div>
+              <div class="muted" id="timerTipText">Tip: tap a +time button right after a set to auto-start.</div>
             </div>
 
             <div class="panel">
@@ -440,7 +498,31 @@
     </footer>
   </div>
 
+  <!-- Modal for Historical Logs -->
+  <div id="modalHistory" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Workout History Logs</h3>
+        <button class="modal-close" id="btnHistoryModalClose" type="button">&times;</button>
+      </div>
+      <div class="modal-content" style="max-height: 70vh; overflow-y: auto;">
+        <div id="historyLogsList" style="display: grid; gap: 14px;">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <input id="fileImport" type="file" accept="application/json" hidden />
   <script src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('ServiceWorker registered:', reg.scope))
+          .catch(err => console.error('ServiceWorker registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>

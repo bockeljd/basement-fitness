@@ -536,10 +536,25 @@ let state = {
   goals: [],
   theme: 'light',
   plan: { generatedAt: null, days: [] },
-  timer: { remainingSec: 0, running: false, interval: null },
+  timer: {
+    mode: 'countdown',
+    running: false,
+    interval: null,
+    remainingSec: 0,
+    elapsedSec: 0,
+    tabata: {
+      round: 1,
+      maxRounds: 8,
+      phase: 'prep',
+      workSec: 20,
+      restSec: 10,
+      prepSec: 5
+    }
+  },
   activeTab: 'dashboard',
   generatedRoutine: null,
-  workoutLibrary: []
+  workoutLibrary: [],
+  analyticsChart: 'consistency'
 };
 
 function seedIfEmpty() {
@@ -573,7 +588,12 @@ function seedIfEmpty() {
       daysPerWeek: 3,
       createdAt: new Date().toISOString(),
       startWeightLbs: 180,
-      currentWeightLbs: 180
+      currentWeightLbs: 180,
+      weightHistory: [
+        { date: ymd(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)), weight: 182.4 },
+        { date: ymd(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)), weight: 181.2 },
+        { date: ymd(new Date()), weight: 180.0 }
+      ]
     };
     store.set(KEYS.primaryGoal, defaultPrimary);
   }
@@ -653,13 +673,15 @@ function renderRoutines() {
     const item = document.createElement('div');
     item.className = 'routineItem';
     item.innerHTML = `
-      <div class="routineMeta">
+      <div class="routineMeta" style="flex: 1;">
         <div class="routineName">${escapeHtml(r.name)}</div>
         <div class="routineDesc">${escapeHtml(r.desc || '')}</div>
       </div>
-      <div class="row">
+      <div class="row wrap" style="gap: 6px;">
         <button class="btn" data-action="start" data-id="${r.id}" type="button">Start</button>
         <button class="btn secondary" data-action="edit" data-id="${r.id}" type="button">Edit</button>
+        <button class="btn secondary" data-action="clone" data-id="${r.id}" title="Duplicate Routine" type="button">Clone</button>
+        <button class="btn danger" style="padding: 8px 10px;" data-action="delete" data-id="${r.id}" type="button">Del</button>
       </div>
     `;
     el.appendChild(item);
@@ -966,45 +988,243 @@ function resetAll() {
 }
 
 // Timer
-function tick() {
-  if (!state.timer.running) return;
-  state.timer.remainingSec = Math.max(0, state.timer.remainingSec - 1);
-  $('timer').textContent = fmtTimer(state.timer.remainingSec);
-  
-  // Update Live Session tab title text with timer
+// Timer Audio synthesize using web audio
+let audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playTone(freq, duration) {
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    
+    // Smooth envelope to prevent pops
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime + duration - 0.02);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {
+    console.warn('AudioContext playback blocked or unsupported', e);
+  }
+}
+
+function playFanfare() {
+  const notes = [
+    { freq: 523.25, dur: 0.15 }, // C5
+    { freq: 659.25, dur: 0.15 }, // E5
+    { freq: 783.99, dur: 0.15 }, // G5
+    { freq: 1046.50, dur: 0.40 } // C6
+  ];
+  let time = 0;
+  notes.forEach(note => {
+    setTimeout(() => {
+      playTone(note.freq, note.dur);
+    }, time);
+    time += note.dur * 1000 + 50;
+  });
+}
+
+function applyTabataPhaseStyle(phase) {
+  const panel = $('timerPanel');
+  if (!panel) return;
+  panel.classList.remove('phase-prep', 'phase-work', 'phase-rest');
+  if (phase === 'prep') panel.classList.add('phase-prep');
+  else if (phase === 'work') panel.classList.add('phase-work');
+  else if (phase === 'rest') panel.classList.add('phase-rest');
+}
+
+function updateTabataDisplay() {
+  const phaseBadge = $('tabataPhaseBadge');
+  const roundText = $('tabataRoundText');
+  if (phaseBadge) {
+    const phase = state.timer.tabata.phase;
+    phaseBadge.textContent = phase.toUpperCase();
+    phaseBadge.className = 'category-badge';
+    if (phase === 'prep') phaseBadge.classList.add('bodyweight');
+    else if (phase === 'work') phaseBadge.classList.add('strength');
+    else if (phase === 'rest') phaseBadge.classList.add('hiit');
+  }
+  if (roundText) {
+    roundText.textContent = `Round ${state.timer.tabata.round}/${state.timer.tabata.maxRounds}`;
+  }
+}
+
+function updateLiveSessionTitle(sec) {
   const activeTabBtn = $('tabActiveWorkout');
   if (activeTabBtn && state.activeSessionId) {
-    const timerText = state.timer.remainingSec > 0 ? ` (${fmtTimer(state.timer.remainingSec)})` : '';
+    const timerText = sec > 0 ? ` (${fmtTimer(sec)})` : '';
     activeTabBtn.querySelector('.tab-text').textContent = `Live Session${timerText}`;
   }
+}
 
-  if (state.timer.remainingSec <= 0) {
-    stopTimer();
-    // Vibrate/beep alert
-    if (navigator.vibrate) navigator.vibrate([120, 50, 120]);
-    // HTML5 Audio beep
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880; // High pitch beep
-      gain.gain.setValueAtTime(0.1, ctx.currentTime);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch (e) {
-      // AudioContext blocked or not supported
+function switchTimerMode(newMode) {
+  stopTimer();
+  state.timer.mode = newMode;
+
+  document.querySelectorAll('.timer-mode-btn').forEach(btn => {
+    if (btn.getAttribute('data-mode') === newMode) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const countdownControls = $('timer-countdown-controls');
+  const tabataSetup = $('timer-tabata-setup');
+  const tabataStatus = $('timer-tabata-status');
+  const timerTitle = $('timerPanelTitle');
+  const timerTip = $('timerTipText');
+
+  if (countdownControls) countdownControls.style.display = (newMode === 'countdown') ? 'block' : 'none';
+  if (tabataSetup) tabataSetup.style.display = (newMode === 'tabata') ? 'block' : 'none';
+  if (tabataStatus) tabataStatus.style.display = 'none';
+  if (timerTip) timerTip.style.display = (newMode === 'countdown') ? 'block' : 'none';
+
+  if (timerTitle) {
+    if (newMode === 'countdown') timerTitle.textContent = 'Rest timer';
+    else if (newMode === 'countup') timerTitle.textContent = 'Stopwatch';
+    else if (newMode === 'tabata') timerTitle.textContent = 'Tabata interval timer';
+  }
+
+  applyTabataPhaseStyle(null);
+
+  if (newMode === 'countdown') {
+    state.timer.remainingSec = 0;
+    $('timer').textContent = fmtTimer(0);
+  } else if (newMode === 'countup') {
+    state.timer.elapsedSec = 0;
+    $('timer').textContent = fmtTimer(0);
+  } else if (newMode === 'tabata') {
+    state.timer.remainingSec = 5;
+    state.timer.tabata.phase = 'prep';
+    state.timer.tabata.round = 1;
+    $('timer').textContent = fmtTimer(5);
+  }
+
+  updateLiveSessionTitle(0);
+}
+
+function tick() {
+  if (!state.timer.running) return;
+
+  const mode = state.timer.mode;
+
+  if (mode === 'countdown') {
+    state.timer.remainingSec = Math.max(0, state.timer.remainingSec - 1);
+    $('timer').textContent = fmtTimer(state.timer.remainingSec);
+    updateLiveSessionTitle(state.timer.remainingSec);
+
+    if (state.timer.remainingSec <= 0) {
+      stopTimer();
+      if (navigator.vibrate) navigator.vibrate([120, 50, 120]);
+      playTone(880, 0.3);
+    }
+  } else if (mode === 'countup') {
+    state.timer.elapsedSec = (state.timer.elapsedSec || 0) + 1;
+    $('timer').textContent = fmtTimer(state.timer.elapsedSec);
+    updateLiveSessionTitle(state.timer.elapsedSec);
+  } else if (mode === 'tabata') {
+    state.timer.remainingSec = Math.max(0, state.timer.remainingSec - 1);
+    $('timer').textContent = fmtTimer(state.timer.remainingSec);
+    updateLiveSessionTitle(state.timer.remainingSec);
+
+    const phase = state.timer.tabata.phase;
+    const round = state.timer.tabata.round;
+    const maxRds = state.timer.tabata.maxRounds;
+
+    if (state.timer.remainingSec >= 1 && state.timer.remainingSec <= 3) {
+      playTone(440, 0.08);
+    }
+
+    if (state.timer.remainingSec <= 0) {
+      if (phase === 'prep') {
+        state.timer.tabata.phase = 'work';
+        state.timer.remainingSec = state.timer.tabata.workSec;
+        applyTabataPhaseStyle('work');
+        playTone(880, 0.4);
+        updateTabataDisplay();
+      } else if (phase === 'work') {
+        if (round >= maxRds) {
+          stopTimer();
+          applyTabataPhaseStyle(null);
+          playFanfare();
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+          }
+          resetTimer();
+        } else {
+          state.timer.tabata.phase = 'rest';
+          state.timer.remainingSec = state.timer.tabata.restSec;
+          applyTabataPhaseStyle('rest');
+          playTone(550, 0.4);
+          updateTabataDisplay();
+        }
+      } else if (phase === 'rest') {
+        state.timer.tabata.round += 1;
+        state.timer.tabata.phase = 'work';
+        state.timer.remainingSec = state.timer.tabata.workSec;
+        applyTabataPhaseStyle('work');
+        playTone(880, 0.4);
+        updateTabataDisplay();
+      }
     }
   }
 }
 
 function startTimer() {
   if (state.timer.running) return;
-  if (state.timer.remainingSec <= 0) {
-    state.timer.remainingSec = 90; // Default to 90 seconds (1:30)
-    $('timer').textContent = fmtTimer(state.timer.remainingSec);
+
+  const mode = state.timer.mode;
+
+  if (mode === 'countdown') {
+    if (state.timer.remainingSec <= 0) {
+      state.timer.remainingSec = 90;
+      $('timer').textContent = fmtTimer(state.timer.remainingSec);
+    }
+  } else if (mode === 'countup') {
+    // Keep current elapsed
+  } else if (mode === 'tabata') {
+    const setupEl = $('timer-tabata-setup');
+    const statusEl = $('timer-tabata-status');
+    const isFresh = state.timer.remainingSec <= 0 || (state.timer.tabata.phase === 'prep' && state.timer.remainingSec === 5 && state.timer.tabata.round === 1);
+    
+    if (isFresh) {
+      const wSec = Math.max(5, parseInt($('tabataWork')?.value || 20, 10));
+      const rSec = Math.max(0, parseInt($('tabataRest')?.value || 10, 10));
+      const maxRds = Math.max(1, parseInt($('tabataRounds')?.value || 8, 10));
+
+      state.timer.tabata.workSec = wSec;
+      state.timer.tabata.restSec = rSec;
+      state.timer.tabata.maxRounds = maxRds;
+      state.timer.tabata.round = 1;
+      state.timer.tabata.phase = 'prep';
+      state.timer.remainingSec = 5;
+
+      applyTabataPhaseStyle('prep');
+      updateTabataDisplay();
+    }
+
+    if (setupEl) setupEl.style.display = 'none';
+    if (statusEl) statusEl.style.display = 'flex';
   }
+
+  getAudioContext();
+
   state.timer.running = true;
   state.timer.interval = setInterval(tick, 1000);
   $('btnTimerStartStop').textContent = 'Pause';
@@ -1019,11 +1239,32 @@ function stopTimer() {
 
 function resetTimer() {
   stopTimer();
-  state.timer.remainingSec = 0;
-  $('timer').textContent = fmtTimer(0);
+  applyTabataPhaseStyle(null);
+  
+  const setupEl = $('timer-tabata-setup');
+  const statusEl = $('timer-tabata-status');
+
+  if (state.timer.mode === 'countdown') {
+    state.timer.remainingSec = 0;
+    $('timer').textContent = fmtTimer(0);
+  } else if (state.timer.mode === 'countup') {
+    state.timer.elapsedSec = 0;
+    $('timer').textContent = fmtTimer(0);
+  } else if (state.timer.mode === 'tabata') {
+    state.timer.remainingSec = 5;
+    state.timer.tabata.phase = 'prep';
+    state.timer.tabata.round = 1;
+    $('timer').textContent = fmtTimer(5);
+    
+    if (setupEl) setupEl.style.display = 'block';
+    if (statusEl) statusEl.style.display = 'none';
+  }
 }
 
 function addRest(sec) {
+  if (state.timer.mode !== 'countdown') {
+    switchTimerMode('countdown');
+  }
   state.timer.remainingSec += (sec|0);
   $('timer').textContent = fmtTimer(state.timer.remainingSec);
   startTimer();
@@ -1451,6 +1692,7 @@ function renderDashboard() {
 
   renderPlan();
   renderRecentActivity();
+  renderAnalytics();
 }
 function updateGoalFieldVisibility() {
   const t = String($('primaryType')?.value || '').trim();
@@ -1545,7 +1787,20 @@ function saveGoalsFromForm() {
     if (progressVal) goal.best5kMin = progressVal;
   } else if (t === 'lose_weight') {
     if (baselineVal) goal.startWeightLbs = baselineVal;
-    if (progressVal) goal.currentWeightLbs = progressVal;
+    if (progressVal) {
+      goal.currentWeightLbs = progressVal;
+      
+      // Update weight trend history
+      goal.weightHistory = state.primaryGoal?.weightHistory || [];
+      const todayStr = ymd(new Date());
+      const existsIdx = goal.weightHistory.findIndex(h => h.date === todayStr);
+      if (existsIdx !== -1) {
+        goal.weightHistory[existsIdx].weight = progressVal;
+      } else {
+        goal.weightHistory.push({ date: todayStr, weight: progressVal });
+      }
+      goal.weightHistory.sort((a, b) => a.date.localeCompare(b.date));
+    }
   }
 
   state.primaryGoal = goal;
@@ -2094,9 +2349,14 @@ function renderWorkoutIdeas() {
         ${exercisesSummary}
       </div>
       
-      <button class="btn primary-gradient start-idea-btn" style="margin-top:auto; width:100%; justify-content:center;" data-id="${idea.id}" type="button">
-        Start Workout
-      </button>
+      <div class="row" style="margin-top: auto; gap: 8px; width: 100%;">
+        <button class="btn primary-gradient start-idea-btn" style="flex: 1; justify-content: center;" data-id="${idea.id}" type="button">
+          Start
+        </button>
+        <button class="btn secondary clone-idea-btn" style="padding: 8px 12px;" data-id="${idea.id}" title="Clone to Custom Routines" type="button">
+          Clone
+        </button>
+      </div>
     `;
     container.appendChild(card);
   });
@@ -2128,6 +2388,32 @@ function renderWorkoutIdeas() {
 
       // Launch workout
       startRoutine(newRoutine.id);
+    });
+  });
+
+  container.querySelectorAll('.clone-idea-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ideaId = btn.getAttribute('data-id');
+      const idea = library.find(i => i.id === ideaId);
+      if (!idea) return;
+
+      const exercises = idea.exercises.map(ex => ({
+        id: uid(),
+        name: `${ex.name} (${ex.reps})`
+      }));
+
+      const newRoutine = {
+        id: uid(),
+        name: idea.name,
+        desc: `${idea.difficulty} · Category: ${displayCategory(idea.category)}`,
+        exercises: exercises
+      };
+
+      state.routines.unshift(newRoutine);
+      saveRoutines();
+      renderRoutines();
+      
+      alert(`Cloned "${idea.name}" to your Custom Routines.`);
     });
   });
 }
@@ -2325,6 +2611,8 @@ function wire() {
     const id = btn.getAttribute('data-id');
     if (action === 'start') startRoutine(id);
     if (action === 'edit') editRoutine(id);
+    if (action === 'clone') cloneRoutine(id);
+    if (action === 'delete') deleteRoutine(id);
   });
 
   $('exerciseList')?.addEventListener('click', (e) => {
@@ -2368,6 +2656,383 @@ function wire() {
       switchTab(tabId);
     });
   });
+
+  // Timer Mode toggles
+  document.querySelectorAll('.timer-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      if (mode) switchTimerMode(mode);
+    });
+  });
+
+  // Analytics graph selector toggles
+  document.querySelectorAll('#analyticsToggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.analyticsChart = btn.getAttribute('data-chart') || 'consistency';
+      renderAnalytics();
+    });
+  });
+
+  // History modal show/hide wiring
+  $('btnShowAllLogs')?.addEventListener('click', showHistoryModal);
+  $('btnHistoryModalClose')?.addEventListener('click', hideHistoryModal);
+  $('modalHistory')?.addEventListener('click', (e) => {
+    if (e.target === $('modalHistory')) hideHistoryModal();
+  });
+}
+
+// Custom routine duplication
+function cloneRoutine(routineId) {
+  const original = state.routines.find(r => r.id === routineId);
+  if (!original) return;
+  
+  const exercises = (original.exercises || []).map(ex => ({
+    id: uid(),
+    name: ex.name
+  }));
+  
+  const cloned = {
+    id: uid(),
+    name: `${original.name} (Copy)`,
+    desc: original.desc || '',
+    exercises: exercises
+  };
+  
+  state.routines.unshift(cloned);
+  saveRoutines();
+  renderRoutines();
+}
+
+// Custom routine deletion
+function deleteRoutine(routineId) {
+  if (!confirm('Are you sure you want to delete this custom routine?')) return;
+  state.routines = state.routines.filter(r => r.id !== routineId);
+  saveRoutines();
+  renderRoutines();
+}
+
+// Analytics Rendering Dispatcher
+function renderAnalytics() {
+  const container = $('analyticsChartContainer');
+  if (!container) return;
+
+  const currentChart = state.analyticsChart || 'consistency';
+
+  // Toggle active button class
+  document.querySelectorAll('#analyticsToggle button').forEach(btn => {
+    if (btn.getAttribute('data-chart') === currentChart) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const desc = $('analyticsMutedDesc');
+  if (currentChart === 'consistency') {
+    if (desc) desc.textContent = 'Weekly workout completions for the last 7 weeks.';
+    renderConsistencyChart(container);
+  } else {
+    if (desc) desc.textContent = 'Body weight progression tracking (lbs).';
+    renderWeightChart(container);
+  }
+}
+
+function renderConsistencyChart(container) {
+  const target = getWeeklyWorkoutsTarget();
+  const weekData = [];
+  const now = new Date();
+  
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+    const key = weekKey(d);
+    const label = getWeekLabel(d);
+    
+    const count = (state.sessions || []).filter(s => {
+      if (!s.endedAt) return false;
+      return weekKey(new Date(s.endedAt)) === key;
+    }).length;
+    
+    weekData.push({ label, count });
+  }
+
+  const maxCount = Math.max(target + 1, ...weekData.map(d => d.count), 4);
+  const heightVal = 160;
+  const widthVal = 500;
+  const paddingBottom = 30;
+  const paddingTop = 20;
+  const paddingLeft = 40;
+  const paddingRight = 60;
+  
+  const graphHeight = heightVal - paddingTop - paddingBottom;
+  const graphWidth = widthVal - paddingLeft - paddingRight;
+  const colWidth = graphWidth / 7;
+  const barWidth = 22;
+
+  const valToY = (val) => heightVal - paddingBottom - (val / maxCount) * graphHeight;
+
+  let svgContent = `
+    <svg viewBox="0 0 ${widthVal} ${heightVal}" width="100%" height="100%">
+      <defs>
+        <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" />
+          <stop offset="100%" stop-color="var(--accent-light)" />
+        </linearGradient>
+        <linearGradient id="barGradSuccess" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" />
+          <stop offset="100%" stop-color="#34d399" />
+        </linearGradient>
+      </defs>
+      
+      <line x1="30" y1="${valToY(target)}" x2="440" y2="${valToY(target)}" class="chart-grid" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4,4" />
+      <text x="445" y="${valToY(target) + 3}" font-size="10" font-weight="700" fill="#f59e0b">Target (${target})</text>
+  `;
+
+  weekData.forEach((w, i) => {
+    const x = paddingLeft + i * colWidth + (colWidth - barWidth) / 2;
+    const y = valToY(w.count);
+    const barHeight = Math.max(2, heightVal - paddingBottom - y);
+    const isSuccess = w.count >= target;
+
+    svgContent += `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="5" fill="${isSuccess ? 'url(#barGradSuccess)' : 'url(#barGrad)'}" class="chart-bar" />
+      <text x="${x + barWidth / 2}" y="${y - 5}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--text)">${w.count}</text>
+      <text x="${x + barWidth / 2}" y="${heightVal - 10}" text-anchor="middle" font-size="10" fill="var(--muted)">${w.label}</text>
+    `;
+  });
+
+  svgContent += `
+      <line x1="30" y1="${heightVal - paddingBottom}" x2="440" y2="${heightVal - paddingBottom}" stroke="var(--border)" stroke-width="1" />
+    </svg>
+  `;
+
+  container.innerHTML = svgContent;
+}
+
+function renderWeightChart(container) {
+  const history = state.primaryGoal?.weightHistory || [];
+  
+  if (!state.primaryGoal || state.primaryGoal.type !== 'lose_weight' || history.length === 0) {
+    container.innerHTML = `
+      <svg viewBox="0 0 500 160" width="100%" height="100%">
+        <text x="250" y="80" text-anchor="middle" fill="var(--muted)" font-size="13" font-family="'Outfit', sans-serif">
+          No weight logs found. Set Weight Loss goal & log weights in Settings.
+        </text>
+      </svg>
+    `;
+    return;
+  }
+
+  const points = history.slice(-10);
+  const weights = points.map(p => p.weight);
+  const minW = Math.min(...weights);
+  const maxW = Math.max(...weights);
+  const wDiff = maxW - minW;
+  const padding = wDiff === 0 ? 5 : wDiff * 0.15;
+  const yMin = minW - padding;
+  const yMax = maxW + padding;
+
+  const heightVal = 160;
+  const widthVal = 500;
+  const paddingBottom = 30;
+  const paddingTop = 25;
+  const paddingLeft = 45;
+  const paddingRight = 35;
+
+  const graphHeight = heightVal - paddingTop - paddingBottom;
+  const graphWidth = widthVal - paddingLeft - paddingRight;
+  const colWidth = points.length > 1 ? graphWidth / (points.length - 1) : graphWidth;
+
+  const valToY = (w) => heightVal - paddingBottom - ((w - yMin) / (yMax - yMin)) * graphHeight;
+  const valToX = (idx) => paddingLeft + idx * colWidth;
+
+  let pathD = "";
+  points.forEach((pt, idx) => {
+    const x = valToX(idx);
+    const y = valToY(pt.weight);
+    if (idx === 0) pathD += `M ${x} ${y}`;
+    else pathD += ` L ${x} ${y}`;
+  });
+
+  let areaD = "";
+  if (points.length > 1) {
+    areaD = pathD + ` L ${valToX(points.length - 1)} ${heightVal - paddingBottom} L ${valToX(0)} ${heightVal - paddingBottom} Z`;
+  }
+
+  let svgContent = `
+    <svg viewBox="0 0 ${widthVal} ${heightVal}" width="100%" height="100%">
+      <defs>
+        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--accent)" />
+          <stop offset="100%" stop-color="#4f46e5" />
+        </linearGradient>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.25" />
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0" />
+        </linearGradient>
+      </defs>
+  `;
+
+  const gridLinesCount = 3;
+  for (let i = 0; i < gridLinesCount; i++) {
+    const ratio = i / (gridLinesCount - 1);
+    const val = yMin + ratio * (yMax - yMin);
+    const y = valToY(val);
+    svgContent += `
+      <line x1="${paddingLeft}" y1="${y}" x2="${widthVal - paddingRight}" y2="${y}" class="chart-grid" stroke="var(--border)" stroke-width="0.8" />
+      <text x="${paddingLeft - 8}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(val)}</text>
+    `;
+  }
+
+  if (points.length > 1) {
+    svgContent += `
+      <path d="${areaD}" fill="url(#areaGrad)" />
+      <path d="${pathD}" fill="none" stroke="url(#lineGrad)" stroke-width="3" class="chart-line" stroke-linecap="round" stroke-linejoin="round" />
+    `;
+  }
+
+  points.forEach((pt, idx) => {
+    const x = valToX(idx);
+    const y = valToY(pt.weight);
+    
+    svgContent += `
+      <circle cx="${x}" cy="${y}" r="4" fill="var(--card)" stroke="var(--accent)" stroke-width="2" class="chart-point" />
+      <text x="${x}" y="${y - 8}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--text)">${pt.weight}</text>
+      <text x="${x}" y="${heightVal - 10}" text-anchor="middle" font-size="9" fill="var(--muted)">${formatDateMD(pt.date)}</text>
+    `;
+  });
+
+  svgContent += `
+    </svg>
+  `;
+
+  container.innerHTML = svgContent;
+}
+
+function getWeekLabel(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(date.setDate(diff));
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[monday.getMonth()]} ${monday.getDate()}`;
+}
+
+function formatDateMD(dateStr) {
+  try {
+    const parts = dateStr.split('-');
+    return `${Number(parts[1])}/${Number(parts[2])}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+// Modal for Historical Logs
+function showHistoryModal() {
+  const modal = $('modalHistory');
+  if (!modal) return;
+  modal.classList.add('active');
+  renderHistoryLogs();
+}
+
+function hideHistoryModal() {
+  const modal = $('modalHistory');
+  if (modal) modal.classList.remove('active');
+}
+
+function renderHistoryLogs() {
+  const container = $('historyLogsList');
+  if (!container) return;
+  
+  const completedSessions = (state.sessions || []).filter(s => s.endedAt);
+  
+  if (completedSessions.length === 0) {
+    container.innerHTML = '<div class="muted" style="text-align: center; padding: 20px;">No workout history logs yet.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  completedSessions.forEach(s => {
+    const r = activeRoutine(s) || (state.workoutLibrary || []).find(w => w.id === s.routineId);
+    const routineName = r ? r.name : 'Custom Workout';
+    const dateStr = new Date(s.endedAt).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const minutes = getSessionDurationMin(s);
+    
+    let exercisesHtml = '';
+    if (s.entries && Object.keys(s.entries).length > 0) {
+      exercisesHtml = '<div style="margin-top: 8px; display: grid; gap: 4px;">';
+      Object.keys(s.entries).forEach(exId => {
+        const sets = s.entries[exId] || [];
+        if (sets.length > 0) {
+          let exName = 'Exercise';
+          const routineEx = r?.exercises?.find(e => e.id === exId);
+          if (routineEx) {
+            exName = routineEx.name;
+          } else {
+            state.routines.forEach(rt => {
+              const found = rt.exercises?.find(e => e.id === exId);
+              if (found) exName = found.name;
+            });
+          }
+          
+          const setsSummary = sets.map((st, idx) => `#${idx + 1}: ${st.w} lb x ${st.r}`).join(' · ');
+          exercisesHtml += `
+            <div class="small" style="line-height: 1.4;">
+              <strong>${escapeHtml(exName)}</strong>: <span class="muted">${escapeHtml(setsSummary)}</span>
+            </div>
+          `;
+        }
+      });
+      exercisesHtml += '</div>';
+    } else {
+      exercisesHtml = '<div class="small muted" style="margin-top: 4px;">No exercises logged.</div>';
+    }
+
+    let notesHtml = '';
+    if (s.notes && s.notes.trim()) {
+      notesHtml = `<div class="small italic muted" style="margin-top: 8px; border-left: 2px solid var(--accent); padding-left: 8px;">"${escapeHtml(s.notes.trim())}"</div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'routineItem';
+    card.style.flexDirection = 'column';
+    card.style.alignItems = 'stretch';
+    card.style.gap = '8px';
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+        <div>
+          <div style="font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 15px;">${escapeHtml(routineName)}</div>
+          <div class="small" style="color: var(--muted); margin-top: 2px;">${dateStr} · ⏱️ ${minutes} min</div>
+        </div>
+        <button class="btn danger" style="padding: 6px 10px; font-size: 12px;" data-delete-session-id="${s.id}" type="button">Delete</button>
+      </div>
+      ${exercisesHtml}
+      ${notesHtml}
+    `;
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll('[data-delete-session-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const sessionId = btn.getAttribute('data-delete-session-id');
+      if (sessionId) deleteSession(sessionId);
+    });
+  });
+}
+
+function deleteSession(sessionId) {
+  if (!confirm('Are you sure you want to delete this workout history log? This will recalculate all streak and consistency metrics.')) return;
+  state.sessions = state.sessions.filter(s => s.id !== sessionId);
+  saveSessions();
+  
+  renderHistoryLogs();
+  renderDashboard();
 }
 
 function applyTheme() {
@@ -2387,12 +3052,10 @@ function boot() {
   loadState();
   applyTheme();
   
-  // Wire events
   wire();
   wireDashboard();
   wireGenerator();
   
-  // Render views
   renderWorkoutIdeas();
   renderDashboard();
   renderRoutines();
@@ -2400,16 +3063,15 @@ function boot() {
   
   hydrateGoalsForm();
   
-  $('timer').textContent = fmtTimer(0);
+  $('timer').textContent = fmtTimer(5);
+  switchTimerMode('countdown'); // Ensure it sets up correctly on boot
   
-  // Auto-switch to active session tab if in progress
   if (state.activeSessionId) {
     switchTab('workout');
   } else {
     switchTab('dashboard');
   }
   
-  // Trigger background sync of workouts library
   syncWorkoutLibrary();
 }
 
