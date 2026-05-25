@@ -1401,8 +1401,8 @@ function renderGoalList(elId, period) {
     const actionsHtml = isAuto
       ? `<span class="badge-auto">Auto</span>`
       : `
-        <button class="btn" data-goal-action="inc" data-goal-id="${g.id}" type="button">+1</button>
-        <button class="btn secondary" data-goal-action="dec" data-goal-id="${g.id}" type="button">-1</button>
+        <button class="btn-sm btn-dec" data-goal-action="dec" data-goal-id="${g.id}" type="button" title="Decrease">−</button>
+        <button class="btn-sm btn-inc" data-goal-action="inc" data-goal-id="${g.id}" type="button" title="Increase">+</button>
       `;
 
     if (period === 'daily') {
@@ -1415,9 +1415,9 @@ function renderGoalList(elId, period) {
             <div class="small">${cur} / ${g.target}</div>
           </div>
         </div>
-        <div class="row wrap" style="align-items: center; gap: 8px;">
+        <div class="row wrap" style="align-items: center; gap: 6px;">
           ${actionsHtml}
-          <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
+          <button class="btn-sm btn-del" data-goal-action="del" data-goal-id="${g.id}" type="button" title="Delete">✕</button>
         </div>
       `;
     } else {
@@ -1428,9 +1428,9 @@ function renderGoalList(elId, period) {
           <div class="small">${cur} / ${g.target} (${g.period})</div>
           <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
         </div>
-        <div class="row wrap">
+        <div class="row wrap" style="align-items: center; gap: 6px;">
           ${actionsHtml}
-          <button class="btn danger" style="padding: 8px 10px;" data-goal-action="del" data-goal-id="${g.id}" type="button">Del</button>
+          <button class="btn-sm btn-del" data-goal-action="del" data-goal-id="${g.id}" type="button" title="Delete">✕</button>
         </div>
       `;
     }
