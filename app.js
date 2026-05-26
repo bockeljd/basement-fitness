@@ -1408,14 +1408,14 @@ function renderGoalList(elId, period) {
     if (period === 'daily') {
       item.className = `habit-item ${cur >= g.target ? 'completed' : ''}`;
       item.innerHTML = `
-        <div class="habit-info">
+        <div class="habit-info" style="min-width: 0; flex: 1;">
           <button class="habit-checkbox-btn" data-goal-action="toggle" data-goal-id="${g.id}" type="button">✓</button>
-          <div>
-            <div class="habit-title" style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
+          <div style="min-width: 0; flex: 1;">
+            <div class="habit-title" style="font-weight:800; font-family:'Outfit',sans-serif; line-height: 1.25; overflow-wrap: break-word; word-break: break-word;">${escapeHtml(g.title)}</div>
             <div class="small">${cur} / ${g.target}</div>
           </div>
         </div>
-        <div class="row wrap" style="align-items: center; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; flex-wrap: nowrap;">
           ${actionsHtml}
           <button class="btn-sm btn-del" data-goal-action="del" data-goal-id="${g.id}" type="button" title="Delete">✕</button>
         </div>
@@ -1423,12 +1423,12 @@ function renderGoalList(elId, period) {
     } else {
       item.className = 'goalItem';
       item.innerHTML = `
-        <div style="flex:1;min-width:180px">
-          <div style="font-weight:800; font-family:'Outfit',sans-serif;">${escapeHtml(g.title)}</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight:800; font-family:'Outfit',sans-serif; line-height: 1.25; overflow-wrap: break-word; word-break: break-word;">${escapeHtml(g.title)}</div>
           <div class="small">${cur} / ${g.target} (${g.period})</div>
           <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
         </div>
-        <div class="row wrap" style="align-items: center; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; flex-wrap: nowrap;">
           ${actionsHtml}
           <button class="btn-sm btn-del" data-goal-action="del" data-goal-id="${g.id}" type="button" title="Delete">✕</button>
         </div>
