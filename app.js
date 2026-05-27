@@ -2971,7 +2971,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       }
     }
 
-    // Inject a warm-up exercise if the focus is not purely Stretching
+    // Inject two warm-up exercises if the focus is not purely Stretching
     if (selected.length > 0 && !(selectedFoci.length === 1 && selectedFoci[0] === 'Stretching & Mobility')) {
       const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
       const allExercises = [
@@ -2981,117 +2981,128 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet));
       
       if (warmupPool.length > 0) {
-        // Exclude exercises already in the routine to prevent duplicates
-        const currentNames = selected.map(ex => ex.name);
-        const candidates = warmupPool.filter(ex => !currentNames.includes(ex.name));
-        const finalPool = candidates.length > 0 ? candidates : warmupPool;
-
-        // Score warm-ups by relevance to selected muscle focus areas
-        let bestMatches = [];
-        const fociLower = selectedFoci.map(f => f.toLowerCase());
+        // 1. Dynamic Heart-rate Warm-up (Jumping Jacks or High Knees)
+        const currentNames1 = selected.map(ex => ex.name);
+        const cardioCandidates = warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name) && !currentNames1.includes(ex.name));
+        const finalCardioPool = cardioCandidates.length > 0 ? cardioCandidates : warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name));
         
-        finalPool.forEach(ex => {
-          const targetL = (ex.target || '').toLowerCase();
-          const infoL = (ex.info || '').toLowerCase();
+        if (finalCardioPool.length > 0) {
+          const pickCardio = finalCardioPool[Math.floor(Math.random() * finalCardioPool.length)];
+          selected.push({
+            ...pickCardio,
+            sourceGroup: 'Warm-up'
+          });
+        }
+
+        // 2. Mobility Warm-up Stretch (World's Greatest Stretch or Cat-Cow Stretch)
+        const currentNames2 = selected.map(ex => ex.name);
+        const mobilityCandidates = warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name) && !currentNames2.includes(ex.name));
+        const finalMobilityPool = mobilityCandidates.length > 0 ? mobilityCandidates : warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name));
+        
+        if (finalMobilityPool.length > 0) {
+          let bestMobility = [];
+          const fociLower = selectedFoci.map(f => f.toLowerCase());
           
-          let score = 0;
-          fociLower.forEach(focus => {
-            if (focus === 'back') {
-              if (targetL.includes('spine') || targetL.includes('back') || infoL.includes('back') || infoL.includes('spine')) score += 2;
-            }
-            if (focus === 'shoulders' || focus === 'chest') {
-              if (targetL.includes('shoulders') || targetL.includes('chest') || infoL.includes('shoulders') || infoL.includes('chest')) score += 2;
-            }
-            if (focus === 'legs') {
-              if (targetL.includes('hips') || targetL.includes('legs') || targetL.includes('calves') || infoL.includes('knees') || infoL.includes('legs')) score += 2;
-            }
-            if (focus === 'cardio') {
-              if (targetL.includes('warm-up') || targetL.includes('cardio') || infoL.includes('heart rate')) score += 2;
-            }
+          finalMobilityPool.forEach(ex => {
+            const targetL = (ex.target || '').toLowerCase();
+            const infoL = (ex.info || '').toLowerCase();
+            let score = 0;
+            fociLower.forEach(focus => {
+              if (focus === 'back' || focus === 'core') {
+                if (ex.name === "Cat-Cow Stretch") score += 2;
+              }
+              if (focus === 'legs' || focus === 'shoulders' || focus === 'chest') {
+                if (ex.name === "World's Greatest Stretch") score += 2;
+              }
+            });
+            bestMobility.push({ ex, score });
           });
           
-          if (score > 0) {
-            bestMatches.push({ ex, score });
-          }
-        });
-        
-        let finalWarmup;
-        if (bestMatches.length > 0) {
-          bestMatches.sort((a, b) => b.score - a.score);
-          const maxScore = bestMatches[0].score;
-          const topCandidates = bestMatches.filter(item => item.score === maxScore).map(item => item.ex);
-          finalWarmup = topCandidates[Math.floor(Math.random() * topCandidates.length)];
-        } else {
-          finalWarmup = finalPool[Math.floor(Math.random() * finalPool.length)];
+          bestMobility.sort((a, b) => b.score - a.score);
+          const finalMobility = bestMobility[0].ex;
+          selected.push({
+            ...finalMobility,
+            sourceGroup: 'Warm-up'
+          });
         }
-        
-        selected.push({
-          ...finalWarmup,
-          sourceGroup: 'Warm-up'
-        });
       }
     }
 
-    // Inject a cool-down stretch if Stretching & Mobility is not already selected in the focus checklist
+    // Inject cool-down stretches matched to active muscle focus areas (max 2 stretches)
     if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
       const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
       const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet));
       
       if (matchStretches.length > 0) {
-        // Exclude exercises already in the routine to prevent duplicates
-        const currentNames = selected.map(ex => ex.name);
-        const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
-        const finalPool = candidates.length > 0 ? candidates : matchStretches;
-
-        // Score stretches by relevance to selected muscle focus areas
-        let bestMatches = [];
-        const fociLower = selectedFoci.map(f => f.toLowerCase());
+        // Find targeted muscle foci (excluding Cardio and Stretching)
+        const activeFoci = selectedFoci.filter(f => f !== 'Cardio' && f !== 'Stretching & Mobility');
+        // Limit to top 2 muscle groups to keep workout length reasonable
+        const fociToStretch = activeFoci.slice(0, 2);
         
-        finalPool.forEach(ex => {
-          const targetL = (ex.target || '').toLowerCase();
-          const infoL = (ex.info || '').toLowerCase();
-          
-          let score = 0;
-          fociLower.forEach(focus => {
-            if (focus === 'back') {
-              if (targetL.includes('back') || targetL.includes('spine') || infoL.includes('back') || infoL.includes('spine')) score += 2;
-            }
-            if (focus === 'chest') {
-              if (targetL.includes('chest') || infoL.includes('chest') || targetL.includes('abs') || infoL.includes('abdominal')) score += 2;
-            }
-            if (focus === 'shoulders') {
-              if (targetL.includes('shoulders') || infoL.includes('shoulders')) score += 2;
-            }
-            if (focus === 'legs') {
-              if (targetL.includes('hips') || targetL.includes('hamstring') || targetL.includes('calves') || infoL.includes('hips') || infoL.includes('hamstring')) score += 2;
-            }
-            if (focus === 'core') {
-              if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
-            }
-            if (focus === 'biceps' || focus === 'triceps') {
-              if (targetL.includes('shoulders') || targetL.includes('upper body') || targetL.includes('spine')) score += 1;
-            }
+        if (fociToStretch.length === 0) {
+          // Fallback if they only selected Cardio: just add one random stretch
+          const currentNames = selected.map(ex => ex.name);
+          const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
+          const finalPool = candidates.length > 0 ? candidates : matchStretches;
+          const pick = finalPool[Math.floor(Math.random() * finalPool.length)];
+          selected.push({
+            ...pick,
+            sourceGroup: 'Stretching & Mobility'
           });
-          
-          if (score > 0) {
-            bestMatches.push({ ex, score });
-          }
-        });
-        
-        let finalStretch;
-        if (bestMatches.length > 0) {
-          bestMatches.sort((a, b) => b.score - a.score);
-          const maxScore = bestMatches[0].score;
-          const topCandidates = bestMatches.filter(item => item.score === maxScore).map(item => item.ex);
-          finalStretch = topCandidates[Math.floor(Math.random() * topCandidates.length)];
         } else {
-          finalStretch = finalPool[Math.floor(Math.random() * finalPool.length)];
+          fociToStretch.forEach(focus => {
+            // Find best stretch for this specific focus group
+            let bestMatches = [];
+            const focusLower = focus.toLowerCase();
+            
+            // Exclude exercises already in the routine to prevent duplicates
+            const currentNames = selected.map(ex => ex.name);
+            const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
+            const poolForFocus = candidates.length > 0 ? candidates : matchStretches;
+            
+            poolForFocus.forEach(ex => {
+              const targetL = (ex.target || '').toLowerCase();
+              const infoL = (ex.info || '').toLowerCase();
+              let score = 0;
+              
+              if (focusLower === 'back') {
+                if (targetL.includes('back') || targetL.includes('spine') || infoL.includes('back') || infoL.includes('spine')) score += 2;
+              }
+              if (focusLower === 'chest') {
+                if (targetL.includes('chest') || infoL.includes('chest') || targetL.includes('abs') || infoL.includes('abdominal')) score += 2;
+              }
+              if (focusLower === 'shoulders') {
+                if (targetL.includes('shoulders') || infoL.includes('shoulders')) score += 2;
+              }
+              if (focusLower === 'legs') {
+                if (targetL.includes('hips') || targetL.includes('hamstring') || targetL.includes('calves') || infoL.includes('hips') || infoL.includes('hamstring')) score += 2;
+              }
+              if (focusLower === 'core') {
+                if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
+              }
+              if (focusLower === 'biceps' || focusLower === 'triceps') {
+                if (targetL.includes('shoulders') || targetL.includes('upper body') || targetL.includes('spine')) score += 1;
+              }
+              
+              if (score > 0) {
+                bestMatches.push({ ex, score });
+              }
+            });
+            
+            let finalStretch;
+            if (bestMatches.length > 0) {
+              bestMatches.sort((a, b) => b.score - a.score);
+              finalStretch = bestMatches[0].ex;
+            } else {
+              finalStretch = poolForFocus[Math.floor(Math.random() * poolForFocus.length)];
+            }
+            
+            selected.push({
+              ...finalStretch,
+              sourceGroup: 'Stretching & Mobility'
+            });
+          });
         }
-        
-        selected.push({
-          ...finalStretch,
-          sourceGroup: 'Stretching & Mobility'
-        });
       }
     }
 
