@@ -388,5 +388,169 @@
         "reps": "3 sets x 10 reps"
       }
     ]
+  },
+  {
+    "id": "idea-barbell-lower",
+    "name": "Lower Body Barbell Power",
+    "desc": "Advanced heavy lifting lower body workout focused on building strength in the quads, hamstrings, and glutes.",
+    "category": "strength",
+    "duration": 35,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Barbell Back Squat",
+        "reps": "4 sets x 6 reps"
+      },
+      {
+        "name": "Barbell Romanian Deadlift",
+        "reps": "3 sets x 8 reps"
+      },
+      {
+        "name": "Barbell Hip Thrust",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "Barbell Standing Calf Raise",
+        "reps": "3 sets x 15 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-calisthenics-strength",
+    "name": "Calisthenics Strength Circuit",
+    "desc": "Advanced bodyweight-only routine focused on building raw upper body power and control.",
+    "category": "bodyweight",
+    "duration": 30,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Pull-ups",
+        "reps": "4 sets x 8 reps"
+      },
+      {
+        "name": "Parallel Bar Dips",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "Decline Push-ups",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Hanging Knee Raises",
+        "reps": "3 sets x 12 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-athletic-metcon",
+    "name": "Athletic Metcon Sweeper",
+    "desc": "High-intensity metabolic conditioning circuit combining dumbells and bodyweight for athletic endurance.",
+    "category": "hiit",
+    "duration": 20,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "Jumping Jacks",
+        "reps": "3 sets x 45 sec"
+      },
+      {
+        "name": "DB Thrusters",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Burpees",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "DB Renegade Rows",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Mountain Climbers",
+        "reps": "3 sets x 30 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-restoration-stretch",
+    "name": "Deep Restoration Stretch",
+    "desc": "A beginner active recovery routine focusing on deep breathing, spinal alignment, and releasing muscle tightness.",
+    "category": "bodyweight",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Child's Pose",
+        "reps": "2 sets x 45 sec hold"
+      },
+      {
+        "name": "Cobra Stretch",
+        "reps": "2 sets x 45 sec hold"
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Downward Dog",
+        "reps": "2 sets x 45 sec hold"
+      }
+    ]
+  },
+  {
+    "id": "idea-dumbbell-core-arms",
+    "name": "Dumbbell Arms & Core Focus",
+    "desc": "Volume-focused workout targeting the biceps, triceps, and abdominal stability with dumbbells.",
+    "category": "strength",
+    "duration": 25,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Bicep Curls",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Overhead Tricep Extensions",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Hammer Curls",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Russian Twists",
+        "reps": "3 sets x 20 reps"
+      },
+      {
+        "name": "Plank Hold",
+        "reps": "3 sets x 45 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-shoulder-sculptor",
+    "name": "Shoulder Sculptor (Dumbbells)",
+    "desc": "Focused accessory shoulder routine designed to hit all three heads of the deltoids for muscular balance.",
+    "category": "strength",
+    "duration": 20,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Shoulder Press",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "DB Lateral Raises",
+        "reps": "3 sets x 12-15 reps"
+      },
+      {
+        "name": "DB Front Raises",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Rear Delt Flyes",
+        "reps": "3 sets x 12-15 reps"
+      }
+    ]
   }
 ]

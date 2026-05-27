@@ -425,6 +425,170 @@ const WORKOUT_LIBRARY = [
         "reps": "3 sets x 10 reps"
       }
     ]
+  },
+  {
+    "id": "idea-barbell-lower",
+    "name": "Lower Body Barbell Power",
+    "desc": "Advanced heavy lifting lower body workout focused on building strength in the quads, hamstrings, and glutes.",
+    "category": "strength",
+    "duration": 35,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Barbell Back Squat",
+        "reps": "4 sets x 6 reps"
+      },
+      {
+        "name": "Barbell Romanian Deadlift",
+        "reps": "3 sets x 8 reps"
+      },
+      {
+        "name": "Barbell Hip Thrust",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "Barbell Standing Calf Raise",
+        "reps": "3 sets x 15 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-calisthenics-strength",
+    "name": "Calisthenics Strength Circuit",
+    "desc": "Advanced bodyweight-only routine focused on building raw upper body power and control.",
+    "category": "bodyweight",
+    "duration": 30,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Pull-ups",
+        "reps": "4 sets x 8 reps"
+      },
+      {
+        "name": "Parallel Bar Dips",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "Decline Push-ups",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Hanging Knee Raises",
+        "reps": "3 sets x 12 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-athletic-metcon",
+    "name": "Athletic Metcon Sweeper",
+    "desc": "High-intensity metabolic conditioning circuit combining dumbells and bodyweight for athletic endurance.",
+    "category": "hiit",
+    "duration": 20,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "Jumping Jacks",
+        "reps": "3 sets x 45 sec"
+      },
+      {
+        "name": "DB Thrusters",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Burpees",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "DB Renegade Rows",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Mountain Climbers",
+        "reps": "3 sets x 30 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-restoration-stretch",
+    "name": "Deep Restoration Stretch",
+    "desc": "A beginner active recovery routine focusing on deep breathing, spinal alignment, and releasing muscle tightness.",
+    "category": "bodyweight",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Child's Pose",
+        "reps": "2 sets x 45 sec hold"
+      },
+      {
+        "name": "Cobra Stretch",
+        "reps": "2 sets x 45 sec hold"
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Downward Dog",
+        "reps": "2 sets x 45 sec hold"
+      }
+    ]
+  },
+  {
+    "id": "idea-dumbbell-core-arms",
+    "name": "Dumbbell Arms & Core Focus",
+    "desc": "Volume-focused workout targeting the biceps, triceps, and abdominal stability with dumbbells.",
+    "category": "strength",
+    "duration": 25,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Bicep Curls",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Overhead Tricep Extensions",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Hammer Curls",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Russian Twists",
+        "reps": "3 sets x 20 reps"
+      },
+      {
+        "name": "Plank Hold",
+        "reps": "3 sets x 45 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-shoulder-sculptor",
+    "name": "Shoulder Sculptor (Dumbbells)",
+    "desc": "Focused accessory shoulder routine designed to hit all three heads of the deltoids for muscular balance.",
+    "category": "strength",
+    "duration": 20,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "DB Shoulder Press",
+        "reps": "3 sets x 10 reps"
+      },
+      {
+        "name": "DB Lateral Raises",
+        "reps": "3 sets x 12-15 reps"
+      },
+      {
+        "name": "DB Front Raises",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "DB Rear Delt Flyes",
+        "reps": "3 sets x 12-15 reps"
+      }
+    ]
   }
 ];
 
@@ -2407,7 +2571,8 @@ function extendPlan() {
     const isWorkoutDay = (daysSinceStart % cadence) === 0;
     
     if (isWorkoutDay) {
-      const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+      const workoutCount = state.plan.days.filter(d => d.kind === 'workout').length;
+      const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, workoutCount);
       state.plan.days.push({
         date: dateStr,
         kind: 'workout',
@@ -2436,11 +2601,13 @@ function regeneratePlan() {
   const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
 
   const planDays = [];
+  let workoutCount = 0;
   for (let i = 0; i < 14; i++) {
     const d = new Date(now.getTime() + i * 86400000);
     const isWorkoutDay = (i % cadence) === 0;
     if (isWorkoutDay) {
-      const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+      const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, workoutCount);
+      workoutCount++;
       planDays.push({
         date: ymd(d),
         kind: 'workout',
@@ -2481,7 +2648,7 @@ function generateTodayFromGoals() {
   if (item?.routine) return startPlannedWorkout(today);
   
   // If rest day, generate a custom session
-  const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+  const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, 0);
   state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
   saveRoutines();
   renderRoutines();
@@ -2521,10 +2688,19 @@ function renderPlan() {
     const badge = isWorkout ? '<span class="planBadge">Workout</span>' : '<span class="planBadge rest">Rest</span>';
     const label = isWorkout ? (d.routine?.name || 'Workout') : 'Recovery / Optional Walk';
 
+    let subtitle = '';
+    if (isWorkout && d.routine.exercises) {
+      const exNames = d.routine.exercises.slice(0, 3).map(e => e.name).join(', ');
+      subtitle = `Focus: ${exNames}${d.routine.exercises.length > 3 ? '...' : ''}`;
+    } else {
+      subtitle = 'Active recovery, stretching, or light walk';
+    }
+
     item.innerHTML = `
       <div class="planMeta">
         <div class="planDate">${isToday ? 'Today' : fmtDay(d.date)}</div>
         <div class="planTitle">${escapeHtml(label)}</div>
+        <div class="planExercises">${escapeHtml(subtitle)}</div>
       </div>
       <div class="planActions">
         ${badge}
@@ -3444,7 +3620,7 @@ function wireQuickStart() {
   });
 
   $('btnQuickStart')?.addEventListener('click', () => {
-    const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal);
+    const r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, 0);
     state.routines = [r, ...state.routines.filter(x => x.id !== r.id)];
     saveRoutines();
     renderRoutines();
@@ -3462,7 +3638,7 @@ function secondaryFinisher(secondaryGoal, eq) {
   return [];
 }
 
-function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal = null) {
+function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal = null, dayIndex = 0) {
   const goal = primaryGoal?.type || profile?.goal || 'general';
   const dur = Number(primaryGoal?.durationMin || profile?.durationMin || 30);
   const eq = new Set(profile?.equipment || ['bodyweight']);
@@ -3476,86 +3652,269 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
   let desc = `Goal: ${goal}, Duration: ${dur}m, Equipment: ${Array.from(eq).join(', ')}`;
   let exercises = [];
 
+  const variant = dayIndex % 3;
+
   if (goal === 'run_5k' || goal === '5k') {
-    name = 'Goal Session: 5K';
-    exercises = [
-      { id: uid(), name: 'Warm-up (5 min)' },
-      { id: uid(), name: wantsRun ? 'Intervals: run 1 min / walk 1 min (12–20 min)' : 'Intervals: run/walk (12–20 min)' },
-      { id: uid(), name: 'Easy pace (5–10 min)' },
-      { id: uid(), name: 'Cool down + stretch (5 min)' },
-    ];
+    if (variant === 0) {
+      name = 'Goal Session: 5K - Intervals';
+      exercises = [
+        { id: uid(), name: 'Warm-up (5 min)' },
+        { id: uid(), name: wantsRun ? 'Intervals: run 1 min / walk 1 min (12–20 min)' : 'Intervals: run/walk (12–20 min)' },
+        { id: uid(), name: 'Easy pace (5–10 min)' },
+        { id: uid(), name: 'Cool down + stretch (5 min)' },
+      ];
+    } else if (variant === 1) {
+      name = 'Goal Session: 5K - Tempo Run';
+      exercises = [
+        { id: uid(), name: 'Warm-up (5 min)' },
+        { id: uid(), name: wantsRun ? 'Tempo run: sustained moderate pace (15–20 min)' : 'Brisk walk/jog tempo intervals (15–20 min)' },
+        { id: uid(), name: 'Cool down + stretch (5 min)' },
+      ];
+    } else {
+      name = 'Goal Session: 5K - Recovery & Hills';
+      exercises = [
+        { id: uid(), name: 'Warm-up (5 min)' },
+        { id: uid(), name: wantsRun ? 'Hill repeats or light recovery jog (10–15 min)' : 'Brisk walk with incline/hills (10–15 min)' },
+        { id: uid(), name: 'Cool down + stretch (5 min)' },
+      ];
+    }
   } else if (goal === 'bar_hang' || goal === 'barhang') {
-    name = 'Goal Session: 2-min Hang';
     const baseline = Number(primaryGoal?.bestHangSec || primaryGoal?.maxHangSec || 30);
     const work = Math.max(10, Math.round(baseline * 0.6));
     const sets = baseline >= 60 ? 6 : 5;
-    exercises = hasPullup ? [
-      { id: uid(), name: `Dead hang — ${sets} x ${work}s (rest 60–90s)` },
-      { id: uid(), name: 'Scapular pull-ups — 3 x 8' },
-      { id: uid(), name: 'Farmer carry / grip — 3 x 45s' },
-      { id: uid(), name: 'Hollow hold — 3 x 25s' },
-    ] : [
-      { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
-      { id: uid(), name: 'Forearm extensor work — 3 x 20' },
-      { id: uid(), name: 'Plank — 3 x 30s' },
-    ];
-  } else if (goal === 'lose_weight' || goal === 'fat_loss') { 
-    name = 'Goal Session: Fat Loss (Full Body)';
-    exercises = hasDB ? [
-      { id: uid(), name: 'DB Goblet Squat' },
-      { id: uid(), name: 'DB Row' },
-      { id: uid(), name: 'DB Press' },
-      { id: uid(), name: 'Conditioning finisher (8–12 min)' },
-    ] : [
-      { id: uid(), name: 'Air Squat' },
-      { id: uid(), name: 'Pushups' },
-      { id: uid(), name: 'Hip hinge (good morning)' },
-      { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
-    ];
+
+    if (variant === 0) {
+      name = 'Goal Session: Grip & Upper Hang';
+      exercises = hasPullup ? [
+        { id: uid(), name: `Dead hang — ${sets} x ${work}s (rest 60–90s)` },
+        { id: uid(), name: 'Scapular pull-ups — 3 x 8' },
+        { id: uid(), name: 'Farmer carry / grip — 3 x 45s' },
+        { id: uid(), name: 'Hollow hold — 3 x 25s' },
+      ] : [
+        { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
+        { id: uid(), name: 'Forearm extensor work — 3 x 20' },
+        { id: uid(), name: 'Plank — 3 x 30s' },
+      ];
+    } else if (variant === 1) {
+      name = 'Goal Session: Core & Pull Hang';
+      exercises = hasPullup ? [
+        { id: uid(), name: `Active hang — ${sets - 1} x ${work + 5}s` },
+        { id: uid(), name: 'L-sit hang or knee raises — 3 x 10' },
+        { id: uid(), name: 'Chin-up holds — 3 x 15s' },
+        { id: uid(), name: 'Plank — 3 x 45s' },
+      ] : [
+        { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
+        { id: uid(), name: 'Pinch grip holds — 3 x 30s' },
+        { id: uid(), name: 'Hollow hold — 3 x 30s' },
+      ];
+    } else {
+      name = 'Goal Session: Shoulder Stability Hang';
+      exercises = hasPullup ? [
+        { id: uid(), name: `Dead hang — ${sets} x ${work}s` },
+        { id: uid(), name: 'Passive to active hang transitions — 3 x 8' },
+        { id: uid(), name: 'Farmer carry / grip — 3 x 45s' },
+        { id: uid(), name: 'Shoulder taps — 3 x 20' },
+      ] : [
+        { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
+        { id: uid(), name: 'Wrist curls — 3 x 15' },
+        { id: uid(), name: 'Plank shoulder taps — 3 x 20' },
+      ];
+    }
+  } else if (goal === 'lose_weight' || goal === 'fat_loss') {
+    if (variant === 0) {
+      name = 'Goal Session: Fat Loss (Upper Focus)';
+      exercises = hasDB ? [
+        { id: uid(), name: 'DB Bench / Floor Press' },
+        { id: uid(), name: 'DB Row' },
+        { id: uid(), name: 'DB Shoulder Press' },
+        { id: uid(), name: 'Conditioning finisher (8–12 min)' },
+      ] : [
+        { id: uid(), name: 'Pushups' },
+        { id: uid(), name: 'Bodyweight row / band row' },
+        { id: uid(), name: 'Pike pushups' },
+        { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
+      ];
+    } else if (variant === 1) {
+      name = 'Goal Session: Fat Loss (Lower Focus)';
+      exercises = hasDB ? [
+        { id: uid(), name: 'DB Goblet Squat' },
+        { id: uid(), name: 'DB Romanian Deadlift' },
+        { id: uid(), name: 'DB Lunges' },
+        { id: uid(), name: 'Conditioning finisher (8–12 min)' },
+      ] : [
+        { id: uid(), name: 'Air Squat' },
+        { id: uid(), name: 'Glute bridges' },
+        { id: uid(), name: 'Walking lunges' },
+        { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
+      ];
+    } else {
+      name = 'Goal Session: Fat Loss (Full Body)';
+      exercises = hasDB ? [
+        { id: uid(), name: 'DB Goblet Squat' },
+        { id: uid(), name: 'DB Row' },
+        { id: uid(), name: 'DB Press' },
+        { id: uid(), name: 'Conditioning finisher (8–12 min)' },
+      ] : [
+        { id: uid(), name: 'Air Squat' },
+        { id: uid(), name: 'Pushups' },
+        { id: uid(), name: 'Hip hinge (good morning)' },
+        { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
+      ];
+    }
   } else if (goal === 'pushups') {
-    name = 'Goal Session: Pushups';
     const baseline = Number(primaryGoal?.bestPushups || primaryGoal?.maxPushups || 10);
     const rep = Math.max(3, Math.floor(baseline * 0.6));
-    exercises = [
-      { id: uid(), name: `Pushups — 6 x ${rep} (rest 60s)` },
-      { id: uid(), name: 'Incline pushups — 3 x 12' },
-      { id: uid(), name: 'Plank — 3 x 30s' },
-    ];
+    if (variant === 0) {
+      name = 'Goal Session: Pushup Volume';
+      exercises = [
+        { id: uid(), name: `Pushups — 6 x ${rep} (rest 60s)` },
+        { id: uid(), name: 'Incline pushups — 3 x 12' },
+        { id: uid(), name: 'Plank — 3 x 30s' },
+      ];
+    } else if (variant === 1) {
+      name = 'Goal Session: Pushup Strength';
+      exercises = [
+        { id: uid(), name: `Close-grip pushups — 4 x ${Math.max(2, Math.floor(rep * 0.7))} (rest 60s)` },
+        { id: uid(), name: 'Decline pushups — 3 x 10' },
+        { id: uid(), name: 'Hollow hold — 3 x 30s' },
+      ];
+    } else {
+      name = 'Goal Session: Pushup Endurance';
+      exercises = [
+        { id: uid(), name: `Wide-grip pushups — 4 x ${rep} (rest 45s)` },
+        { id: uid(), name: 'Scapular pushups — 3 x 15' },
+        { id: uid(), name: 'Plank shoulder taps — 3 x 20' },
+      ];
+    }
   } else if (goal === 'build_muscle' || goal === 'hypertrophy') {
-    name = 'Goal Session: Build Muscle';
-    exercises = hasDB ? [
-      { id: uid(), name: 'DB Squat / Split Squat' },
-      { id: uid(), name: 'DB Bench / Floor Press' },
-      { id: uid(), name: 'One-arm DB Row' },
-      { id: uid(), name: 'DB Shoulder Press' },
-    ] : hasBB ? [
-      { id: uid(), name: 'Squat' },
-      { id: uid(), name: 'Bench Press' },
-      { id: uid(), name: 'Barbell Row' },
-      { id: uid(), name: 'Accessory (arms/shoulders)' },
-    ] : [
-      { id: uid(), name: 'Pushups (volume)' },
-      { id: uid(), name: 'Bodyweight row / band row' },
-      { id: uid(), name: 'Split squats' },
-      { id: uid(), name: 'Plank (time)' },
-    ];
+    if (variant === 0) {
+      name = 'Goal Session: Build Muscle (Upper Focus)';
+      exercises = hasDB ? [
+        { id: uid(), name: 'DB Bench / Floor Press' },
+        { id: uid(), name: 'One-arm DB Row' },
+        { id: uid(), name: 'DB Shoulder Press' },
+        { id: uid(), name: 'DB Bicep Curls' },
+      ] : hasBB ? [
+        { id: uid(), name: 'Bench Press' },
+        { id: uid(), name: 'Barbell Row' },
+        { id: uid(), name: 'Overhead Press' },
+        { id: uid(), name: 'Accessory (arms/shoulders)' },
+      ] : [
+        { id: uid(), name: 'Pushups (volume)' },
+        { id: uid(), name: 'Bodyweight row / band row' },
+        { id: uid(), name: 'Plank (time)' },
+      ];
+    } else if (variant === 1) {
+      name = 'Goal Session: Build Muscle (Lower Focus)';
+      exercises = hasDB ? [
+        { id: uid(), name: 'DB Squat / Split Squat' },
+        { id: uid(), name: 'DB Romanian Deadlift' },
+        { id: uid(), name: 'DB Lunges' },
+        { id: uid(), name: 'Calf raises' },
+      ] : hasBB ? [
+        { id: uid(), name: 'Squat' },
+        { id: uid(), name: 'Barbell Romanian Deadlift' },
+        { id: uid(), name: 'Hip Thrusts' },
+        { id: uid(), name: 'Barbell Standing Calf Raise' },
+      ] : [
+        { id: uid(), name: 'Split squats' },
+        { id: uid(), name: 'Glute bridges' },
+        { id: uid(), name: 'Walking lunges' },
+        { id: uid(), name: 'Single-leg calf raises' },
+      ];
+    } else {
+      name = 'Goal Session: Build Muscle (Full Body)';
+      exercises = hasDB ? [
+        { id: uid(), name: 'DB Squat / Split Squat' },
+        { id: uid(), name: 'DB Bench / Floor Press' },
+        { id: uid(), name: 'One-arm DB Row' },
+        { id: uid(), name: 'DB Shoulder Press' },
+      ] : hasBB ? [
+        { id: uid(), name: 'Squat' },
+        { id: uid(), name: 'Bench Press' },
+        { id: uid(), name: 'Barbell Row' },
+        { id: uid(), name: 'Accessory (arms/shoulders)' },
+      ] : [
+        { id: uid(), name: 'Pushups (volume)' },
+        { id: uid(), name: 'Bodyweight row / band row' },
+        { id: uid(), name: 'Split squats' },
+        { id: uid(), name: 'Plank (time)' },
+      ];
+    }
   } else {
-    name = (profile?.goal === 'strength' && hasBB) ? 'Quick Start: Strength (Barbell)' : 'Quick Start';
-    exercises = (profile?.goal === 'strength' && hasBB) ? [
-      { id: uid(), name: 'Squat' },
-      { id: uid(), name: 'Bench Press' },
-      { id: uid(), name: 'Deadlift' },
-    ] : hasDB ? [
-      { id: uid(), name: 'Dumbbell Goblet Squat' },
-      { id: uid(), name: 'Dumbbell Bench / Floor Press' },
-      { id: uid(), name: 'One-arm Dumbbell Row' },
-      { id: uid(), name: 'Dumbbell Shoulder Press' },
-    ] : [
-      { id: uid(), name: 'Air Squat' },
-      { id: uid(), name: 'Pushups' },
-      { id: uid(), name: 'Hip Hinge (Good morning)' },
-      { id: uid(), name: 'Plank (time)' },
-    ];
+    const isStrengthBB = (profile?.goal === 'strength' && hasBB);
+    if (isStrengthBB) {
+      if (variant === 0) {
+        name = 'Strength Split: Upper Focus';
+        exercises = [
+          { id: uid(), name: 'Bench Press' },
+          { id: uid(), name: 'Overhead Press' },
+          { id: uid(), name: 'Barbell Row' },
+        ];
+      } else if (variant === 1) {
+        name = 'Strength Split: Lower Focus';
+        exercises = [
+          { id: uid(), name: 'Squat' },
+          { id: uid(), name: 'Deadlift' },
+          { id: uid(), name: 'Barbell Standing Calf Raise' },
+        ];
+      } else {
+        name = 'Strength Split: Full Body';
+        exercises = [
+          { id: uid(), name: 'Squat' },
+          { id: uid(), name: 'Bench Press' },
+          { id: uid(), name: 'Deadlift' },
+        ];
+      }
+    } else if (hasDB) {
+      if (variant === 0) {
+        name = 'Dumbbell Split: Upper Focus';
+        exercises = [
+          { id: uid(), name: 'Dumbbell Bench / Floor Press' },
+          { id: uid(), name: 'One-arm Dumbbell Row' },
+          { id: uid(), name: 'Dumbbell Shoulder Press' },
+        ];
+      } else if (variant === 1) {
+        name = 'Dumbbell Split: Lower Focus';
+        exercises = [
+          { id: uid(), name: 'Dumbbell Goblet Squat' },
+          { id: uid(), name: 'Dumbbell Romanian Deadlift' },
+          { id: uid(), name: 'Dumbbell Lunges' },
+        ];
+      } else {
+        name = 'Dumbbell Split: Full Body';
+        exercises = [
+          { id: uid(), name: 'Dumbbell Goblet Squat' },
+          { id: uid(), name: 'Dumbbell Bench / Floor Press' },
+          { id: uid(), name: 'One-arm Dumbbell Row' },
+          { id: uid(), name: 'Dumbbell Shoulder Press' },
+        ];
+      }
+    } else {
+      if (variant === 0) {
+        name = 'Bodyweight Split: Upper Focus';
+        exercises = [
+          { id: uid(), name: 'Pushups' },
+          { id: uid(), name: 'Bodyweight row / band row' },
+          { id: uid(), name: 'Plank (time)' },
+        ];
+      } else if (variant === 1) {
+        name = 'Bodyweight Split: Lower Focus';
+        exercises = [
+          { id: uid(), name: 'Air Squat' },
+          { id: uid(), name: 'Glute bridges' },
+          { id: uid(), name: 'Split squats' },
+        ];
+      } else {
+        name = 'Bodyweight Split: Full Body';
+        exercises = [
+          { id: uid(), name: 'Air Squat' },
+          { id: uid(), name: 'Pushups' },
+          { id: uid(), name: 'Hip Hinge (Good morning)' },
+          { id: uid(), name: 'Plank (time)' },
+        ];
+      }
+    }
   }
 
   const maxEx = dur <= 20 ? 3 : dur <= 30 ? 4 : 6;
@@ -3566,7 +3925,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
   const idGoal = (primaryGoal?.type || goal);
   return {
-    id: `gen:${idGoal}:${dur}:${Array.from(eq).sort().join('-')}`,
+    id: `gen:${idGoal}:${dur}:${Array.from(eq).sort().join('-')}:${dayIndex}`,
     name,
     desc,
     exercises

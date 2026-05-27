@@ -572,6 +572,14 @@ select.input {
   color: var(--muted);
 }
 
+.planExercises {
+  font-size: 11.5px;
+  color: var(--muted);
+  opacity: 0.85;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
 .planBadge {
   font-size: 10.5px;
   font-weight: 800;
