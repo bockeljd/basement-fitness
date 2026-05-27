@@ -2958,10 +2958,55 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
       const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
       const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet));
+      
       if (matchStretches.length > 0) {
-        const pick = matchStretches[Math.floor(Math.random() * matchStretches.length)];
+        // Score stretches by relevance to selected muscle focus areas
+        let bestMatches = [];
+        const fociLower = selectedFoci.map(f => f.toLowerCase());
+        
+        matchStretches.forEach(ex => {
+          const targetL = (ex.target || '').toLowerCase();
+          const infoL = (ex.info || '').toLowerCase();
+          
+          let score = 0;
+          fociLower.forEach(focus => {
+            if (focus === 'back') {
+              if (targetL.includes('back') || targetL.includes('spine') || infoL.includes('back') || infoL.includes('spine')) score += 2;
+            }
+            if (focus === 'chest') {
+              if (targetL.includes('chest') || infoL.includes('chest') || targetL.includes('abs') || infoL.includes('abdominal')) score += 2;
+            }
+            if (focus === 'shoulders') {
+              if (targetL.includes('shoulders') || infoL.includes('shoulders')) score += 2;
+            }
+            if (focus === 'legs') {
+              if (targetL.includes('hips') || targetL.includes('hamstring') || targetL.includes('calves') || infoL.includes('hips') || infoL.includes('hamstring')) score += 2;
+            }
+            if (focus === 'core') {
+              if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
+            }
+            if (focus === 'biceps' || focus === 'triceps') {
+              if (targetL.includes('shoulders') || infoL.includes('upper body') || targetL.includes('spine')) score += 1;
+            }
+          });
+          
+          if (score > 0) {
+            bestMatches.push({ ex, score });
+          }
+        });
+        
+        let finalStretch;
+        if (bestMatches.length > 0) {
+          bestMatches.sort((a, b) => b.score - a.score);
+          const maxScore = bestMatches[0].score;
+          const topCandidates = bestMatches.filter(item => item.score === maxScore).map(item => item.ex);
+          finalStretch = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+        } else {
+          finalStretch = matchStretches[Math.floor(Math.random() * matchStretches.length)];
+        }
+        
         selected.push({
-          ...pick,
+          ...finalStretch,
           sourceGroup: 'Stretching & Mobility'
         });
       }
