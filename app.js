@@ -781,6 +781,20 @@ const EXERCISES_BY_GROUP = {
         "Press up dynamically to full extension."
       ],
       proTip: "If this is too difficult on your toes, perform them with your knees on the floor."
+    },
+    {
+      name: "Cable Crossover",
+      type: "Cable",
+      difficulty: "Intermediate",
+      target: "Lower/Outer Chest",
+      info: "Cable flying movement for high pectoral isolation and tension.",
+      steps: [
+        "Set pulleys to high position, grasp handles, and step forward to create tension.",
+        "Bend elbows slightly and lean forward at the hips.",
+        "Bring hands down and inward in a wide arc, crossing one hand over the other at the bottom.",
+        "Slowly reverse the movement back to the starting stretch."
+      ],
+      proTip: "Focus on squeezing your chest muscles rather than pushing with your hands, and alternating which hand crosses on top."
     }
   ],
   "Back": [
@@ -863,6 +877,45 @@ const EXERCISES_BY_GROUP = {
         "Hold the contraction for 2-3 seconds, then lower down slowly."
       ],
       proTip: "Keep your neck neutral by looking at the floor rather than raising your chin."
+    },
+    {
+      name: "Cable Lat Pulldown",
+      type: "Cable",
+      difficulty: "Beginner",
+      target: "Lats & Upper Back",
+      info: "Classic vertical pull isolating the latissimus dorsi.",
+      steps: [
+        "Sit on the pulldown machine, adjust knee pads, grasp the bar with a wide overhand grip.",
+        "Lean back slightly, pull the bar down to your upper chest by drawing elbows down and back.",
+        "Squeeze lats at the bottom, then slowly return bar to full vertical stretch."
+      ],
+      proTip: "Avoid using momentum or pulling the bar down to your stomach. Lead with the elbows."
+    },
+    {
+      name: "Cable Seated Row",
+      type: "Cable",
+      difficulty: "Beginner",
+      target: "Mid-back & Lats",
+      info: "Horizontal cable pull for mid-back thickness.",
+      steps: [
+        "Sit at the row station, place feet on pads, grasp handle, and slide hips back with slightly bent knees.",
+        "Keep torso upright, pull handle towards your lower chest, retracting shoulder blades.",
+        "Extend arms back under control to feel a deep stretch in your upper back."
+      ],
+      proTip: "Keep your chest puffed out and shoulders back. Avoid leaning back excessively as you pull."
+    },
+    {
+      name: "Banded Pull-Aparts",
+      type: "Bands",
+      difficulty: "Beginner",
+      target: "Upper Back & Rear Delts",
+      info: "Excellent posture exercise using a resistance band.",
+      steps: [
+        "Stand tall holding a resistance band straight in front of you at shoulder height.",
+        "Pull your hands apart to stretch the band across your chest, keeping arms straight.",
+        "Squeeze your shoulder blades together at full extension, then return under control."
+      ],
+      proTip: "Focus on pulling with your upper back and rear delts rather than bending your elbows."
     }
   ],
   "Shoulders": [
@@ -944,6 +997,32 @@ const EXERCISES_BY_GROUP = {
         "Squeeze rear delts at the top, then lower with control."
       ],
       proTip: "Focus on pulling with your elbows and avoid shrugging your shoulders into your neck."
+    },
+    {
+      name: "Cable Face Pulls",
+      type: "Cable",
+      difficulty: "Intermediate",
+      target: "Rear Delts & Rotator Cuff",
+      info: "Excellent cable exercise for posture, rear delts, and upper back.",
+      steps: [
+        "Set cable pulley to upper chest height, grasp rope handles with thumbs facing back.",
+        "Step back, pull hands toward your ears, flaring elbows and rotating shoulders outward.",
+        "Squeeze the contraction at the ears, then slowly return to full extension."
+      ],
+      proTip: "Keep your chest high and squeeze your shoulder blades together. Do not pull with your lower back."
+    },
+    {
+      name: "Banded Lateral Raise",
+      type: "Bands",
+      difficulty: "Intermediate",
+      target: "Side Delts",
+      info: "Side raise variation using a band for ascending resistance.",
+      steps: [
+        "Stand on the middle of a resistance band, holding handles at your sides.",
+        "Raise your arms out to the sides until they are parallel to the floor.",
+        "Squeeze the shoulder contraction under peak tension, then lower slowly."
+      ],
+      proTip: "Keep a slight bend in your knees and elbows; do not swing your torso."
     }
   ],
   "Biceps": [
@@ -1011,6 +1090,19 @@ const EXERCISES_BY_GROUP = {
         "Lower under control, flattening arm out completely."
       ],
       proTip: "Keep your torso stationary and focus entirely on squeezing the bicep muscle."
+    },
+    {
+      name: "Cable Bicep Curl",
+      type: "Cable",
+      difficulty: "Beginner",
+      target: "Biceps",
+      info: "Cable curls keeping constant tension on the bicep muscle.",
+      steps: [
+        "Attach a straight or EZ-bar to the low pulley, stand close, and grip the bar underhand.",
+        "Keep elbows pinned to your sides, curl the bar up toward your shoulders.",
+        "Squeeze biceps at the top, then slowly lower the bar back to full extension."
+      ],
+      proTip: "Keep your upper arms stationary; do not let your elbows drift forward."
     }
   ],
   "Triceps": [
@@ -1078,6 +1170,19 @@ const EXERCISES_BY_GROUP = {
         "Press up through palms to lock out arms."
       ],
       proTip: "Keep your back close to the bench as you lower and raise yourself."
+    },
+    {
+      name: "Cable Tricep Pushdown",
+      type: "Cable",
+      difficulty: "Beginner",
+      target: "Triceps",
+      info: "Isolation movement using a cable bar or rope to target triceps.",
+      steps: [
+        "Attach a rope or bar to the high pulley, grasp with overhand grip, step back.",
+        "Keep elbows pinned to your ribs, extend arms down to lock out elbows.",
+        "Squeeze triceps at the bottom, then slowly return to the starting position (hands at chest height)."
+      ],
+      proTip: "Keep your upper body still and do not let your shoulders rise up during the eccentric phase."
     }
   ],
   "Legs": [
@@ -1159,6 +1264,19 @@ const EXERCISES_BY_GROUP = {
         "Pause, then lower heels down under control."
       ],
       proTip: "Hold the peak contraction for 1-2 seconds and lower down slowly to eliminate Achilles tendon bounce."
+    },
+    {
+      name: "Banded Squats",
+      type: "Bands / Bodyweight",
+      difficulty: "Beginner",
+      target: "Quads & Glutes",
+      info: "Squat variation with a resistance band looped around thighs to engage glutes.",
+      steps: [
+        "Loop a resistance band just above your knees, stand with feet shoulder-width apart.",
+        "Squat down, actively pushing outward against the band to keep knees aligned with toes.",
+        "Drive through your heels to return to standing, squeezing glutes at the top."
+      ],
+      proTip: "Keep the tension on the band throughout the exercise. Do not let your knees collapse inward."
     }
   ],
   "Core": [
@@ -1226,6 +1344,19 @@ const EXERCISES_BY_GROUP = {
         "Press your lower back flat into the floor; there should be no gap."
       ],
       proTip: "If your lower back arches off the floor, lift your legs higher or bend your knees until it is flat."
+    },
+    {
+      name: "Banded Woodchopper",
+      type: "Bands",
+      difficulty: "Intermediate",
+      target: "Obliques & Core Rotation",
+      info: "Rotational core exercise using a resistance band anchored to a post.",
+      steps: [
+        "Anchor a resistance band at chest height, stand sideways to the anchor and grab the handle with both hands.",
+        "Rotate your torso away from the anchor point, pulling the band across your body.",
+        "Keep your arms straight and pivot your back foot, then return slowly."
+      ],
+      proTip: "Generate the power from your obliques and hips rather than pulling with your arms."
     }
   ],
   "Cardio": [
@@ -1294,6 +1425,33 @@ const EXERCISES_BY_GROUP = {
         "Pump arms in sync."
       ],
       proTip: "Keep your torso tall; do not lean backward to get your knees higher."
+    },
+    {
+      name: "Rowing Machine Intervals",
+      type: "Rower",
+      difficulty: "Intermediate",
+      target: "Full Body Cardio",
+      info: "High-intensity cardio intervals on the rowing machine.",
+      steps: [
+        "Sit on the rower seat, strap feet in, and grab the handle with both hands.",
+        "Push back with your legs, then lean back slightly and pull the handle to your lower ribs.",
+        "Extend arms, hinge at hips, and bend knees to return to starting position.",
+        "Alternate 1 minute of hard rowing with 1 minute of light active recovery."
+      ],
+      proTip: "Rowing is 60% legs, 20% core, and 20% arms. Drive hard with your legs first."
+    },
+    {
+      name: "Rowing 500m Sprint",
+      type: "Rower",
+      difficulty: "Advanced",
+      target: "Full Body Cardio & Endurance",
+      info: "Speed sprint targeting explosive endurance across legs, core, and back.",
+      steps: [
+        "Strap into the rowing machine and set monitor to track 500 meters.",
+        "Row at maximum effort, focusing on a strong leg drive and fast pull stroke.",
+        "Complete the 500m distance as fast as possible."
+      ],
+      proTip: "Pace yourself slightly in the first 100m, then maintain a high, powerful stroke rate."
     }
   ],
   "Stretching & Mobility": [
@@ -2824,14 +2982,18 @@ function matchEquipment(exType, exName, eqSet) {
   const tLower = exType.toLowerCase();
   const nLower = exName.toLowerCase();
   
-  if (tLower === 'bodyweight' || tLower === 'stretching') return true;
+  if (tLower === 'bodyweight' || tLower === 'stretching' || tLower.includes('bodyweight')) return true;
   
-  if (eqSet.has('dumbbells') && (tLower.includes('dumbbell') || tLower.includes('kettlebell') || tLower.includes('band') || tLower.includes('cable'))) return true;
-  if (eqSet.has('barbell') && tLower.includes('barbell')) return true;
-  if (eqSet.has('pullupbar') && (nLower.includes('pull-up') || nLower.includes('chin-up') || tLower.includes('bar') || tLower.includes('cable'))) return true;
-  if (eqSet.has('treadmill') && tLower.includes('treadmill')) return true;
+  let matches = false;
+  if (tLower.includes('cable')) matches = matches || eqSet.has('cables');
+  if (tLower.includes('band')) matches = matches || eqSet.has('resistancebands');
+  if (tLower.includes('dumbbell') || tLower.includes('kettlebell')) matches = matches || eqSet.has('dumbbells');
+  if (tLower.includes('barbell')) matches = matches || eqSet.has('barbell');
+  if (tLower.includes('treadmill') || nLower.includes('treadmill')) matches = matches || eqSet.has('treadmill');
+  if (tLower.includes('rower') || nLower.includes('rower') || nLower.includes('rowing machine')) matches = matches || eqSet.has('rower');
+  if (nLower.includes('pull-up') || nLower.includes('chin-up') || tLower.includes('pullupbar')) matches = matches || eqSet.has('pullupbar');
   
-  return false;
+  return matches;
 }
 
 function generateRepsForExercise(ex, difficulty) {
@@ -2941,6 +3103,17 @@ function swapExerciseAtIndex(idx) {
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   const repsDetails = generateRepsForExercise(pick, state.lastGenParams.difficulty);
 
+  let swapReason = '';
+  if (group === 'Warm-up') {
+    swapReason = ["Jumping Jacks", "High Knees"].includes(pick.name)
+      ? "Warm-up: Swapped dynamic cardio to raise heart rate"
+      : "Warm-up: Swapped joint mobility preparation";
+  } else if (group === 'Stretching & Mobility') {
+    swapReason = "Cool-down: Swapped stretch for muscle recovery";
+  } else {
+    swapReason = `Swapped target movement for ${group}`;
+  }
+
   // Replace exercise in place
   exercises[idx] = {
     id: uid(),
@@ -2948,7 +3121,8 @@ function swapExerciseAtIndex(idx) {
     reps: repsDetails,
     sourceGroup: group,
     info: pick.info,
-    type: pick.type
+    type: pick.type,
+    reason: swapReason
   };
 
   lastSwappedIndex = idx;
@@ -2991,6 +3165,7 @@ function renderGeneratorPreview() {
       <div style="flex: 1;">
         <div style="font-weight: 800; font-size:14.5px;">${phaseBadge}${escapeHtml(ex.name)} <span style="color: var(--accent); font-weight: 700; font-size: 13.5px;">(${escapeHtml(ex.reps)})</span></div>
         <div class="small">${escapeHtml(ex.info || 'Control movement and focus on form.')}</div>
+        <div style="font-size: 11px; color: var(--accent); opacity: 0.85; margin-top: 3.5px; font-weight: 500;">💡 ${escapeHtml(ex.reason || 'Included for balanced training')}</div>
       </div>
       <button class="btn secondary btn-swap-exercise" data-swap-idx="${idx}" type="button" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;">🔁 Swap</button>
     `;
@@ -3105,6 +3280,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
             const pick = poolForGroup.splice(idx, 1)[0];
             
             if (!selected.some(s => s.name === pick.name)) {
+              pick.reason = `Primary target movement for ${pick.sourceGroup}`;
               selected.push(pick);
             }
           }
@@ -3118,7 +3294,9 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       const remainingMatches = matchPool.filter(m => !selected.some(s => s.name === m.name));
       while (selected.length < exerciseCount && remainingMatches.length > 0) {
         const idx = Math.floor(Math.random() * remainingMatches.length);
-        selected.push(remainingMatches.splice(idx, 1)[0]);
+        const pick = remainingMatches.splice(idx, 1)[0];
+        pick.reason = `Target movement for ${pick.sourceGroup}`;
+        selected.push(pick);
       }
     }
 
@@ -3128,7 +3306,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
         name: "Pull-ups (or Chin-ups)", 
         type: "Bodyweight", 
         info: "Hang from bar, pull chest to bar, control down.",
-        sourceGroup: selectedFoci.includes('Back') ? 'Back' : 'Shoulders'
+        sourceGroup: selectedFoci.includes('Back') ? 'Back' : 'Shoulders',
+        reason: "Injected vertical pull since Pull-up Bar is available"
       };
       if (!selected.some(s => s.name.includes("Pull-ups") || s.name.includes("Chin-ups"))) {
         if (selected.length >= exerciseCount) {
@@ -3145,7 +3324,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
         name: "Treadmill or Bike Interval", 
         type: "Treadmill", 
         info: "Alternate 1m moderate, 1m fast pace.",
-        sourceGroup: 'Cardio'
+        sourceGroup: 'Cardio',
+        reason: "Cardio machine interval conditioning"
       };
       if (!selected.some(s => s.name.includes("Treadmill") || s.name.includes("Bike"))) {
         selected[0] = machineEx;
@@ -3171,7 +3351,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
           const pickCardio = finalCardioPool[Math.floor(Math.random() * finalCardioPool.length)];
           selected.push({
             ...pickCardio,
-            sourceGroup: 'Warm-up'
+            sourceGroup: 'Warm-up',
+            reason: "Warm-up: Raise heart rate and warm up muscles"
           });
         }
 
@@ -3203,7 +3384,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
           const finalMobility = bestMobility[0].ex;
           selected.push({
             ...finalMobility,
-            sourceGroup: 'Warm-up'
+            sourceGroup: 'Warm-up',
+            reason: "Warm-up: Joint mobility for workout preparation"
           });
         }
       }
@@ -3228,7 +3410,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
           const pick = finalPool[Math.floor(Math.random() * finalPool.length)];
           selected.push({
             ...pick,
-            sourceGroup: 'Stretching & Mobility'
+            sourceGroup: 'Stretching & Mobility',
+            reason: "Cool-down: General stretching and recovery"
           });
         } else {
           fociToStretch.forEach(focus => {
@@ -3280,7 +3463,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
             
             selected.push({
               ...finalStretch,
-              sourceGroup: 'Stretching & Mobility'
+              sourceGroup: 'Stretching & Mobility',
+              reason: `Cool-down: Target stretch for ${focus}`
             });
           });
         }
@@ -3306,7 +3490,8 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
         reps: repsDetails,
         sourceGroup: ex.sourceGroup || '',
         info: ex.info,
-        type: ex.type || ''
+        type: ex.type || '',
+        reason: ex.reason || 'Workout sequence movement'
       };
     });
 
