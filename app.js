@@ -2614,13 +2614,33 @@ function wireGenerator() {
   $('btnStartGeneratedWorkout')?.addEventListener('click', () => {
     if (!state.generatedRoutine) return;
     
-    // Add generated workout to routines state
-    state.routines = [state.generatedRoutine, ...state.routines.filter(r => r.id !== state.generatedRoutine.id)];
+    const finalized = finalizeGeneratedRoutine();
+    if (!finalized) return;
+    
+    // Add finalized generated workout to routines state
+    state.routines = [finalized, ...state.routines.filter(r => r.id !== finalized.id)];
     saveRoutines();
     renderRoutines();
     
     // Launch workout
-    startRoutine(state.generatedRoutine.id);
+    startRoutine(finalized.id);
+  });
+
+  // Save generated routine
+  $('btnSaveGeneratedRoutine')?.addEventListener('click', () => {
+    if (!state.generatedRoutine) return;
+    
+    const finalized = finalizeGeneratedRoutine();
+    if (!finalized) return;
+    
+    // Assign a fresh permanent ID to make it unique for saving
+    finalized.id = uid();
+    
+    state.routines.unshift(finalized);
+    saveRoutines();
+    renderRoutines();
+    
+    alert(`Routine "${finalized.name}" saved successfully to your Custom Routines!`);
   });
 }
 
@@ -2663,6 +2683,156 @@ function generateRepsForExercise(ex, difficulty) {
   if (difficulty === 'beginner') return '2 sets x 10-12 reps';
   if (difficulty === 'advanced') return '4 sets x 8-12 reps';
   return '3 sets x 10-12 reps';
+}
+
+function getExerciseTier(ex, groupName) {
+  const nameL = ex.name.toLowerCase();
+  const typeL = (ex.type || '').toLowerCase();
+  const groupL = (groupName || '').toLowerCase();
+
+  // Cool-down / Stretching
+  if (groupL === 'stretching & mobility' || typeL === 'stretching') {
+    return 4;
+  }
+
+  // Core & Cardio / Finishers
+  if (groupL === 'cardio' || groupL === 'core' || nameL.includes('plank') || nameL.includes('crunch') || nameL.includes('twist') || nameL.includes('hold') || nameL.includes('burpee') || nameL.includes('jack') || nameL.includes('climber') || nameL.includes('knee')) {
+    return 3;
+  }
+
+  // Heavy Compounds
+  if (
+    typeL === 'barbell' || 
+    nameL.includes('squat') || 
+    nameL.includes('deadlift') || 
+    nameL.includes('press') || 
+    nameL.includes('row') || 
+    nameL.includes('pull-up') || 
+    nameL.includes('chin-up')
+  ) {
+    return 1;
+  }
+
+  // Accessories / Isolation
+  return 2;
+}
+
+let lastSwappedIndex = null;
+
+function swapExerciseAtIndex(idx) {
+  if (!state.generatedRoutine || !state.lastGenParams) return;
+  const exercises = state.generatedRoutine.exercises;
+  if (idx < 0 || idx >= exercises.length) return;
+
+  const currentEx = exercises[idx];
+  const group = currentEx.sourceGroup;
+  if (!group) return;
+
+  const eqSet = new Set(state.lastGenParams.equipment || ['bodyweight']);
+  const pool = (EXERCISES_BY_GROUP[group] || []).filter(ex => {
+    return matchEquipment(ex.type, ex.name, eqSet);
+  });
+
+  // Exclude current exercise names in the routine to prevent duplicates
+  const currentNames = exercises.map(ex => ex.name);
+  let candidates = pool.filter(ex => !currentNames.includes(ex.name));
+
+  // If no candidates found, relax exclusion to allow any exercise in the pool except the one at this index
+  if (candidates.length === 0) {
+    candidates = pool.filter(ex => ex.name !== currentEx.name);
+  }
+
+  if (candidates.length === 0) {
+    alert(`No other exercises in the "${group}" library match your equipment settings.`);
+    return;
+  }
+
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  const repsDetails = generateRepsForExercise(pick, state.lastGenParams.difficulty);
+
+  // Replace exercise in place
+  exercises[idx] = {
+    id: uid(),
+    name: pick.name,
+    reps: repsDetails,
+    sourceGroup: group,
+    info: pick.info,
+    type: pick.type
+  };
+
+  lastSwappedIndex = idx;
+  renderGeneratorPreview();
+}
+
+function renderGeneratorPreview() {
+  if (!state.generatedRoutine) return;
+
+  const routineInput = $('customRoutineName');
+  if (routineInput) {
+    // Only set if input value is empty or hasn't been custom-edited by user
+    if (!routineInput.value || routineInput.value.startsWith('Custom ') || routineInput.value.trim() === '') {
+      routineInput.value = state.generatedRoutine.name;
+    }
+  }
+
+  $('previewWorkoutDesc').textContent = state.generatedRoutine.desc;
+
+  const previewList = $('previewExercisesList');
+  previewList.innerHTML = '';
+
+  state.generatedRoutine.exercises.forEach((ex, idx) => {
+    const item = document.createElement('div');
+    item.className = 'routineItem' + (idx === lastSwappedIndex ? ' animate-swap' : '');
+    item.style.padding = '10px 14px';
+    item.style.display = 'flex';
+    item.style.justifyContent = 'space-between';
+    item.style.alignItems = 'center';
+    item.style.gap = '12px';
+
+    item.innerHTML = `
+      <div style="flex: 1;">
+        <div style="font-weight: 800; font-size:14.5px;">${escapeHtml(ex.name)} <span style="color: var(--accent); font-weight: 700; font-size: 13.5px;">(${escapeHtml(ex.reps)})</span></div>
+        <div class="small">${escapeHtml(ex.info || 'Control movement and focus on form.')}</div>
+      </div>
+      <button class="btn secondary btn-swap-exercise" data-swap-idx="${idx}" type="button" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;">🔁 Swap</button>
+    `;
+    previewList.appendChild(item);
+  });
+
+  // Reset lastSwappedIndex so future actions don't trigger animation
+  lastSwappedIndex = null;
+
+  // Bind click listeners for swap buttons
+  previewList.querySelectorAll('.btn-swap-exercise').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.getAttribute('data-swap-idx'), 10);
+      swapExerciseAtIndex(idx);
+    });
+  });
+}
+
+function finalizeGeneratedRoutine() {
+  if (!state.generatedRoutine) return null;
+
+  const customName = $('customRoutineName')?.value.trim() || state.generatedRoutine.name;
+
+  // Map elements to the combined style structure { id, name: "Name (Reps)", info }
+  const canonicalExercises = state.generatedRoutine.exercises.map(ex => {
+    const combinedName = ex.reps ? `${ex.name} (${ex.reps})` : ex.name;
+    return {
+      id: ex.id || uid(),
+      name: combinedName,
+      info: ex.info || 'Control movement and focus on form.'
+    };
+  });
+
+  return {
+    id: state.generatedRoutine.id,
+    name: customName,
+    desc: state.generatedRoutine.desc,
+    exercises: canonicalExercises
+  };
 }
 
 function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
@@ -2756,7 +2926,12 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
 
     // Inject Pull-up Bar if checked and focus includes Back/Shoulders
     if (eqSet.has('pullupbar') && (selectedFoci.includes('Back') || selectedFoci.includes('Shoulders')) && selected.length > 0) {
-      const pullupEx = { name: "Pull-ups (or Chin-ups)", type: "Bodyweight", info: "Hang from bar, pull chest to bar, control down." };
+      const pullupEx = { 
+        name: "Pull-ups (or Chin-ups)", 
+        type: "Bodyweight", 
+        info: "Hang from bar, pull chest to bar, control down.",
+        sourceGroup: selectedFoci.includes('Back') ? 'Back' : 'Shoulders'
+      };
       if (!selected.some(s => s.name.includes("Pull-ups") || s.name.includes("Chin-ups"))) {
         if (selected.length >= exerciseCount) {
           selected[selected.length - 1] = pullupEx;
@@ -2768,11 +2943,23 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     
     // Inject Cardio Machine if checked and focus includes Cardio
     if (eqSet.has('treadmill') && selectedFoci.includes('Cardio') && selected.length > 0) {
-      const machineEx = { name: "Treadmill or Bike Interval", type: "Treadmill", info: "Alternate 1m moderate, 1m fast pace." };
+      const machineEx = { 
+        name: "Treadmill or Bike Interval", 
+        type: "Treadmill", 
+        info: "Alternate 1m moderate, 1m fast pace.",
+        sourceGroup: 'Cardio'
+      };
       if (!selected.some(s => s.name.includes("Treadmill") || s.name.includes("Bike"))) {
         selected[0] = machineEx;
       }
     }
+
+    // Sort selected exercises by tier sequence (Tier 1 -> Tier 4)
+    selected.sort((a, b) => {
+      const groupA = a.sourceGroup || '';
+      const groupB = b.sourceGroup || '';
+      return getExerciseTier(a, groupA) - getExerciseTier(b, groupB);
+    });
 
     let difficultyBadge = "Intermediate";
     if (difficulty === 'beginner') difficultyBadge = "Beginner";
@@ -2782,8 +2969,11 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       const repsDetails = generateRepsForExercise(ex, difficulty);
       return {
         id: uid(),
-        name: `${ex.name} (${repsDetails})`,
-        info: ex.info
+        name: ex.name,
+        reps: repsDetails,
+        sourceGroup: ex.sourceGroup || '',
+        info: ex.info,
+        type: ex.type || ''
       };
     });
 
@@ -2797,25 +2987,16 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       exercises: exercisesMapped
     };
 
+    // Save generation state parameter values to state.lastGenParams
+    state.lastGenParams = {
+      duration,
+      selectedFoci,
+      equipment,
+      difficulty
+    };
+
     // Render Preview
-    $('previewWorkoutName').textContent = state.generatedRoutine.name;
-    $('previewWorkoutDesc').textContent = state.generatedRoutine.desc;
-    
-    const previewList = $('previewExercisesList');
-    previewList.innerHTML = '';
-    
-    exercisesMapped.forEach(ex => {
-      const item = document.createElement('div');
-      item.className = 'routineItem';
-      item.style.padding = '10px 14px';
-      item.innerHTML = `
-        <div>
-          <div style="font-weight: 800; font-size:14.5px;">${escapeHtml(ex.name)}</div>
-          <div class="small">${escapeHtml(ex.info || 'Control movement and focus on form.')}</div>
-        </div>
-      `;
-      previewList.appendChild(item);
-    });
+    renderGeneratorPreview();
 
     // Toggle View State
     loader.style.display = 'none';
@@ -2823,6 +3004,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     $('generatorPreview').style.display = 'block';
   }, 1800);
 }
+
 
 
 // Synchronize Workout Library from static JSON

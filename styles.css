@@ -1545,5 +1545,10 @@ select.input {
   line-height: 1.4;
 }
 
+.animate-swap {
+  animation: fadeIn 0.4s ease-out;
+}
+
+
 
 
