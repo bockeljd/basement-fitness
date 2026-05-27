@@ -2566,6 +2566,20 @@ function wireGenerator() {
 
   // Toggle buttons in groups
   container.querySelectorAll('.pill-group').forEach(group => {
+    if (group.id === 'genFocus') {
+      group.addEventListener('click', (e) => {
+        const btn = e.target.closest('.pill-btn');
+        if (!btn) return;
+        btn.classList.toggle('active');
+        // Ensure at least one muscle group focus remains selected
+        const actives = group.querySelectorAll('.pill-btn.active');
+        if (actives.length === 0) {
+          btn.classList.add('active');
+        }
+      });
+      return;
+    }
+
     group.addEventListener('click', (e) => {
       const btn = e.target.closest('.pill-btn');
       if (!btn) return;
@@ -2578,7 +2592,12 @@ function wireGenerator() {
   $('btnRunGenerator')?.addEventListener('click', () => {
     // Collect Form inputs
     const duration = container.querySelector('#genDuration .pill-btn.active').getAttribute('data-value');
-    const focus = container.querySelector('#genFocus .pill-btn.active').getAttribute('data-value');
+    
+    const selectedFoci = [];
+    container.querySelectorAll('#genFocus .pill-btn.active').forEach(btn => {
+      selectedFoci.push(btn.getAttribute('data-value'));
+    });
+    
     const difficulty = container.querySelector('#genDifficulty .pill-btn.active').getAttribute('data-value');
     
     const equipment = ['bodyweight'];
@@ -2588,7 +2607,7 @@ function wireGenerator() {
       }
     });
 
-    generateCustomWorkout(Number(duration), focus, equipment, difficulty);
+    generateCustomWorkout(Number(duration), selectedFoci, equipment, difficulty);
   });
 
   // Start generated workout
@@ -2605,7 +2624,48 @@ function wireGenerator() {
   });
 }
 
-function generateCustomWorkout(duration, focus, equipment, difficulty) {
+function matchEquipment(exType, exName, eqSet) {
+  const tLower = exType.toLowerCase();
+  const nLower = exName.toLowerCase();
+  
+  if (tLower === 'bodyweight' || tLower === 'stretching') return true;
+  
+  if (eqSet.has('dumbbells') && (tLower.includes('dumbbell') || tLower.includes('kettlebell') || tLower.includes('band') || tLower.includes('cable'))) return true;
+  if (eqSet.has('barbell') && tLower.includes('barbell')) return true;
+  if (eqSet.has('pullupbar') && (nLower.includes('pull-up') || nLower.includes('chin-up') || tLower.includes('bar') || tLower.includes('cable'))) return true;
+  if (eqSet.has('treadmill') && tLower.includes('treadmill')) return true;
+  
+  return false;
+}
+
+function generateRepsForExercise(ex, difficulty) {
+  const nameL = ex.name.toLowerCase();
+  const typeL = ex.type.toLowerCase();
+  
+  if (typeL === 'stretching') {
+    if (difficulty === 'beginner') return '2 sets x 30s hold';
+    if (difficulty === 'advanced') return '3 sets x 60s hold';
+    return '2 sets x 45s hold';
+  }
+  
+  if (nameL.includes('plank') || nameL.includes('hold')) {
+    if (difficulty === 'beginner') return '3 sets x 30s hold';
+    if (difficulty === 'advanced') return '4 sets x 60s hold';
+    return '3 sets x 45s hold';
+  }
+  
+  if (nameL.includes('burpee') || nameL.includes('jack') || nameL.includes('climber') || nameL.includes('knee')) {
+    if (difficulty === 'beginner') return '3 sets x 30s work';
+    if (difficulty === 'advanced') return '4 sets x 45s work';
+    return '3 sets x 40s work';
+  }
+  
+  if (difficulty === 'beginner') return '2 sets x 10-12 reps';
+  if (difficulty === 'advanced') return '4 sets x 8-12 reps';
+  return '3 sets x 10-12 reps';
+}
+
+function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
   // Hide form and results, show loader
   $('generatorForm').style.display = 'none';
   $('generatorPreview').style.display = 'none';
@@ -2631,107 +2691,110 @@ function generateCustomWorkout(duration, focus, equipment, difficulty) {
     // Process generator algorithm
     const eqSet = new Set(equipment);
     
-    // Determine movement structure and selects exercises
-    let exercises = [];
-    const pool = EXERCISE_POOL[focus] || EXERCISE_POOL.fullbody;
-    
-    // 1. Gather all matched exercises from focus pool
+    // Determine movement structure and select exercises
     let matchPool = [];
     
-    // Always include bodyweight
-    if (pool.bodyweight) matchPool.push(...pool.bodyweight.map(ex => ({ ...ex, source: 'bodyweight' })));
-    
-    // Include others if checked
-    if (eqSet.has('dumbbells') && pool.dumbbells) {
-      matchPool.push(...pool.dumbbells.map(ex => ({ ...ex, source: 'dumbbells' })));
-    }
-    if (eqSet.has('barbell') && pool.barbell) {
-      matchPool.push(...pool.barbell.map(ex => ({ ...ex, source: 'barbell' })));
-    }
+    selectedFoci.forEach(focusKey => {
+      const list = EXERCISES_BY_GROUP[focusKey] || [];
+      list.forEach(ex => {
+        if (matchEquipment(ex.type, ex.name, eqSet)) {
+          matchPool.push({
+            ...ex,
+            sourceGroup: focusKey
+          });
+        }
+      });
+    });
 
     // Determine count based on duration (15m: 3, 30m: 4, 45m: 5, 60m: 6)
     const exerciseCount = duration <= 15 ? 3 : duration <= 30 ? 4 : duration <= 45 ? 5 : 6;
 
-    // Structured selection (rather than pure random) to ensure balanced workout
     let selected = [];
-    
-    // If equipment has dumbbells/barbell, try to mix compound and bodyweight
-    const weights = matchPool.filter(e => e.source === 'dumbbells' || e.source === 'barbell');
-    const bodyweight = matchPool.filter(e => e.source === 'bodyweight');
-
-    // Alternate selections to build a smart workout
-    for (let i = 0; i < exerciseCount; i++) {
-      let pick = null;
-      if (i % 2 === 0 && weights.length > 0) {
-        // Pick weight exercise
-        const idx = Math.floor(Math.random() * weights.length);
-        pick = weights.splice(idx, 1)[0];
-      } else if (bodyweight.length > 0) {
-        // Pick bodyweight exercise
-        const idx = Math.floor(Math.random() * bodyweight.length);
-        pick = bodyweight.splice(idx, 1)[0];
-      } else if (weights.length > 0) {
-        // Fallback weight
-        const idx = Math.floor(Math.random() * weights.length);
-        pick = weights.splice(idx, 1)[0];
-      }
+    if (matchPool.length > 0) {
+      // Group matched exercises by their muscle group
+      const groupsMap = {};
+      selectedFoci.forEach(f => { groupsMap[f] = []; });
+      matchPool.forEach(ex => {
+        if (groupsMap[ex.sourceGroup]) {
+          groupsMap[ex.sourceGroup].push(ex);
+        }
+      });
       
-      if (pick) selected.push(pick);
+      const activeGroups = selectedFoci.filter(f => groupsMap[f] && groupsMap[f].length > 0);
+      
+      if (activeGroups.length > 0) {
+        let groupIndex = 0;
+        const maxAttempts = exerciseCount * 4;
+        let attempts = 0;
+        
+        while (selected.length < exerciseCount && attempts < maxAttempts) {
+          attempts++;
+          const currentGroup = activeGroups[groupIndex % activeGroups.length];
+          const poolForGroup = groupsMap[currentGroup];
+          
+          if (poolForGroup && poolForGroup.length > 0) {
+            const idx = Math.floor(Math.random() * poolForGroup.length);
+            const pick = poolForGroup.splice(idx, 1)[0];
+            
+            if (!selected.some(s => s.name === pick.name)) {
+              selected.push(pick);
+            }
+          }
+          groupIndex++;
+        }
+      }
     }
 
-    // Inject Pull-up Bar if checked
-    if (eqSet.has('pullupbar') && (focus === 'fullbody' || focus === 'upper') && selected.length > 0) {
-      // Replace last exercise or insert pullups
-      const pullupEx = { name: "Pull-ups (or Chin-ups)", reps: "3 sets x max reps", info: "Hang from bar, pull chest to bar, control down." };
-      if (selected.length >= exerciseCount) {
-        selected[selected.length - 1] = pullupEx;
-      } else {
-        selected.push(pullupEx);
+    // Fallback: If we still don't have enough exercises, pull randomly from matches
+    if (selected.length < exerciseCount && matchPool.length > 0) {
+      const remainingMatches = matchPool.filter(m => !selected.some(s => s.name === m.name));
+      while (selected.length < exerciseCount && remainingMatches.length > 0) {
+        const idx = Math.floor(Math.random() * remainingMatches.length);
+        selected.push(remainingMatches.splice(idx, 1)[0]);
+      }
+    }
+
+    // Inject Pull-up Bar if checked and focus includes Back/Shoulders
+    if (eqSet.has('pullupbar') && (selectedFoci.includes('Back') || selectedFoci.includes('Shoulders')) && selected.length > 0) {
+      const pullupEx = { name: "Pull-ups (or Chin-ups)", type: "Bodyweight", info: "Hang from bar, pull chest to bar, control down." };
+      if (!selected.some(s => s.name.includes("Pull-ups") || s.name.includes("Chin-ups"))) {
+        if (selected.length >= exerciseCount) {
+          selected[selected.length - 1] = pullupEx;
+        } else {
+          selected.push(pullupEx);
+        }
       }
     }
     
-    // Inject Cardio Machine if checked
-    if (eqSet.has('treadmill') && focus === 'cardio' && selected.length > 0) {
-      const machineEx = { name: "Treadmill or Bike Interval", reps: "15 min interval", info: "Alternate 1m moderate, 1m fast pace." };
-      selected[0] = machineEx; // Put cardiorespiratory first
+    // Inject Cardio Machine if checked and focus includes Cardio
+    if (eqSet.has('treadmill') && selectedFoci.includes('Cardio') && selected.length > 0) {
+      const machineEx = { name: "Treadmill or Bike Interval", type: "Treadmill", info: "Alternate 1m moderate, 1m fast pace." };
+      if (!selected.some(s => s.name.includes("Treadmill") || s.name.includes("Bike"))) {
+        selected[0] = machineEx;
+      }
     }
 
-    // 2. Adjust sets/reps scaling based on intensity difficulty
-    let setMultiplier = 3;
     let difficultyBadge = "Intermediate";
-    if (difficulty === 'beginner') {
-      setMultiplier = 2;
-      difficultyBadge = "Beginner";
-    } else if (difficulty === 'advanced') {
-      setMultiplier = 4;
-      difficultyBadge = "Advanced";
-    }
+    if (difficulty === 'beginner') difficultyBadge = "Beginner";
+    else if (difficulty === 'advanced') difficultyBadge = "Advanced";
 
-    exercises = selected.map(ex => {
-      // Parse out reps format
-      let formattedReps = ex.reps;
-      if (ex.reps.includes('sets')) {
-        formattedReps = ex.reps.replace(/^\d+ sets/, `${setMultiplier} sets`);
-      } else {
-        formattedReps = `${setMultiplier} sets x ${ex.reps}`;
-      }
-      
-      // Combine name with reps details for compatibility with existing tracking model
+    const exercisesMapped = selected.map(ex => {
+      const repsDetails = generateRepsForExercise(ex, difficulty);
       return {
         id: uid(),
-        name: `${ex.name} (${formattedReps})`,
+        name: `${ex.name} (${repsDetails})`,
         info: ex.info
       };
     });
 
-    const displayFocus = focus.charAt(0).toUpperCase() + focus.slice(1);
-    const routineId = `gen:${focus}:${duration}:${difficulty}:${uid()}`;
+    const displayFocus = selectedFoci.join(' + ');
+    const routineId = `gen:${selectedFoci.join('-')}:${duration}:${difficulty}:${uid()}`;
     
     state.generatedRoutine = {
       id: routineId,
-      name: `Custom ${displayFocus} (${duration}m)`,
-      desc: `Generated: ${difficultyBadge} · Focus: ${displayFocus} · Equip: ${equipment.join(', ')}`,
-      exercises: exercises
+      name: `Custom ${selectedFoci.length > 2 ? 'Mixed' : displayFocus} (${duration}m)`,
+      desc: `Generated: ${difficultyBadge} · Focus: ${selectedFoci.join(', ')} · Equip: ${equipment.join(', ')}`,
+      exercises: exercisesMapped
     };
 
     // Render Preview
@@ -2741,7 +2804,7 @@ function generateCustomWorkout(duration, focus, equipment, difficulty) {
     const previewList = $('previewExercisesList');
     previewList.innerHTML = '';
     
-    exercises.forEach(ex => {
+    exercisesMapped.forEach(ex => {
       const item = document.createElement('div');
       item.className = 'routineItem';
       item.style.padding = '10px 14px';
@@ -2760,6 +2823,7 @@ function generateCustomWorkout(duration, focus, equipment, difficulty) {
     $('generatorPreview').style.display = 'block';
   }, 1800);
 }
+
 
 // Synchronize Workout Library from static JSON
 async function syncWorkoutLibrary(force = false) {
