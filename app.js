@@ -2729,9 +2729,19 @@ function swapExerciseAtIndex(idx) {
   if (!group) return;
 
   const eqSet = new Set(state.lastGenParams.equipment || ['bodyweight']);
-  const pool = (EXERCISES_BY_GROUP[group] || []).filter(ex => {
-    return matchEquipment(ex.type, ex.name, eqSet);
-  });
+  let pool;
+  if (group === 'Warm-up') {
+    const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
+    const allExercises = [
+      ...(EXERCISES_BY_GROUP["Cardio"] || []),
+      ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
+    ];
+    pool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet));
+  } else {
+    pool = (EXERCISES_BY_GROUP[group] || []).filter(ex => {
+      return matchEquipment(ex.type, ex.name, eqSet);
+    });
+  }
 
   // Exclude current exercise names in the routine to prevent duplicates
   const currentNames = exercises.map(ex => ex.name);
@@ -2789,9 +2799,16 @@ function renderGeneratorPreview() {
     item.style.alignItems = 'center';
     item.style.gap = '12px';
 
+    let phaseBadge = '';
+    if (ex.sourceGroup === 'Warm-up') {
+      phaseBadge = `<span style="background: rgba(59, 130, 246, 0.12); color: #3b82f6; font-size: 11px; font-weight: 800; padding: 3px 6px; border-radius: 4px; margin-right: 8px; text-transform: uppercase; display: inline-block; vertical-align: middle; line-height: 1;">Warm-up</span>`;
+    } else if (ex.sourceGroup === 'Stretching & Mobility') {
+      phaseBadge = `<span style="background: rgba(168, 85, 247, 0.12); color: #a855f7; font-size: 11px; font-weight: 800; padding: 3px 6px; border-radius: 4px; margin-right: 8px; text-transform: uppercase; display: inline-block; vertical-align: middle; line-height: 1;">Cool-down</span>`;
+    }
+
     item.innerHTML = `
       <div style="flex: 1;">
-        <div style="font-weight: 800; font-size:14.5px;">${escapeHtml(ex.name)} <span style="color: var(--accent); font-weight: 700; font-size: 13.5px;">(${escapeHtml(ex.reps)})</span></div>
+        <div style="font-weight: 800; font-size:14.5px;">${phaseBadge}${escapeHtml(ex.name)} <span style="color: var(--accent); font-weight: 700; font-size: 13.5px;">(${escapeHtml(ex.reps)})</span></div>
         <div class="small">${escapeHtml(ex.info || 'Control movement and focus on form.')}</div>
       </div>
       <button class="btn secondary btn-swap-exercise" data-swap-idx="${idx}" type="button" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;">🔁 Swap</button>
@@ -2954,17 +2971,83 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       }
     }
 
+    // Inject a warm-up exercise if the focus is not purely Stretching
+    if (selected.length > 0 && !(selectedFoci.length === 1 && selectedFoci[0] === 'Stretching & Mobility')) {
+      const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
+      const allExercises = [
+        ...(EXERCISES_BY_GROUP["Cardio"] || []),
+        ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
+      ];
+      const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet));
+      
+      if (warmupPool.length > 0) {
+        // Exclude exercises already in the routine to prevent duplicates
+        const currentNames = selected.map(ex => ex.name);
+        const candidates = warmupPool.filter(ex => !currentNames.includes(ex.name));
+        const finalPool = candidates.length > 0 ? candidates : warmupPool;
+
+        // Score warm-ups by relevance to selected muscle focus areas
+        let bestMatches = [];
+        const fociLower = selectedFoci.map(f => f.toLowerCase());
+        
+        finalPool.forEach(ex => {
+          const targetL = (ex.target || '').toLowerCase();
+          const infoL = (ex.info || '').toLowerCase();
+          
+          let score = 0;
+          fociLower.forEach(focus => {
+            if (focus === 'back') {
+              if (targetL.includes('spine') || targetL.includes('back') || infoL.includes('back') || infoL.includes('spine')) score += 2;
+            }
+            if (focus === 'shoulders' || focus === 'chest') {
+              if (targetL.includes('shoulders') || targetL.includes('chest') || infoL.includes('shoulders') || infoL.includes('chest')) score += 2;
+            }
+            if (focus === 'legs') {
+              if (targetL.includes('hips') || targetL.includes('legs') || targetL.includes('calves') || infoL.includes('knees') || infoL.includes('legs')) score += 2;
+            }
+            if (focus === 'cardio') {
+              if (targetL.includes('warm-up') || targetL.includes('cardio') || infoL.includes('heart rate')) score += 2;
+            }
+          });
+          
+          if (score > 0) {
+            bestMatches.push({ ex, score });
+          }
+        });
+        
+        let finalWarmup;
+        if (bestMatches.length > 0) {
+          bestMatches.sort((a, b) => b.score - a.score);
+          const maxScore = bestMatches[0].score;
+          const topCandidates = bestMatches.filter(item => item.score === maxScore).map(item => item.ex);
+          finalWarmup = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+        } else {
+          finalWarmup = finalPool[Math.floor(Math.random() * finalPool.length)];
+        }
+        
+        selected.push({
+          ...finalWarmup,
+          sourceGroup: 'Warm-up'
+        });
+      }
+    }
+
     // Inject a cool-down stretch if Stretching & Mobility is not already selected in the focus checklist
     if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
       const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
       const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet));
       
       if (matchStretches.length > 0) {
+        // Exclude exercises already in the routine to prevent duplicates
+        const currentNames = selected.map(ex => ex.name);
+        const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
+        const finalPool = candidates.length > 0 ? candidates : matchStretches;
+
         // Score stretches by relevance to selected muscle focus areas
         let bestMatches = [];
         const fociLower = selectedFoci.map(f => f.toLowerCase());
         
-        matchStretches.forEach(ex => {
+        finalPool.forEach(ex => {
           const targetL = (ex.target || '').toLowerCase();
           const infoL = (ex.info || '').toLowerCase();
           
@@ -2986,7 +3069,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
               if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
             }
             if (focus === 'biceps' || focus === 'triceps') {
-              if (targetL.includes('shoulders') || infoL.includes('upper body') || targetL.includes('spine')) score += 1;
+              if (targetL.includes('shoulders') || targetL.includes('upper body') || targetL.includes('spine')) score += 1;
             }
           });
           
@@ -3002,7 +3085,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
           const topCandidates = bestMatches.filter(item => item.score === maxScore).map(item => item.ex);
           finalStretch = topCandidates[Math.floor(Math.random() * topCandidates.length)];
         } else {
-          finalStretch = matchStretches[Math.floor(Math.random() * matchStretches.length)];
+          finalStretch = finalPool[Math.floor(Math.random() * finalPool.length)];
         }
         
         selected.push({
