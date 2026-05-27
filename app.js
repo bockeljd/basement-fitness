@@ -1690,6 +1690,49 @@ function ensureSessionShape(s) {
   return s;
 }
 
+const expandedGuides = new Set();
+
+function findLibraryExercise(rawName) {
+  if (!rawName) return null;
+  let name = rawName.split('(')[0].trim().toLowerCase();
+  
+  const norm = (s) => s
+    .replace(/\bdb\b/g, 'dumbbell')
+    .replace(/\bbb\b/g, 'barbell')
+    .replace(/flat\b/g, '')
+    .replace(/machine\b/g, '')
+    .replace(/stretches\b/g, 'stretch')
+    .replace(/s\b/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+    
+  const cleanName = norm(name);
+  
+  let bestMatch = null;
+  let bestScore = 0;
+  
+  for (const group in EXERCISES_BY_GROUP) {
+    for (const ex of EXERCISES_BY_GROUP[group]) {
+      const exClean = norm(ex.name.toLowerCase());
+      if (cleanName === exClean) {
+        return ex;
+      }
+      
+      let score = 0;
+      if (cleanName.includes(exClean) || exClean.includes(cleanName)) {
+        score = Math.min(cleanName.length, exClean.length);
+      }
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = ex;
+      }
+    }
+  }
+  
+  return bestScore > 2 ? bestMatch : null;
+}
+
 function renderWorkout() {
   const s = activeSession();
   const activeTabBtn = $('tabActiveWorkout');
@@ -1731,18 +1774,32 @@ function renderWorkout() {
     exEl.className = 'exercise';
 
     const sets = s.entries[ex.id] || [];
+    const isExpanded = expandedGuides.has(ex.id);
+    const guideStyle = isExpanded ? 'max-height: none; opacity: 1; margin-top: 8px; border-top: 1px dashed var(--border);' : '';
+    const iconStyle = isExpanded ? 'transform: rotate(180deg);' : '';
 
     exEl.innerHTML = `
       <div class="exerciseHeader">
         <div>
           <div class="exerciseName">${escapeHtml(ex.name)}</div>
-          <div class="small">${sets.length} sets logged</div>
+          <div class="small" style="display: flex; gap: 8px; align-items: center; margin-top: 2px;">
+            <span>${sets.length} sets logged</span>
+            <button class="btn-guide-toggle" data-ex-id="${ex.id}" type="button" style="background: none; border: none; padding: 0; color: var(--accent); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+              <span>📖 Form Guide</span> <span class="guide-toggle-icon" style="font-size: 8px; transition: transform 0.2s ease; ${iconStyle}">▼</span>
+            </button>
+          </div>
         </div>
         <div class="row">
           <button class="btn secondary" data-action="renameExercise" data-ex="${ex.id}" type="button">Rename</button>
           <button class="btn danger" data-action="removeExercise" data-ex="${ex.id}" type="button">Remove</button>
         </div>
       </div>
+      
+      <!-- Collapsible Form Guide Drawer -->
+      <div class="exercise-dir-details" id="guide-${ex.id}" style="${guideStyle} padding-top: 0; border-top: none;">
+        <!-- Filled dynamically below -->
+      </div>
+
       <div class="sets" id="sets-${ex.id}"></div>
       <div class="row wrap" style="margin-top:10px">
         <input class="input" style="width: 100px;" inputmode="decimal" placeholder="Weight" data-field="w" data-ex="${ex.id}" />
@@ -1752,6 +1809,58 @@ function renderWorkout() {
     `;
 
     list.appendChild(exEl);
+
+    // populate form guide drawer
+    const matched = findLibraryExercise(ex.name);
+    const guideEl = exEl.querySelector(`#guide-${CSS.escape(ex.id)}`);
+    
+    if (matched) {
+      const stepsHtml = (matched.steps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
+      const proTipHtml = matched.proTip ? `
+        <div class="exercise-pro-tip" style="margin-bottom: 6px;">
+          <strong>💡 Pro Tip:</strong> ${escapeHtml(matched.proTip)}
+        </div>
+      ` : '';
+      
+      guideEl.innerHTML = `
+        <div style="padding: 10px 0 6px;">
+          <div class="exercise-detail-row" style="margin-top: 0;">
+            <span class="detail-label">Target Area:</span>
+            <span class="detail-val" style="color: var(--accent);">${escapeHtml(matched.target || 'General')}</span>
+          </div>
+          <div class="exercise-detail-row">
+            <span class="detail-label">Difficulty:</span>
+            <span class="detail-val">${escapeHtml(matched.difficulty || 'Intermediate')}</span>
+          </div>
+          <div class="exercise-detail-row">
+            <span class="detail-label">Equipment:</span>
+            <span class="detail-val" style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(99, 102, 241, 0.08); padding: 1px 4px; border-radius: 4px;">${escapeHtml(matched.type || 'Bodyweight')}</span>
+          </div>
+          
+          <div class="exercise-detail-heading">How to Perform:</div>
+          <ol class="exercise-steps-list" style="margin-bottom: 10px;">
+            ${stepsHtml}
+          </ol>
+          ${proTipHtml}
+        </div>
+      `;
+    } else {
+      guideEl.innerHTML = `
+        <div style="padding: 10px 0 6px;">
+          <div class="exercise-detail-heading">General Form Pointers:</div>
+          <ol class="exercise-steps-list" style="margin-bottom: 10px;">
+            <li><strong>Mind-Muscle Connection:</strong> Focus on the active muscle contracting and stretching throughout the movement.</li>
+            <li><strong>Controlled Eccentrics:</strong> Lower the weight slowly (2-3 seconds) to maintain tension and protect joints.</li>
+            <li><strong>Full Range of Motion:</strong> Perform the complete movement path without short-cutting or using momentum.</li>
+            <li><strong>Proper Breathing:</strong> Inhale on the release/lowering, exhale on the contraction/push. Do not hold your breath.</li>
+            <li><strong>Spine Safety:</strong> Brace your core and maintain a neutral/flat back on all movements.</li>
+          </ol>
+          <div class="exercise-pro-tip" style="margin-bottom: 6px;">
+            <strong>💡 Pro Tip:</strong> If you feel joint pain or lose form, reduce the weight immediately or perform a bodyweight alternative.
+          </div>
+        </div>
+      `;
+    }
 
     // render sets list
     const setsEl = exEl.querySelector(`#sets-${CSS.escape(ex.id)}`);
@@ -1765,6 +1874,43 @@ function renderWorkout() {
         </div>
       `;
     }).join('');
+  });
+
+  // Bind click listeners for guide toggle buttons
+  list.querySelectorAll('.btn-guide-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const exId = btn.getAttribute('data-ex-id');
+      const details = list.querySelector(`#guide-${CSS.escape(exId)}`);
+      const icon = btn.querySelector('.guide-toggle-icon');
+      
+      const isExpanded = expandedGuides.has(exId);
+      
+      if (!isExpanded) {
+        expandedGuides.add(exId);
+        details.style.maxHeight = details.scrollHeight + 'px';
+        details.style.opacity = '1';
+        details.style.marginTop = '8px';
+        details.style.borderTop = '1px dashed var(--border)';
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        setTimeout(() => {
+          if (expandedGuides.has(exId)) {
+            details.style.maxHeight = 'none';
+          }
+        }, 300);
+      } else {
+        expandedGuides.delete(exId);
+        if (details.style.maxHeight === 'none') {
+          details.style.maxHeight = details.scrollHeight + 'px';
+          details.offsetHeight; // force reflow
+        }
+        details.style.maxHeight = '0';
+        details.style.opacity = '0';
+        details.style.marginTop = '0';
+        details.style.borderTop = 'none';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      }
+    });
   });
 }
 
