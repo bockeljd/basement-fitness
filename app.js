@@ -2690,6 +2690,11 @@ function getExerciseTier(ex, groupName) {
   const typeL = (ex.type || '').toLowerCase();
   const groupL = (groupName || '').toLowerCase();
 
+  // Warm-up phase
+  if (groupL === 'warm-up') {
+    return 0;
+  }
+
   // Cool-down / Stretching
   if (groupL === 'stretching & mobility' || typeL === 'stretching') {
     return 4;
