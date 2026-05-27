@@ -524,69 +524,680 @@ const EXERCISE_POOL = {
 
 const EXERCISES_BY_GROUP = {
   "Chest": [
-    { name: "Push-ups", type: "Bodyweight", info: "Great for overall chest development. Keep elbows at 45 degrees." },
-    { name: "Dumbbell Bench Press", type: "Dumbbells", info: "Allows a deeper range of motion than a barbell bench press." },
-    { name: "Barbell Bench Press", type: "Barbell", info: "The classic chest builder. Keep shoulder blades retracted." },
-    { name: "Incline Dumbbell Press", type: "Dumbbells", info: "Targets the upper portion of the chest." },
-    { name: "Chest Dips", type: "Bodyweight", info: "Lean forward slightly to focus on lower chest." },
-    { name: "Dumbbell Flys", type: "Dumbbells", info: "Isolates the chest muscles, focusing on the stretch at the bottom." }
+    {
+      name: "Barbell Bench Press",
+      type: "Barbell",
+      difficulty: "Intermediate",
+      target: "Mid Chest",
+      info: "Classic compound press for chest mass and upper body power.",
+      steps: [
+        "Lie flat on the bench, feet flat on the floor, grip the bar slightly wider than shoulder width.",
+        "Retract your shoulder blades and brace your core.",
+        "Unrack the bar and lower it under control to your mid-chest.",
+        "Press the bar back up dynamically to full extension without lifting your hips."
+      ],
+      proTip: "Keep your elbows tucked at a 45-degree angle to save your shoulder joints."
+    },
+    {
+      name: "Dumbbell Bench Press",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Chest (General)",
+      info: "Excellent chest press allowing a greater range of motion and correcting imbalances.",
+      steps: [
+        "Sit on the bench holding dumbbells, lie back and press them straight above your chest.",
+        "Lower the weights slowly until they are near the outer chest level.",
+        "Press the dumbbells back up to the starting position, squeezing the chest at the top."
+      ],
+      proTip: "Do not let the dumbbells clank together at the top; maintain tension on the chest."
+    },
+    {
+      name: "Incline Dumbbell Press",
+      type: "Dumbbells",
+      difficulty: "Intermediate",
+      target: "Upper Chest",
+      info: "Dumbbell press performed on a 30-45 degree incline to target upper pectorals.",
+      steps: [
+        "Set bench to a 30-45 degree incline, lie back holding dumbbells at collarbone level.",
+        "Press dumbbells straight up above your eyes.",
+        "Lower the weights under control until your elbows are below your shoulders."
+      ],
+      proTip: "Avoid using a bench angle greater than 45 degrees, which shifts the load to the front delts."
+    },
+    {
+      name: "Chest Dips",
+      type: "Bodyweight",
+      difficulty: "Advanced",
+      target: "Lower Chest",
+      info: "Powerful bodyweight exercise focusing on the lower chest and triceps.",
+      steps: [
+        "Grab the dip bars, lock your arms, and cross your ankles.",
+        "Lean your torso forward (about 30 degrees) and flare your elbows slightly.",
+        "Lower your body until you feel a light stretch in your chest.",
+        "Press back up to lock out your elbows."
+      ],
+      proTip: "Leaning forward targets the chest, while staying completely upright targets the triceps."
+    },
+    {
+      name: "Push-ups",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Chest (General)",
+      info: "Fundamental chest and core builder that can be done anywhere.",
+      steps: [
+        "Place hands flat on the floor slightly wider than shoulder width.",
+        "Establish a rigid straight line from head to heels.",
+        "Lower your chest to the floor by bending your elbows.",
+        "Press the floor away to return to the top."
+      ],
+      proTip: "Tuck your elbows to your sides rather than flaring them outwards to protect your rotator cuffs."
+    },
+    {
+      name: "Dumbbell Flys",
+      type: "Dumbbells",
+      difficulty: "Intermediate",
+      target: "Chest Outer / Stretch",
+      info: "Isolation movement focusing on horizontal adduction and chest stretch.",
+      steps: [
+        "Lie on a flat bench holding dumbbells above chest with palms facing each other.",
+        "Slightly bend your elbows and lower weights in a wide arc until you feel a chest stretch.",
+        "Squeeze chest to return dumbbells in the same wide arc back to the starting point."
+      ],
+      proTip: "Keep the bend in your elbows constant throughout the movement. It is a fly, not a press."
+    },
+    {
+      name: "Diamond Push-ups",
+      type: "Bodyweight",
+      difficulty: "Intermediate",
+      target: "Inner Chest / Triceps",
+      info: "Push-up variation with close hand positioning for inner chest and triceps.",
+      steps: [
+        "Place hands close together on the floor under your chest, forming a diamond shape with thumbs and index fingers.",
+        "Brace core and lower your chest down to meet your hands.",
+        "Press up dynamically to full extension."
+      ],
+      proTip: "If this is too difficult on your toes, perform them with your knees on the floor."
+    }
   ],
   "Back": [
-    { name: "Pull-ups / Chin-ups", type: "Bodyweight", info: "The ultimate vertical pulling exercise for a wide back." },
-    { name: "Dumbbell Rows", type: "Dumbbells", info: "Great for mid-back development. Pull to your hip, not chest." },
-    { name: "Barbell Row", type: "Barbell", info: "Builds thick back muscles. Maintain a strong bent-over posture." },
-    { name: "Lat Pulldowns", type: "Machine", info: "Vertical pull alternative. Pull down to upper chest level." },
-    { name: "Supermans", type: "Bodyweight", info: "Strengthens lower back and glutes without any equipment." }
+    {
+      name: "Pull-ups",
+      type: "Bodyweight",
+      difficulty: "Advanced",
+      target: "Lats & Upper Back",
+      info: "The ultimate vertical pulling exercise for back width and arm strength.",
+      steps: [
+        "Hang from a pull-up bar with an overhand grip (palms facing away), hands wider than shoulders.",
+        "Depress your shoulder blades and pull your chest up to meet the bar.",
+        "Lead with your elbows and squeeze your lats at the top.",
+        "Slowly lower yourself back to a full hang."
+      ],
+      proTip: "Avoid swinging or using momentum. Control the lowering phase for maximum hypertrophy."
+    },
+    {
+      name: "Barbell Row",
+      type: "Barbell",
+      difficulty: "Intermediate",
+      target: "Mid Back & Lats",
+      info: "Heavy compound horizontal row targeting back thickness.",
+      steps: [
+        "Hold barbell with overhand grip, bend knees slightly, hinge at hips until torso is near 45 degrees.",
+        "Brace core, keep spine neutral, row bar to your lower sternum/belly button.",
+        "Squeeze shoulder blades together, then lower the bar with control."
+      ],
+      proTip: "Pull with your elbows, not your hands, to ensure your back muscles do the work."
+    },
+    {
+      name: "Dumbbell Rows",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Lats & Rhomboids",
+      info: "Single-arm row that allows full retraction of the shoulder blade.",
+      steps: [
+        "Place one knee and hand on a flat bench, holding a dumbbell in the other hand.",
+        "With a flat back, pull the dumbbell up to your hip level.",
+        "Squeeze your lat, then lower the weight slowly to full arm extension."
+      ],
+      proTip: "Avoid twisting your torso at the top; keep your hips and shoulders parallel to the floor."
+    },
+    {
+      name: "Chin-ups",
+      type: "Bodyweight",
+      difficulty: "Intermediate",
+      target: "Lower Lats & Biceps",
+      info: "Vertical pull with underhand grip that recruits biceps heavily.",
+      steps: [
+        "Hang from bar with underhand grip (palms facing you), hands shoulder-width apart.",
+        "Pull your body up until your chin clears the bar.",
+        "Lower yourself slowly to the starting dead-hang position."
+      ],
+      proTip: "Pull your shoulders down and back before you start pulling with your arms."
+    },
+    {
+      name: "Deadlift",
+      type: "Barbell",
+      difficulty: "Advanced",
+      target: "Entire Posterior Chain",
+      info: "Fundamental compound lift for posterior strength, lower back, and hamstrings.",
+      steps: [
+        "Stand with feet hip-width apart, shins close to the barbell.",
+        "Hinge at hips, bend knees, grip bar, flatten your back, and pull chest up.",
+        "Drive through your heels, push hips forward, and stand up to lock out.",
+        "Lower bar back down by hinging hips and bending knees once bar clears knees."
+      ],
+      proTip: "Never let your lower back round during the lift. Keep the barbell close to your shins."
+    },
+    {
+      name: "Supermans",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Lower Back / Glutes",
+      info: "Simple bodyweight exercise targeting the lower back extensors.",
+      steps: [
+        "Lie face down on the floor with arms extended forward and legs straight.",
+        "Simultaneously lift your arms, chest, and legs off the ground.",
+        "Hold the contraction for 2-3 seconds, then lower down slowly."
+      ],
+      proTip: "Keep your neck neutral by looking at the floor rather than raising your chin."
+    }
   ],
   "Shoulders": [
-    { name: "Overhead Shoulder Press", type: "Dumbbells / Barbell", info: "Key vertical press for shoulder size and strength." },
-    { name: "Lateral Raises", type: "Dumbbells", info: "Isolates the lateral deltoid to build shoulder width." },
-    { name: "Pike Push-ups", type: "Bodyweight", info: "Bodyweight shoulder press alternative. Elevate hips high." },
-    { name: "Face Pulls", type: "Bands / Cable", info: "Crucial for rear deltoid and rotator cuff health." },
-    { name: "Front Raises", type: "Dumbbells", info: "Targets the anterior (front) deltoid." }
+    {
+      name: "Overhead Barbell Press",
+      type: "Barbell",
+      difficulty: "Intermediate",
+      target: "Anterior Delts",
+      info: "Standing compound press that builds massive shoulder power and core stability.",
+      steps: [
+        "Rack barbell at chest height, grip bar slightly wider than shoulders, rack on front delts.",
+        "Brace core, squeeze glutes, press bar vertically over your head, clearing your face.",
+        "Lock out arms at the top, pushing head slightly forward through the window.",
+        "Lower the bar back down to upper chest under control."
+      ],
+      proTip: "Keep your core braced tightly. Do not lean back excessively to press the weight."
+    },
+    {
+      name: "Dumbbell Shoulder Press",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Shoulders (General)",
+      info: "Vertical shoulder press providing independent arm path and stability training.",
+      steps: [
+        "Sit on utility bench holding dumbbells at ear level with palms facing forward.",
+        "Press the weights straight up overhead until arms are extended.",
+        "Lower the weights slowly back to the start position."
+      ],
+      proTip: "Keep your elbows slightly angled forward (in the scapular plane) rather than flared flat."
+    },
+    {
+      name: "Dumbbell Lateral Raise",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Lateral Delts",
+      info: "Crucial isolation exercise for building shoulder width and the capped deltoid look.",
+      steps: [
+        "Stand tall holding dumbbells at your sides, slight bend in elbows.",
+        "Raise arms out to sides until they are parallel to the floor.",
+        "Lead with the elbows, turn pinkies slightly up, then lower weights slowly."
+      ],
+      proTip: "Avoid swinging or using body momentum. Pause briefly at the peak of the raise."
+    },
+    {
+      name: "Arnold Press",
+      type: "Dumbbells",
+      difficulty: "Intermediate",
+      target: "Front & Side Delts",
+      info: "Rotational press popularized by Arnold Schwarzenegger for complete delt coverage.",
+      steps: [
+        "Sit on bench, hold dumbbells in front of chest with palms facing you (like top of curl).",
+        "Press dumbbells overhead while rotating your wrists so palms face forward at the top.",
+        "Reverse the rotation as you lower the weights back to the start."
+      ],
+      proTip: "Execute the rotation smoothly throughout the press rather than all at once."
+    },
+    {
+      name: "Pike Push-ups",
+      type: "Bodyweight",
+      difficulty: "Intermediate",
+      target: "Front Delts / Triceps",
+      info: "Excellent bodyweight shoulder press progression.",
+      steps: [
+        "Start in a push-up position, then walk your feet forward and lift hips to form an inverted V-shape.",
+        "Lower your head forward between your hands by bending your elbows.",
+        "Press the floor away to return to the starting pike shape."
+      ],
+      proTip: "To make it harder, elevate your feet on a bench or box."
+    },
+    {
+      name: "Dumbbell Rear Delt Flys",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Posterior Delts",
+      info: "Hinged shoulder fly targeting rear delts and upper back health.",
+      steps: [
+        "Hinge at hips with flat back, holding dumbbells hanging down, palms facing each other.",
+        "With slightly bent elbows, raise dumbbells out to your sides.",
+        "Squeeze rear delts at the top, then lower with control."
+      ],
+      proTip: "Focus on pulling with your elbows and avoid shrugging your shoulders into your neck."
+    }
   ],
   "Biceps": [
-    { name: "Bicep Curls", type: "Dumbbells", info: "Classic curl. Keep elbows pinned close to your sides." },
-    { name: "Hammer Curls", type: "Dumbbells", info: "Targets brachialis and brachioradialis for forearm/bicep thickness." },
-    { name: "Barbell Bicep Curl", type: "Barbell", info: "Allows heavier loading of the biceps." },
-    { name: "Concentration Curls", type: "Dumbbells", info: "Sit, rest elbow on inner thigh to isolate bicep peak." },
-    { name: "Chin-ups", type: "Bodyweight", info: "Underhand pull-up. Excellent compound builder for biceps." }
+    {
+      name: "Dumbbell Bicep Curls",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Biceps (Short/Long Head)",
+      info: "The standard dumbbell curl. Supinate wrists for maximum contraction.",
+      steps: [
+        "Stand or sit holding dumbbells at your sides, palms facing in (neutral grip).",
+        "Curl weights up while rotating wrists so palms face up at the top.",
+        "Squeeze biceps, then lower weights back down slowly, rotating wrists back."
+      ],
+      proTip: "Keep your elbows pinned close to your torso. Do not swing your hips."
+    },
+    {
+      name: "Hammer Curls",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Brachialis & Forearms",
+      info: "Curl performed with neutral grip, targeting forearm and outer arm thickness.",
+      steps: [
+        "Stand holding dumbbells with palms facing each other.",
+        "Keep palms facing each other and curl the weights up.",
+        "Lower the weights slowly, resisting gravity."
+      ],
+      proTip: "This is great for building the brachialis muscle, which sits under the bicep and pushes it up."
+    },
+    {
+      name: "Barbell Bicep Curl",
+      type: "Barbell",
+      difficulty: "Beginner",
+      target: "Biceps (General)",
+      info: "Classic barbell movement allowing heavy bicep loading.",
+      steps: [
+        "Stand holding barbell with underhand grip at shoulder width.",
+        "Curl bar upwards, keeping elbows stationary at sides.",
+        "Lower bar with control to full extension."
+      ],
+      proTip: "Do not let your shoulders roll forward at the top of the movement."
+    },
+    {
+      name: "Incline Dumbbell Curl",
+      type: "Dumbbells",
+      difficulty: "Intermediate",
+      target: "Bicep Long Head",
+      info: "Seated incline curl that places the biceps under deep stretch.",
+      steps: [
+        "Sit on incline bench (45 degrees), dumbbells hanging down behind your torso.",
+        "Keep elbows locked in place and curl the weights up.",
+        "Lower weights back to the full stretch position slowly."
+      ],
+      proTip: "Do not move your elbows forward during the curl; keep them pinned in place behind you."
+    },
+    {
+      name: "Concentration Curl",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Bicep Peak",
+      info: "Seated curl designed to isolate the biceps and build bicep height.",
+      steps: [
+        "Sit on bench, rest elbow against inner thigh, holding a dumbbell.",
+        "Curl dumbbell up toward your chest, isolating bicep contraction.",
+        "Lower under control, flattening arm out completely."
+      ],
+      proTip: "Keep your torso stationary and focus entirely on squeezing the bicep muscle."
+    }
   ],
   "Triceps": [
-    { name: "Tricep Dips", type: "Bodyweight", info: "Bench dips or parallel bar dips. Keep chest upright to target triceps." },
-    { name: "Overhead Extension", type: "Dumbbells", info: "Strengthens the long head of the triceps. Keep elbows tucked." },
-    { name: "Tricep Pushdowns", type: "Cable / Bands", info: "Squeeze hard at the bottom extension." },
-    { name: "Diamond Push-ups", type: "Bodyweight", info: "Close grip push-up that heavily recruits triceps." },
-    { name: "Skull Crushers", type: "Barbell / Dumbbells", info: "Lower weight toward forehead, keeping upper arms vertical." }
+    {
+      name: "Tricep Overhead Extension",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Tricep Long Head",
+      info: "Overhead press focusing on the long head of the triceps.",
+      steps: [
+        "Hold dumbbell vertically with both hands behind head, elbows pointing forward.",
+        "Extend arms vertically to lift the weight overhead.",
+        "Lower dumbbell back down behind your head slowly."
+      ],
+      proTip: "Keep your elbows tucked inward close to your ears; do not let them flare wide."
+    },
+    {
+      name: "Skull Crushers",
+      type: "Barbell / Dumbbells",
+      difficulty: "Intermediate",
+      target: "Triceps (General)",
+      info: "Lying tricep extension targeting lateral and long heads.",
+      steps: [
+        "Lie on bench, press bar/dumbbells straight above your chest.",
+        "Keeping upper arms vertical, bend elbows to lower bar towards forehead.",
+        "Use triceps to press bar back to vertical start."
+      ],
+      proTip: "For shoulder health, lower the bar slightly behind your head rather than straight to your forehead."
+    },
+    {
+      name: "Tricep Pushdowns",
+      type: "Cable / Bands",
+      difficulty: "Beginner",
+      target: "Tricep Lateral Head",
+      info: "Cable/band pull down that isolates the outer triceps.",
+      steps: [
+        "Grip attachment (rope/bar) at chest height, keep elbows tight to ribs.",
+        "Extend arms downward, squeezing triceps at lockout.",
+        "Return slowly to chest height."
+      ],
+      proTip: "Keep your shoulders down and avoid using your bodyweight to press the rope down."
+    },
+    {
+      name: "Parallel Bar Dips",
+      type: "Bodyweight",
+      difficulty: "Advanced",
+      target: "Triceps & Lower Chest",
+      info: "Upright dip targeting tricep lockouts and pressing power.",
+      steps: [
+        "Mount dip bars, keep body upright, lock out arms.",
+        "Lower body by bending elbows back, keeping torso vertical.",
+        "Push back up using triceps to full arm extension."
+      ],
+      proTip: "Keep your torso vertical to target the triceps; leaning forward shifts focus to the chest."
+    },
+    {
+      name: "Bench Dips",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Triceps",
+      info: "Accessible tricep dip that can be done using a bench, chair, or couch.",
+      steps: [
+        "Place hands on edge of bench behind you, feet extended forward on floor.",
+        "Lower hips by bending elbows to 90 degrees.",
+        "Press up through palms to lock out arms."
+      ],
+      proTip: "Keep your back close to the bench as you lower and raise yourself."
+    }
   ],
   "Legs": [
-    { name: "Back Squats", type: "Barbell / Dumbbells", info: "The king of leg exercises. Focus on sitting back and down." },
-    { name: "Romanian Deadlifts", type: "Dumbbells / Barbell", info: "Excellent for hamstrings and glutes. Hinge at hips." },
-    { name: "Bulgarian Split Squats", type: "Dumbbells / Bodyweight", info: "Single-leg builder. Rear foot elevated on a bench." },
-    { name: "Walking Lunges", type: "Dumbbells / Bodyweight", info: "Dynamic leg builder. Step and lower until knees are 90 degrees." },
-    { name: "Calf Raises", type: "Dumbbells / Bodyweight", info: "Builds calf strength. Rise high onto toes and control down." },
-    { name: "Glute Bridges / Hip Thrusts", type: "Bodyweight / Barbell", info: "Focuses heavily on glute activation and hip extension." }
+    {
+      name: "Barbell Back Squat",
+      type: "Barbell",
+      difficulty: "Intermediate",
+      target: "Quads & Glutes",
+      info: "The king of lower body compound exercises for strength and size.",
+      steps: [
+        "Position bar on upper back/traps, lift off rack, step back.",
+        "Set feet shoulder-width, toes angled slightly out.",
+        "Hinge hips and bend knees to lower down to parallel or lower.",
+        "Drive through your heels and mid-foot to stand back up."
+      ],
+      proTip: "Keep your chest up and push your knees out in line with your toes."
+    },
+    {
+      name: "Dumbbell Romanian Deadlift",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Hamstrings & Glutes",
+      info: "Hinge exercise targeting the hamstrings, glutes, and lower back.",
+      steps: [
+        "Stand tall holding dumbbells in front of thighs, feet hip-width apart.",
+        "Push hips back and lower weights down front of legs, keeping knees slightly bent.",
+        "Once you feel hamstring stretch, squeeze glutes and return to standing."
+      ],
+      proTip: "Keep the dumbbells close to your legs and maintain a neutral, flat spine throughout."
+    },
+    {
+      name: "Bulgarian Split Squats",
+      type: "Dumbbells / Bodyweight",
+      difficulty: "Advanced",
+      target: "Quads, Glutes & Balance",
+      info: "Highly effective single-leg builder. Excellent for correcting imbalances.",
+      steps: [
+        "Place one foot flat on floor and rest top of other foot on bench behind you.",
+        "Lower rear knee toward floor, keeping front knee behind front toes.",
+        "Press through front heel to return to vertical."
+      ],
+      proTip: "Leaning forward slightly targets glutes; staying upright targets quads."
+    },
+    {
+      name: "Dumbbell Goblet Squat",
+      type: "Dumbbells",
+      difficulty: "Beginner",
+      target: "Quads & Core",
+      info: "Great squat variation holding dumbbell at chest, correcting squat posture.",
+      steps: [
+        "Hold dumbbell vertically at chest level, feet shoulder-width.",
+        "Squat deep, pushing knees out and keeping chest tall.",
+        "Drive back up to starting position."
+      ],
+      proTip: "This is a great starting squat because the front load acts as a counterweight to help you stay upright."
+    },
+    {
+      name: "Walking Lunges",
+      type: "Dumbbells / Bodyweight",
+      difficulty: "Beginner",
+      target: "Quads, Glutes & Hamstrings",
+      info: "Dynamic unilateral leg builder that improves balance and strength.",
+      steps: [
+        "Step forward, lower hips until back knee is just off floor.",
+        "Press through front heel and step forward into next lunge.",
+        "Maintain upright chest."
+      ],
+      proTip: "Take wide steps to target the glutes/hamstrings; shorter steps target the quads."
+    },
+    {
+      name: "Dumbbell Calf Raises",
+      type: "Dumbbells / Bodyweight",
+      difficulty: "Beginner",
+      target: "Calves",
+      info: "Isolates the gastrocnemius calf muscle.",
+      steps: [
+        "Stand holding dumbbells at sides, feet hip-width.",
+        "Rise up onto balls of feet as high as possible.",
+        "Pause, then lower heels down under control."
+      ],
+      proTip: "Hold the peak contraction for 1-2 seconds and lower down slowly to eliminate Achilles tendon bounce."
+    }
   ],
   "Core": [
-    { name: "Plank Hold", type: "Bodyweight", info: "Brace abs, squeeze glutes, keep straight line from head to heels." },
-    { name: "Bicycle Crunches", type: "Bodyweight", info: "Highly effective for rectus abdominis and obliques." },
-    { name: "Russian Twists", type: "Dumbbells / Bodyweight", info: "Rotational core strength. Touch floor on each side." },
-    { name: "Hollow Body Hold", type: "Bodyweight", info: "Press lower back completely flat against the floor." },
-    { name: "Leg Raises", type: "Bodyweight", info: "Lying on back, raise legs to vertical, control the descent." }
+    {
+      name: "Plank Hold",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Transverse Abdominis",
+      info: "Isometric core strength standard that builds complete core stability.",
+      steps: [
+        "Rest forearms on floor, hands apart, step feet back.",
+        "Create straight line from head to heels.",
+        "Tighten abs, squeeze glutes, and hold."
+      ],
+      proTip: "Do not let your hips sag or arch up. Imagine pulling your belly button into your spine."
+    },
+    {
+      name: "Bicycle Crunches",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Six-pack Abs / Obliques",
+      info: "Rotational crunch targeting rectus abdominis and obliques.",
+      steps: [
+        "Lie on back, hands behind head, raise legs, knees bent.",
+        "Pedal legs while rotating torso, bringing elbow to opposite knee.",
+        "Alternate sides in controlled fluid tempo."
+      ],
+      proTip: "Move slowly and focus on the torso rotation rather than just pulling your elbows forward."
+    },
+    {
+      name: "Hanging Leg Raises",
+      type: "Bodyweight",
+      difficulty: "Advanced",
+      target: "Lower Abs / Grip",
+      info: "High-intensity abdominal exercise hanging from a pull-up bar.",
+      steps: [
+        "Hang from bar with overhand grip, arms straight.",
+        "Keeping legs straight, lift them up to form a 90-degree angle with torso.",
+        "Slowly lower legs back down, avoiding swinging."
+      ],
+      proTip: "If straight legs are too difficult, bend your knees and lift your knees to your chest."
+    },
+    {
+      name: "Russian Twists",
+      type: "Dumbbells / Bodyweight",
+      difficulty: "Beginner",
+      target: "Obliques",
+      info: "Rotational core exercise performed in a V-sit posture.",
+      steps: [
+        "Sit on floor, lean back, elevate feet slightly off floor.",
+        "Hold hands (or a dumbbell) and rotate torso to touch floor on right, then left.",
+        "Repeat under control."
+      ],
+      proTip: "Follow your hands with your eyes to ensure your entire torso is rotating, not just your arms."
+    },
+    {
+      name: "Hollow Body Hold",
+      type: "Bodyweight",
+      difficulty: "Intermediate",
+      target: "Deep Core Stability",
+      info: "Gymnastics core hold that keeps the entire core under deep isometric tension.",
+      steps: [
+        "Lie flat on back, extend arms overhead and legs straight out.",
+        "Raise legs, head, and shoulders slightly off ground.",
+        "Press your lower back flat into the floor; there should be no gap."
+      ],
+      proTip: "If your lower back arches off the floor, lift your legs higher or bend your knees until it is flat."
+    }
   ],
   "Cardio": [
-    { name: "Burpees", type: "Bodyweight", info: "Full body explosive movement. High heart rate stimulator." },
-    { name: "Jumping Jacks", type: "Bodyweight", info: "Steady aerobic cardio exercise." },
-    { name: "Mountain Climbers", type: "Bodyweight", info: "Core and cardio combined. Keep hips low and drive knees." },
-    { name: "Treadmill Jogging / Running", type: "Treadmill", info: "Brisk pace or intervals for cardiovascular health." },
-    { name: "High Knees", type: "Bodyweight", info: "Running in place with exaggerated knee lift." }
+    {
+      name: "Burpees",
+      type: "Bodyweight",
+      difficulty: "Intermediate",
+      target: "Full Body Cardio",
+      info: "High-intensity aerobic conditioning movement.",
+      steps: [
+        "From standing, squat down, place hands on floor.",
+        "Kick feet back into push-up position, perform push-up.",
+        "Jump feet back to hands, explode up into jump, clap overhead."
+      ],
+      proTip: "Pace yourself; finding a steady rhythm is better than sprinting and burning out in 5 reps."
+    },
+    {
+      name: "Mountain Climbers",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Cardio & Core",
+      info: "Cardiovascular builder simulating running in a plank position.",
+      steps: [
+        "Start in high push-up plank position.",
+        "Drive right knee under chest to head height, return to start.",
+        "Alternate rapidly with left knee."
+      ],
+      proTip: "Keep your hips low and in line with your shoulders; do not bounce your hips up and down."
+    },
+    {
+      name: "Kettlebell Swings",
+      type: "Dumbbells / Kettlebell",
+      difficulty: "Intermediate",
+      target: "Glutes, Hamstrings & Cardio",
+      info: "Explosive hip hinge movement that trains cardiovascular endurance and hip power.",
+      steps: [
+        "Stand over weight, hinge hips back, grip weight.",
+        "Swing weight back between legs, then snap hips forward dynamically.",
+        "Stand tall, letting weight float up to shoulder height.",
+        "Control descent, hinging back into next rep."
+      ],
+      proTip: "This is a hinge, not a squat. The power comes from snapping your hips, not lifting with your arms."
+    },
+    {
+      name: "Jumping Jacks",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Cardio (Aerobic)",
+      info: "Classic aerobic warming up standard.",
+      steps: [
+        "Stand tall, feet together, arms at sides.",
+        "Jump feet wide while raising arms overhead.",
+        "Jump back to start."
+      ],
+      proTip: "Land softly on the balls of your feet to reduce impact on your knees."
+    },
+    {
+      name: "High Knees",
+      type: "Bodyweight",
+      difficulty: "Beginner",
+      target: "Cardio (Anaerobic)",
+      info: "Rapid sprint in place with knee drive.",
+      steps: [
+        "Stand, run in place rapidly.",
+        "Drive knees up to hip height on each stride.",
+        "Pump arms in sync."
+      ],
+      proTip: "Keep your torso tall; do not lean backward to get your knees higher."
+    }
   ],
   "Stretching & Mobility": [
-    { name: "World's Greatest Stretch", type: "Stretching", info: "Lunge + rotation. Excellent full body opener." },
-    { name: "Child's Pose", type: "Stretching", info: "Resting pose. Stretches lower back, hips, thighs, and ankles." },
-    { name: "Cat-Cow Stretch", type: "Stretching", info: "Mobilizes spine and increases flexibility in neck and back." },
-    { name: "Hamstring Scoop Stretch", type: "Stretching", info: "Active stretching of hamstrings and calves while walking." },
-    { name: "Cobra Stretch", type: "Stretching", info: "Lying prone, press chest up to stretch abdominal wall and open chest." }
+    {
+      name: "World's Greatest Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Hips, Spine & Shoulders",
+      info: "Comprehensive full body mobility sequence.",
+      steps: [
+        "Step forward into deep lunge, place opposite hand flat on floor inside front foot.",
+        "Reach front elbow down toward inside of ankle, then rotate arm up toward ceiling, looking up.",
+        "Return hand, sit back to stretch hamstrings, then return to start."
+      ],
+      proTip: "Take your time in each position. Exhale as you rotate your torso upward."
+    },
+    {
+      name: "Child's Pose",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Lower Back & Hips",
+      info: "Resting stretch that decompresses the spine and opens hips.",
+      steps: [
+        "Kneel, sit hips back on heels, touch big toes, knees apart.",
+        "Reach arms forward flat on floor, lower chest to floor.",
+        "Breathe deeply and sink into stretch."
+      ],
+      proTip: "Walk your hands to the left and right to feel an additional stretch along your lats and obliques."
+    },
+    {
+      name: "Cat-Cow Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Spine Mobility",
+      info: "Flow stretch to warm up the spine and relieve back stiffness.",
+      steps: [
+        "Start on hands and knees (tabletop position).",
+        "Inhale: Arch back, drop belly, look up to ceiling (Cow).",
+        "Exhale: Round spine, tuck chin, tuck tailbone (Cat)."
+      ],
+      proTip: "Move slowly and initiate the movement from your tailbone, letting it ripple up your spine."
+    },
+    {
+      name: "Downward Dog",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Hamstrings, Calves & Shoulders",
+      info: "Classic yoga posture that stretches the entire backside of the body.",
+      steps: [
+        "Start in push-up plank, lift hips high and back.",
+        "Push heels toward floor, press chest back towards thighs.",
+        "Splay fingers wide, press floor away."
+      ],
+      proTip: "If your hamstrings are tight, bend your knees slightly to maintain a straight line in your back."
+    },
+    {
+      name: "Cobra Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Abs & Spine Extension",
+      info: "Prone back extension that opens the abdominal wall and chest.",
+      steps: [
+        "Lie face down, hands flat on floor under shoulders.",
+        "Press up to lift chest, keeping thighs on floor.",
+        "Look straight ahead or up slightly."
+      ],
+      proTip: "Keep your shoulders down and away from your ears; do not lock out your elbows if it pinches your lower back."
+    }
   ]
 };
 
@@ -2317,15 +2928,43 @@ function renderExercisesDirectory() {
     card.className = 'exercise-group-card';
     const emoji = groupEmojis[groupName] || "💪";
 
-    const itemsHtml = list.map(ex => `
-      <div class="exercise-dir-item">
-        <div class="exercise-dir-top">
-          <span class="exercise-dir-name">${escapeHtml(ex.name)}</span>
-          <span class="exercise-dir-meta">${escapeHtml(ex.type)}</span>
+    const itemsHtml = list.map((ex, idx) => {
+      const exId = `${groupName.replace(/\s+/g, '-')}-${idx}`;
+      const stepsList = ex.steps ? ex.steps.map(step => `<li>${escapeHtml(step)}</li>`).join('') : '';
+      
+      return `
+        <div class="exercise-dir-item" data-ex-id="${exId}">
+          <div class="exercise-dir-top">
+            <span class="exercise-dir-name">${escapeHtml(ex.name)}</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="exercise-dir-meta">${escapeHtml(ex.type)}</span>
+              <span class="exercise-dir-indicator" style="font-size: 8px; color: var(--muted); transition: transform 0.25s ease;">▼</span>
+            </div>
+          </div>
+          <div class="exercise-dir-info">${escapeHtml(ex.info)}</div>
+          
+          <div class="exercise-dir-details" id="details-${exId}" style="max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.25s ease;">
+            <div class="exercise-detail-row">
+              <span class="detail-label">🎯 Target:</span>
+              <span class="detail-val">${escapeHtml(ex.target || 'General')}</span>
+            </div>
+            <div class="exercise-detail-row">
+              <span class="detail-label">⚡ Difficulty:</span>
+              <span class="detail-val">${escapeHtml(ex.difficulty || 'Beginner')}</span>
+            </div>
+            <div class="exercise-detail-heading">Execution Steps</div>
+            <ol class="exercise-steps-list">
+              ${stepsList}
+            </ol>
+            ${ex.proTip ? `
+              <div class="exercise-pro-tip">
+                <strong>Pro Tip:</strong> ${escapeHtml(ex.proTip)}
+              </div>
+            ` : ''}
+          </div>
         </div>
-        <div class="exercise-dir-info">${escapeHtml(ex.info)}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     card.innerHTML = `
       <div class="exercise-group-header">
@@ -2340,6 +2979,30 @@ function renderExercisesDirectory() {
     `;
 
     container.appendChild(card);
+  });
+
+  // Wire expand/collapse click events
+  container.querySelectorAll('.exercise-dir-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      // Prevent expand/collapse if clicking copyable text inside details panel
+      if (e.target.closest('.exercise-dir-details')) return;
+
+      const details = item.querySelector('.exercise-dir-details');
+      const indicator = item.querySelector('.exercise-dir-indicator');
+      const isExpanded = item.classList.toggle('expanded');
+      
+      if (isExpanded) {
+        details.style.maxHeight = details.scrollHeight + 'px';
+        details.style.opacity = '1';
+        details.style.marginTop = '10px';
+        if (indicator) indicator.style.transform = 'rotate(180deg)';
+      } else {
+        details.style.maxHeight = '0';
+        details.style.opacity = '0';
+        details.style.marginTop = '0';
+        if (indicator) indicator.style.transform = 'rotate(0deg)';
+      }
+    });
   });
 }
 

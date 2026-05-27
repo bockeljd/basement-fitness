@@ -1473,4 +1473,77 @@ select.input {
   line-height: 1.4;
 }
 
+.exercise-dir-item {
+  cursor: pointer;
+  user-select: none;
+}
+
+.exercise-dir-details {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
+  border-top: 1px dashed var(--border);
+  padding-top: 0;
+}
+
+.exercise-dir-item.expanded {
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  background: var(--card) !important;
+}
+
+.exercise-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+.detail-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.detail-val {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.exercise-detail-heading {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-top: 10px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exercise-steps-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.exercise-steps-list li {
+  margin-bottom: 4px;
+}
+
+.exercise-pro-tip {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.04);
+  border-left: 3px solid var(--accent);
+  font-size: 10.5px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+
 
