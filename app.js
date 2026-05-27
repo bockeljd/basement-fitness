@@ -2954,6 +2954,19 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       }
     }
 
+    // Inject a cool-down stretch if Stretching & Mobility is not already selected in the focus checklist
+    if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
+      const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
+      const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet));
+      if (matchStretches.length > 0) {
+        const pick = matchStretches[Math.floor(Math.random() * matchStretches.length)];
+        selected.push({
+          ...pick,
+          sourceGroup: 'Stretching & Mobility'
+        });
+      }
+    }
+
     // Sort selected exercises by tier sequence (Tier 1 -> Tier 4)
     selected.sort((a, b) => {
       const groupA = a.sourceGroup || '';
