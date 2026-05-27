@@ -567,18 +567,6 @@ function seedIfEmpty() {
     store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
   }
 
-  // Seed default goals if they don't exist
-  const g = store.get(KEYS.goals, null);
-  if (!Array.isArray(g) || g.length === 0) {
-    const defaultGoals = [
-      { id: 'goal-daily-hydration', title: 'Hydration (8 cups)', period: 'daily', target: 8, progress: {} },
-      { id: 'goal-daily-meals', title: 'Healthy Meals', period: 'daily', target: 3, progress: {} },
-      { id: 'goal-weekly-workouts', title: 'Workouts', period: 'weekly', target: 3, progress: {} },
-      { id: 'goal-weekly-steps', title: 'Steps (10k / day)', period: 'weekly', target: 7, progress: {} }
-    ];
-    store.set(KEYS.goals, defaultGoals);
-  }
-
   // Seed a default primary goal if none exists so the calendar is populated out of the box
   const pg = store.get(KEYS.primaryGoal, null);
   if (!pg) {
@@ -606,7 +594,7 @@ function loadState() {
   state.profile = store.get(KEYS.profile, state.profile);
   state.primaryGoal = store.get(KEYS.primaryGoal, null);
   state.secondaryGoal = store.get(KEYS.secondaryGoal, null);
-  state.goals = store.get(KEYS.goals, []);
+  state.goals = [];
   state.theme = store.get(KEYS.theme, 'light');
   state.plan = store.get(KEYS.plan, state.plan);
   state.workoutLibrary = store.get(KEYS.workoutLibrary, WORKOUT_LIBRARY);
@@ -616,7 +604,6 @@ function saveRoutines() { store.set(KEYS.routines, state.routines); }
 function saveSessions() { store.set(KEYS.sessions, state.sessions); }
 function saveActive() { store.set(KEYS.active, state.activeSessionId); }
 function saveProfile() { store.set(KEYS.profile, state.profile); }
-function saveGoals() { store.set(KEYS.goals, state.goals); }
 function saveTheme() { store.set(KEYS.theme, state.theme); }
 function savePrimaryGoal() { store.set(KEYS.primaryGoal, state.primaryGoal); }
 function saveSecondaryGoal() { store.set(KEYS.secondaryGoal, state.secondaryGoal); }
@@ -817,17 +804,6 @@ function endWorkout() {
     saveSessions();
     saveActive();
     stopTimer();
-    
-    // Increment completion goals if a primary/habits setup matches
-    // (Existing goals progress increment code, for user custom goals)
-    const routineObj = activeRoutine(s);
-    if (routineObj) {
-      // Find a goal matching "Workouts" or "Exercise" to auto-increment progress
-      const matchingGoal = state.goals.find(g => g.title.toLowerCase().includes('workout') || g.title.toLowerCase().includes('exercise'));
-      if (matchingGoal) {
-        incProgress(matchingGoal.id, 1);
-      }
-    }
     
     // Switch to Dashboard
     switchTab('dashboard');
@@ -1290,153 +1266,7 @@ function weekKey(d) {
   const w = Math.floor((days + jan1.getDay()) / 7) + 1;
   return `${x.getFullYear()}-W${String(w).padStart(2,'0')}`;
 }
-function monthKey(d) {
-  const x = startOfDay(d);
-  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`;
-}
-function goalPeriodKey(goal, now=new Date()) {
-  if (goal.period === 'daily') return ymd(now);
-  if (goal.period === 'weekly') return weekKey(now);
-  return monthKey(now);
-}
-function currentProgress(goal, now=new Date()) {
-  const titleLower = (goal.title || '').toLowerCase();
-  if (titleLower.includes('workout') || titleLower.includes('exercise')) {
-    const k = goalPeriodKey(goal, now);
-    const completedSessions = (state.sessions || []).filter(s => {
-      if (!s.endedAt) return false;
-      try {
-        const endedDate = new Date(s.endedAt);
-        return goalPeriodKey(goal, endedDate) === k;
-      } catch {
-        return false;
-      }
-    });
-    return completedSessions.length;
-  }
 
-  goal.progress = goal.progress || {};
-  const k = goalPeriodKey(goal, now);
-  return Number(goal.progress[k] || 0);
-}
-function setProgress(goalId, val, now=new Date()) {
-  const g = state.goals.find(x => x.id === goalId);
-  if (!g) return;
-  g.progress = g.progress || {};
-  const k = goalPeriodKey(g, now);
-  g.progress[k] = Math.max(0, Number(val || 0));
-  saveGoals();
-}
-function incProgress(goalId, delta=1) {
-  const g = state.goals.find(x => x.id === goalId);
-  if (!g) return;
-  const titleLower = (g.title || '').toLowerCase();
-  if (titleLower.includes('workout') || titleLower.includes('exercise')) return;
-  const cur = currentProgress(g);
-  setProgress(goalId, cur + delta);
-  renderDashboard();
-}
-function toggleGoal(goalId) {
-  const g = state.goals.find(x => x.id === goalId);
-  if (!g) return;
-  const titleLower = (g.title || '').toLowerCase();
-  if (titleLower.includes('workout') || titleLower.includes('exercise')) return;
-  const cur = currentProgress(g);
-  if (cur >= g.target) {
-    setProgress(goalId, 0);
-  } else {
-    setProgress(goalId, g.target);
-  }
-  renderDashboard();
-}
-function addGoal() {
-  const title = prompt('Goal name? (e.g., Workouts, Protein days, Steps, Pushups)');
-  if (!title) return;
-  const period = prompt('Period? Enter daily / weekly / monthly', 'daily');
-  const p = String(period || 'daily').toLowerCase();
-  if (!['daily','weekly','monthly'].includes(p)) {
-    alert('Period must be daily, weekly, or monthly.');
-    return;
-  }
-  const targetRaw = prompt('Target number? (e.g., 1 per day, 4 per week, 12 per month)', '1');
-  const target = Number(targetRaw || 1);
-  if (!target || Number.isNaN(target) || target <= 0) {
-    alert('Target must be a positive number.');
-    return;
-  }
-
-  state.goals.unshift({
-    id: uid(),
-    title: title.trim(),
-    period: p,
-    target,
-    progress: {}
-  });
-  saveGoals();
-  renderDashboard();
-}
-function deleteGoal(goalId) {
-  if (!confirm('Delete goal?')) return;
-  state.goals = state.goals.filter(g => g.id !== goalId);
-  saveGoals();
-  renderDashboard();
-}
-function renderGoalList(elId, period) {
-  const el = $(elId);
-  if (!el) return;
-  const now = new Date();
-  const goals = (state.goals || []).filter(g => g.period === period);
-  if (!goals.length) {
-    el.innerHTML = `<div class="muted">No ${period} goals yet.</div>`;
-    return;
-  }
-  el.innerHTML = '';
-  goals.forEach(g => {
-    const cur = currentProgress(g, now);
-    const pct = Math.max(0, Math.min(100, (cur / g.target) * 100));
-    const item = document.createElement('div');
-    
-    const titleLower = (g.title || '').toLowerCase();
-    const isAuto = titleLower.includes('workout') || titleLower.includes('exercise');
-    const actionsHtml = isAuto
-      ? `<span class="badge-auto">Auto</span>`
-      : `
-        <button class="btn-sm btn-dec" data-goal-action="dec" data-goal-id="${g.id}" type="button" title="Decrease">−</button>
-        <button class="btn-sm btn-inc" data-goal-action="inc" data-goal-id="${g.id}" type="button" title="Increase">+</button>
-      `;
-
-    if (period === 'daily') {
-      item.className = `habit-item ${cur >= g.target ? 'completed' : ''}`;
-      item.innerHTML = `
-        <div class="habit-info" style="min-width: 0; flex: 1;">
-          <button class="habit-checkbox-btn" data-goal-action="toggle" data-goal-id="${g.id}" type="button">✓</button>
-          <div style="min-width: 0; flex: 1;">
-            <div class="habit-title" style="font-weight:800; font-family:'Outfit',sans-serif; line-height: 1.25; overflow-wrap: break-word; word-break: break-word;">${escapeHtml(g.title)}</div>
-            <div class="small">${cur} / ${g.target}</div>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; flex-wrap: nowrap;">
-          ${actionsHtml}
-          <button class="btn-sm btn-del" data-goal-action="del" data-goal-id="${g.id}" type="button" title="Delete">✕</button>
-        </div>
-      `;
-    } else {
-      item.className = 'goalItem';
-      item.innerHTML = `
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-weight:800; font-family:'Outfit',sans-serif; line-height: 1.25; overflow-wrap: break-word; word-break: break-word;">${escapeHtml(g.title)}</div>
-          <div class="small">${cur} / ${g.target} (${g.period})</div>
-          <div class="progressBar"><div class="progressFill" style="width:${pct}%"></div></div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; flex-wrap: nowrap;">
-          ${actionsHtml}
-          <button class="btn-sm btn-del" data-goal-action="del" data-goal-id="${g.id}" type="button" title="Delete">✕</button>
-        </div>
-      `;
-    }
-    el.appendChild(item);
-  });
-}
 function computeStreak() {
   const sessions = (state.sessions || []).filter(s => s.endedAt);
   const days = new Set(sessions.map(s => ymd(new Date(s.endedAt))));
@@ -1475,9 +1305,7 @@ function getSessionDurationMin(session) {
   return Number(state.primaryGoal?.durationMin || state.profile?.durationMin || 30);
 }
 function getWeeklyWorkoutsTarget() {
-  const g = (state.goals || []).find(x => x.period === 'weekly' && (x.title.toLowerCase().includes('workout') || x.title.toLowerCase().includes('exercise')));
-  if (g) return g.target;
-  if (state.primaryGoal && state.primaryGoal.daysPerWeek) return state.primaryGoal.daysPerWeek;
+  if (state.primaryGoal && state.primaryGoal.daysPerWeek) return Number(state.primaryGoal.daysPerWeek);
   return 3;
 }
 function getWeeklyWorkoutsCompleted() {
@@ -1675,10 +1503,6 @@ function renderDashboard() {
     if (kpiPrimaryVal) kpiPrimaryVal.textContent = 'Not Set';
     if (kpiPrimaryFill) kpiPrimaryFill.style.width = '0%';
   }
-
-  renderGoalList('goalsDaily', 'daily');
-  renderGoalList('goalsWeekly', 'weekly');
-  renderGoalList('goalsMonthly', 'monthly');
 
   const badge = $('streakBadge');
   if (badge) {
@@ -2033,7 +1857,6 @@ function renderPlan() {
 }
 
 function wireDashboard() {
-  $('btnAddGoal')?.addEventListener('click', addGoal);
   $('btnSaveGoals')?.addEventListener('click', saveGoalsFromForm);
   $('primaryType')?.addEventListener('change', updateGoalFieldVisibility);
   $('btnGenerateToday')?.addEventListener('click', generateTodayFromGoals);
@@ -2045,20 +1868,6 @@ function wireDashboard() {
     const act = btn.getAttribute('data-plan-action');
     const dateStr = btn.getAttribute('data-plan-date');
     if (act === 'start' && dateStr) startPlannedWorkout(dateStr);
-  });
-
-  ['goalsDaily','goalsWeekly','goalsMonthly'].forEach(id => {
-    $(id)?.addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      const act = btn.getAttribute('data-goal-action');
-      const gid = btn.getAttribute('data-goal-id');
-      if (!act || !gid) return;
-      if (act === 'inc') incProgress(gid, 1);
-      if (act === 'dec') incProgress(gid, -1);
-      if (act === 'toggle') toggleGoal(gid);
-      if (act === 'del') deleteGoal(gid);
-    });
   });
 }
 
