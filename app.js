@@ -522,6 +522,74 @@ const EXERCISE_POOL = {
   }
 };
 
+const EXERCISES_BY_GROUP = {
+  "Chest": [
+    { name: "Push-ups", type: "Bodyweight", info: "Great for overall chest development. Keep elbows at 45 degrees." },
+    { name: "Dumbbell Bench Press", type: "Dumbbells", info: "Allows a deeper range of motion than a barbell bench press." },
+    { name: "Barbell Bench Press", type: "Barbell", info: "The classic chest builder. Keep shoulder blades retracted." },
+    { name: "Incline Dumbbell Press", type: "Dumbbells", info: "Targets the upper portion of the chest." },
+    { name: "Chest Dips", type: "Bodyweight", info: "Lean forward slightly to focus on lower chest." },
+    { name: "Dumbbell Flys", type: "Dumbbells", info: "Isolates the chest muscles, focusing on the stretch at the bottom." }
+  ],
+  "Back": [
+    { name: "Pull-ups / Chin-ups", type: "Bodyweight", info: "The ultimate vertical pulling exercise for a wide back." },
+    { name: "Dumbbell Rows", type: "Dumbbells", info: "Great for mid-back development. Pull to your hip, not chest." },
+    { name: "Barbell Row", type: "Barbell", info: "Builds thick back muscles. Maintain a strong bent-over posture." },
+    { name: "Lat Pulldowns", type: "Machine", info: "Vertical pull alternative. Pull down to upper chest level." },
+    { name: "Supermans", type: "Bodyweight", info: "Strengthens lower back and glutes without any equipment." }
+  ],
+  "Shoulders": [
+    { name: "Overhead Shoulder Press", type: "Dumbbells / Barbell", info: "Key vertical press for shoulder size and strength." },
+    { name: "Lateral Raises", type: "Dumbbells", info: "Isolates the lateral deltoid to build shoulder width." },
+    { name: "Pike Push-ups", type: "Bodyweight", info: "Bodyweight shoulder press alternative. Elevate hips high." },
+    { name: "Face Pulls", type: "Bands / Cable", info: "Crucial for rear deltoid and rotator cuff health." },
+    { name: "Front Raises", type: "Dumbbells", info: "Targets the anterior (front) deltoid." }
+  ],
+  "Biceps": [
+    { name: "Bicep Curls", type: "Dumbbells", info: "Classic curl. Keep elbows pinned close to your sides." },
+    { name: "Hammer Curls", type: "Dumbbells", info: "Targets brachialis and brachioradialis for forearm/bicep thickness." },
+    { name: "Barbell Bicep Curl", type: "Barbell", info: "Allows heavier loading of the biceps." },
+    { name: "Concentration Curls", type: "Dumbbells", info: "Sit, rest elbow on inner thigh to isolate bicep peak." },
+    { name: "Chin-ups", type: "Bodyweight", info: "Underhand pull-up. Excellent compound builder for biceps." }
+  ],
+  "Triceps": [
+    { name: "Tricep Dips", type: "Bodyweight", info: "Bench dips or parallel bar dips. Keep chest upright to target triceps." },
+    { name: "Overhead Extension", type: "Dumbbells", info: "Strengthens the long head of the triceps. Keep elbows tucked." },
+    { name: "Tricep Pushdowns", type: "Cable / Bands", info: "Squeeze hard at the bottom extension." },
+    { name: "Diamond Push-ups", type: "Bodyweight", info: "Close grip push-up that heavily recruits triceps." },
+    { name: "Skull Crushers", type: "Barbell / Dumbbells", info: "Lower weight toward forehead, keeping upper arms vertical." }
+  ],
+  "Legs": [
+    { name: "Back Squats", type: "Barbell / Dumbbells", info: "The king of leg exercises. Focus on sitting back and down." },
+    { name: "Romanian Deadlifts", type: "Dumbbells / Barbell", info: "Excellent for hamstrings and glutes. Hinge at hips." },
+    { name: "Bulgarian Split Squats", type: "Dumbbells / Bodyweight", info: "Single-leg builder. Rear foot elevated on a bench." },
+    { name: "Walking Lunges", type: "Dumbbells / Bodyweight", info: "Dynamic leg builder. Step and lower until knees are 90 degrees." },
+    { name: "Calf Raises", type: "Dumbbells / Bodyweight", info: "Builds calf strength. Rise high onto toes and control down." },
+    { name: "Glute Bridges / Hip Thrusts", type: "Bodyweight / Barbell", info: "Focuses heavily on glute activation and hip extension." }
+  ],
+  "Core": [
+    { name: "Plank Hold", type: "Bodyweight", info: "Brace abs, squeeze glutes, keep straight line from head to heels." },
+    { name: "Bicycle Crunches", type: "Bodyweight", info: "Highly effective for rectus abdominis and obliques." },
+    { name: "Russian Twists", type: "Dumbbells / Bodyweight", info: "Rotational core strength. Touch floor on each side." },
+    { name: "Hollow Body Hold", type: "Bodyweight", info: "Press lower back completely flat against the floor." },
+    { name: "Leg Raises", type: "Bodyweight", info: "Lying on back, raise legs to vertical, control the descent." }
+  ],
+  "Cardio": [
+    { name: "Burpees", type: "Bodyweight", info: "Full body explosive movement. High heart rate stimulator." },
+    { name: "Jumping Jacks", type: "Bodyweight", info: "Steady aerobic cardio exercise." },
+    { name: "Mountain Climbers", type: "Bodyweight", info: "Core and cardio combined. Keep hips low and drive knees." },
+    { name: "Treadmill Jogging / Running", type: "Treadmill", info: "Brisk pace or intervals for cardiovascular health." },
+    { name: "High Knees", type: "Bodyweight", info: "Running in place with exaggerated knee lift." }
+  ],
+  "Stretching & Mobility": [
+    { name: "World's Greatest Stretch", type: "Stretching", info: "Lunge + rotation. Excellent full body opener." },
+    { name: "Child's Pose", type: "Stretching", info: "Resting pose. Stretches lower back, hips, thighs, and ankles." },
+    { name: "Cat-Cow Stretch", type: "Stretching", info: "Mobilizes spine and increases flexibility in neck and back." },
+    { name: "Hamstring Scoop Stretch", type: "Stretching", info: "Active stretching of hamstrings and calves while walking." },
+    { name: "Cobra Stretch", type: "Stretching", info: "Lying prone, press chest up to stretch abdominal wall and open chest." }
+  ]
+};
+
 let state = {
   routines: [],
   sessions: [],
@@ -2227,6 +2295,54 @@ function renderWorkoutIdeas() {
   });
 }
 
+function renderExercisesDirectory() {
+  const container = $('exercisesGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const groupEmojis = {
+    "Chest": "🏋️‍♂️",
+    "Back": "🧗‍♂️",
+    "Shoulders": "🛡️",
+    "Biceps": "💪",
+    "Triceps": "⚡",
+    "Legs": "🦵",
+    "Core": "🧩",
+    "Cardio": "🫀",
+    "Stretching & Mobility": "🧘"
+  };
+
+  Object.entries(EXERCISES_BY_GROUP).forEach(([groupName, list]) => {
+    const card = document.createElement('div');
+    card.className = 'exercise-group-card';
+    const emoji = groupEmojis[groupName] || "💪";
+
+    const itemsHtml = list.map(ex => `
+      <div class="exercise-dir-item">
+        <div class="exercise-dir-top">
+          <span class="exercise-dir-name">${escapeHtml(ex.name)}</span>
+          <span class="exercise-dir-meta">${escapeHtml(ex.type)}</span>
+        </div>
+        <div class="exercise-dir-info">${escapeHtml(ex.info)}</div>
+      </div>
+    `).join('');
+
+    card.innerHTML = `
+      <div class="exercise-group-header">
+        <h3 class="exercise-group-title">
+          <span>${emoji}</span> ${escapeHtml(groupName)}
+        </h3>
+        <span class="exercise-group-count">${list.length} exercises</span>
+      </div>
+      <div class="exercise-dir-list">
+        ${itemsHtml}
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
 function displayCategory(cat) {
   if (cat === 'hiit') return 'HIIT';
   return cat.charAt(0).toUpperCase() + cat.slice(1);
@@ -2866,6 +2982,7 @@ function boot() {
   wireGenerator();
   
   renderWorkoutIdeas();
+  renderExercisesDirectory();
   renderDashboard();
   renderRoutines();
   renderWorkout();
