@@ -157,7 +157,8 @@
         <section class="card" id="cardPlan" style="margin-top: 16px;">
           <div class="cardHeader">
             <h2>Calendar</h2>
-            <div class="row wrap">
+            <div class="row wrap" style="gap: 8px;">
+              <button class="btn secondary" id="btnToggleCalendarView" type="button">📅 Month View</button>
               <button class="btn secondary" id="btnRegenPlan" type="button">Regenerate</button>
             </div>
           </div>
@@ -546,6 +547,19 @@
         <div id="historyLogsList" style="display: grid; gap: 14px;">
           <!-- Populated dynamically via JS -->
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Day Details (Month Calendar View) -->
+  <div id="modalDayDetails" class="modal-overlay">
+    <div class="modal-container" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="dayDetailsTitle">Day Details</h3>
+        <button class="modal-close" id="btnDayDetailsClose" type="button">&times;</button>
+      </div>
+      <div class="modal-content" id="dayDetailsContent" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Populated dynamically via JS -->
       </div>
     </div>
   </div>

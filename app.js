@@ -31,6 +31,7 @@ const KEYS = {
   primaryGoal: 'bf:primaryGoal',
   secondaryGoal: 'bf:secondaryGoal',
   plan: 'bf:plan',
+  calendarView: 'bf:calendarView',
   workoutLibrary: 'bf:workoutLibrary'
 };
 
@@ -1537,6 +1538,7 @@ let state = {
   goals: [],
   theme: 'light',
   plan: { generatedAt: null, days: [] },
+  calendarView: 'list',
   timer: {
     mode: 'countdown',
     running: false,
@@ -1598,6 +1600,7 @@ function loadState() {
   state.goals = [];
   state.theme = store.get(KEYS.theme, 'light');
   state.plan = store.get(KEYS.plan, state.plan);
+  state.calendarView = store.get(KEYS.calendarView, 'list');
   state.workoutLibrary = store.get(KEYS.workoutLibrary, WORKOUT_LIBRARY);
 }
 
@@ -1609,6 +1612,7 @@ function saveTheme() { store.set(KEYS.theme, state.theme); }
 function savePrimaryGoal() { store.set(KEYS.primaryGoal, state.primaryGoal); }
 function saveSecondaryGoal() { store.set(KEYS.secondaryGoal, state.secondaryGoal); }
 function savePlan() { store.set(KEYS.plan, state.plan); }
+function saveCalendarView() { store.set(KEYS.calendarView, state.calendarView); }
 
 function fmtTimer(sec) {
   const s = Math.max(0, sec|0);
@@ -2964,8 +2968,8 @@ function ensurePlanGenerated() {
     state.plan = { generatedAt: new Date().toISOString(), days: [] };
   }
   
-  // If remaining plan days is less than 7, extend it to 14 days
-  if (state.plan.days.length < 7) {
+  // If remaining plan days is less than 30, extend it to 30 days
+  if (state.plan.days.length < 30) {
     extendPlan();
   }
   return true;
@@ -2990,7 +2994,7 @@ function extendPlan() {
     state.plan.generatedAt = genDate.toISOString();
   }
   
-  while (state.plan.days.length < 14) {
+  while (state.plan.days.length < 30) {
     let nextDate;
     if (state.plan.days.length > 0) {
       const lastDayStr = state.plan.days[state.plan.days.length - 1].date;
@@ -3029,14 +3033,14 @@ function regeneratePlan() {
     return;
   }
 
-  // Build 14-day calendar plan
+  // Build 30-day calendar plan
   const now = new Date();
   const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
   const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
 
   const planDays = [];
   let workoutCount = 0;
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 30; i++) {
     const d = new Date(now.getTime() + i * 86400000);
     const isWorkoutDay = (i % cadence) === 0;
     if (isWorkoutDay) {
@@ -3089,9 +3093,308 @@ function generateTodayFromGoals() {
   startRoutine(r.id);
 }
 
+// Month Calendar Grid Views
+function renderMonthCalendar() {
+  const el = $('planList');
+  if (!el) return;
+
+  ensurePlanGenerated();
+  const days = state.plan?.days || [];
+  if (days.length === 0) return;
+
+  const today = ymd(new Date());
+
+  // Render headers
+  let html = `
+    <div class="calendar-grid">
+      <div class="calendar-grid-header">Sun</div>
+      <div class="calendar-grid-header">Mon</div>
+      <div class="calendar-grid-header">Tue</div>
+      <div class="calendar-grid-header">Wed</div>
+      <div class="calendar-grid-header">Thu</div>
+      <div class="calendar-grid-header">Fri</div>
+      <div class="calendar-grid-header">Sat</div>
+  `;
+
+  // Determine weekday offset for the first day
+  const [y, m, d] = days[0].date.split('-').map(Number);
+  const firstDate = new Date(y, m - 1, d, 12, 0, 0);
+  const offset = firstDate.getDay(); // 0 is Sunday, 1 is Monday...
+
+  // Empty cells for offset
+  for (let i = 0; i < offset; i++) {
+    html += `<div class="calendar-cell empty"></div>`;
+  }
+
+  // Render cells
+  days.forEach(day => {
+    const isToday = day.date === today;
+    const isWorkout = day.kind === 'workout' && day.routine;
+    
+    let cellClass = 'calendar-cell';
+    if (isToday) cellClass += ' today';
+    
+    let badgeHtml = '';
+    const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === day.date);
+    
+    if (isWorkout) {
+      cellClass += ' workout';
+      badgeHtml = `<span class="calendar-cell-badge" title="${escapeHtml(day.routine.name)}">💪</span>`;
+    } else {
+      if (hasLoggedRecovery) {
+        cellClass += ' completed-recovery';
+        badgeHtml = `<span class="calendar-cell-badge">🧘</span>`;
+      } else {
+        cellClass += ' rest';
+        badgeHtml = ``;
+      }
+    }
+
+    const dayNum = day.date.split('-')[2];
+    const tooltipText = isWorkout ? day.routine.name : (hasLoggedRecovery ? 'Recovery Completed' : 'Rest Day');
+
+    html += `
+      <div class="${cellClass}" data-calendar-date="${day.date}" title="${escapeHtml(tooltipText)}">
+        <div class="calendar-cell-num">${dayNum}</div>
+        ${badgeHtml}
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
+  
+  // Wire click listener for cells in Month View
+  el.querySelectorAll('.calendar-cell:not(.empty)').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const dateStr = cell.getAttribute('data-calendar-date');
+      if (dateStr) showDayPopover(dateStr);
+    });
+  });
+}
+
+function showDayPopover(dateStr) {
+  const modal = $('modalDayDetails');
+  const titleEl = $('dayDetailsTitle');
+  const contentEl = $('dayDetailsContent');
+  if (!modal || !titleEl || !contentEl) return;
+
+  const item = (state.plan?.days || []).find(d => d.date === dateStr);
+  if (!item) return;
+
+  // Format title date
+  let dateTitle = dateStr;
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dateTitle = dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  } catch {}
+
+  titleEl.textContent = dateTitle;
+
+  const isWorkout = item.kind === 'workout' && item.routine;
+  const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === dateStr);
+
+  let html = '';
+  if (isWorkout) {
+    const exercisesHtml = item.routine.exercises.map(ex => {
+      const baseName = ex.name.split(' (')[0].trim();
+      return `<li style="margin-bottom: 6px; font-size: 13px;"><strong>${escapeHtml(baseName)}</strong> - <span class="muted">${escapeHtml(ex.info)}</span></li>`;
+    }).join('');
+
+    html = `
+      <div style="padding: 10px 0;">
+        <h4 style="font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 8px;">${escapeHtml(item.routine.name)}</h4>
+        <p class="muted" style="font-size: 12px; margin-bottom: 12px;">Scheduled Split Workout</p>
+        
+        <div class="panel" style="margin-bottom: 16px;">
+          <div class="panelTitle" style="font-size: 11px; text-transform: uppercase; margin-bottom: 6px;">Exercise Sequence</div>
+          <ol style="margin: 0; padding-left: 18px; line-height: 1.4;">
+            ${exercisesHtml}
+          </ol>
+        </div>
+        
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;">
+          <button class="btn" data-plan-action="start" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">Start Session</button>
+          <button class="btn secondary" data-plan-action="swap" data-plan-date="${dateStr}" type="button">🔁 Swap Focus</button>
+          <button class="btn secondary" data-plan-action="shift" data-plan-date="${dateStr}" type="button">➡️ Shift Day</button>
+          <button class="btn danger" data-plan-action="toggle" data-plan-date="${dateStr}" type="button">❌ Make Rest</button>
+        </div>
+      </div>
+    `;
+  } else {
+    let actionButtons = '';
+    let recoveryStateHtml = '';
+    
+    if (hasLoggedRecovery) {
+      recoveryStateHtml = `
+        <div class="exercise-overload-card" style="margin-bottom: 12px; padding: 10px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; font-size: 13px;">
+          <div style="font-weight: 700; color: var(--success); display: flex; align-items: center; gap: 6px;">
+            <span>✅ Active Recovery Completed</span>
+          </div>
+          <p class="muted" style="font-size: 11px; margin-top: 4px; margin-bottom: 0;">15-minute active stretching and light mobility session logged.</p>
+        </div>
+      `;
+      actionButtons = `
+        <button class="btn secondary" data-plan-action="toggle" data-plan-date="${dateStr}" type="button" style="width: 100%;">➕ Change to Workout</button>
+      `;
+    } else {
+      recoveryStateHtml = `
+        <div class="exercise-overload-card" style="margin-bottom: 12px; padding: 10px; background: rgba(71, 85, 105, 0.03); border: 1px solid var(--border); border-radius: 6px; font-size: 13px;">
+          <div style="font-weight: 700; color: var(--muted);">🧘 Recovery Target</div>
+          <p class="muted" style="font-size: 11px; margin-top: 4px; margin-bottom: 0;">Active recovery, stretching, light walking, or mobility work.</p>
+        </div>
+      `;
+      actionButtons = `
+        <button class="btn" data-plan-action="log-recovery" data-plan-date="${dateStr}" type="button" style="flex: 1;">🧘 Log 15m Recovery</button>
+        <button class="btn secondary" data-plan-action="toggle" data-plan-date="${dateStr}" type="button">➕ Change to Workout</button>
+      `;
+    }
+
+    html = `
+      <div style="padding: 10px 0;">
+        <h4 style="font-size: 16px; font-weight: 800; color: var(--muted); margin-bottom: 8px;">Rest & Recovery</h4>
+        <p class="muted" style="font-size: 12px; margin-bottom: 12px;">Active recovery or rest day</p>
+        
+        ${recoveryStateHtml}
+        
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;">
+          ${actionButtons}
+        </div>
+      </div>
+    `;
+  }
+
+  contentEl.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+function closeDayPopover() {
+  const modal = $('modalDayDetails');
+  if (modal) modal.style.display = 'none';
+}
+
+function handleCalendarAction(act, dateStr) {
+  if (!dateStr || !act) return;
+  
+  if (act === 'start') {
+    closeDayPopover();
+    startPlannedWorkout(dateStr);
+  } else if (act === 'swap') {
+    const idx = state.plan.days.findIndex(d => d.date === dateStr);
+    if (idx !== -1) {
+      const item = state.plan.days[idx];
+      if (item.routine && item.routine.id) {
+        const parts = item.routine.id.split(':');
+        let dayIndex = parseInt(parts[parts.length - 1], 10);
+        if (isNaN(dayIndex)) dayIndex = 0;
+        const nextDayIndex = dayIndex + 1;
+        const newRoutine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, nextDayIndex);
+        parts[parts.length - 1] = String(nextDayIndex);
+        newRoutine.id = parts.join(':');
+        item.routine = newRoutine;
+        savePlan();
+        if (state.calendarView === 'month') {
+          renderMonthCalendar();
+          showDayPopover(dateStr);
+        } else {
+          renderPlan();
+        }
+      }
+    }
+  } else if (act === 'shift') {
+    const idx = state.plan.days.findIndex(d => d.date === dateStr);
+    if (idx !== -1 && idx < state.plan.days.length - 1) {
+      const current = state.plan.days[idx];
+      const next = state.plan.days[idx + 1];
+      
+      const tempKind = current.kind;
+      const tempRoutine = current.routine;
+      
+      current.kind = next.kind;
+      current.routine = next.routine;
+      
+      next.kind = tempKind;
+      next.routine = tempRoutine;
+      
+      savePlan();
+      if (state.calendarView === 'month') {
+        renderMonthCalendar();
+        showDayPopover(next.date);
+      } else {
+        renderPlan();
+      }
+    }
+  } else if (act === 'toggle') {
+    const idx = state.plan.days.findIndex(d => d.date === dateStr);
+    if (idx !== -1) {
+      const day = state.plan.days[idx];
+      if (day.kind === 'workout') {
+        day.kind = 'rest';
+        day.routine = null;
+      } else {
+        day.kind = 'workout';
+        const priorWorkouts = state.plan.days.slice(0, idx).filter(d => d.kind === 'workout').length;
+        day.routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, priorWorkouts);
+      }
+      savePlan();
+      if (state.calendarView === 'month') {
+        renderMonthCalendar();
+        showDayPopover(dateStr);
+      } else {
+        renderPlan();
+      }
+    }
+  } else if (act === 'log-recovery') {
+    const todayStr = ymd(new Date());
+    let startedAt, endedAt;
+    if (dateStr === todayStr) {
+      const now = new Date();
+      endedAt = now.toISOString();
+      startedAt = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+    } else {
+      const parts = dateStr.split('-');
+      const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+      endedAt = dt.toISOString();
+      startedAt = new Date(dt.getTime() - 15 * 60 * 1000).toISOString();
+    }
+    
+    const recoverySession = {
+      id: uid(),
+      routineId: 'active-recovery',
+      startedAt,
+      endedAt,
+      notes: '15-min active recovery / stretching completed',
+      entries: {}
+    };
+    
+    state.sessions.unshift(recoverySession);
+    saveSessions();
+    
+    if (typeof confetti === 'function') {
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+    }
+    
+    renderDashboard();
+    if (state.calendarView === 'month') {
+      showDayPopover(dateStr);
+    }
+  }
+}
+
 function renderPlan() {
   const el = $('planList');
   if (!el) return;
+
+  const toggleBtn = $('btnToggleCalendarView');
+  if (toggleBtn) {
+    toggleBtn.textContent = state.calendarView === 'month' ? '📝 List View' : '📅 Month View';
+  }
+
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+    return;
+  }
 
   if (!state.primaryGoal) {
     el.innerHTML = '<div class="muted">Set a primary goal to generate a plan.</div>';
@@ -3196,97 +3499,31 @@ function wireDashboard() {
   $('btnGenerateToday')?.addEventListener('click', generateTodayFromGoals);
   $('btnRegenPlan')?.addEventListener('click', regeneratePlan);
 
+  $('btnToggleCalendarView')?.addEventListener('click', () => {
+    state.calendarView = state.calendarView === 'month' ? 'list' : 'month';
+    saveCalendarView();
+    renderPlan();
+  });
+
+  $('btnDayDetailsClose')?.addEventListener('click', closeDayPopover);
+  $('modalDayDetails')?.addEventListener('click', (e) => {
+    if (e.target === $('modalDayDetails')) closeDayPopover();
+  });
+
   $('planList')?.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     const act = btn.getAttribute('data-plan-action');
     const dateStr = btn.getAttribute('data-plan-date');
-    if (!dateStr || !act) return;
-    
-    if (act === 'start') {
-      startPlannedWorkout(dateStr);
-    } else if (act === 'swap') {
-      const idx = state.plan.days.findIndex(d => d.date === dateStr);
-      if (idx !== -1) {
-        const item = state.plan.days[idx];
-        if (item.routine && item.routine.id) {
-          const parts = item.routine.id.split(':');
-          let dayIndex = parseInt(parts[parts.length - 1], 10);
-          if (isNaN(dayIndex)) dayIndex = 0;
-          const nextDayIndex = dayIndex + 1;
-          const newRoutine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, nextDayIndex);
-          parts[parts.length - 1] = String(nextDayIndex);
-          newRoutine.id = parts.join(':');
-          item.routine = newRoutine;
-          savePlan();
-          renderPlan();
-        }
-      }
-    } else if (act === 'shift') {
-      const idx = state.plan.days.findIndex(d => d.date === dateStr);
-      if (idx !== -1 && idx < state.plan.days.length - 1) {
-        const current = state.plan.days[idx];
-        const next = state.plan.days[idx + 1];
-        
-        const tempKind = current.kind;
-        const tempRoutine = current.routine;
-        
-        current.kind = next.kind;
-        current.routine = next.routine;
-        
-        next.kind = tempKind;
-        next.routine = tempRoutine;
-        
-        savePlan();
-        renderPlan();
-      }
-    } else if (act === 'toggle') {
-      const idx = state.plan.days.findIndex(d => d.date === dateStr);
-      if (idx !== -1) {
-        const day = state.plan.days[idx];
-        if (day.kind === 'workout') {
-          day.kind = 'rest';
-          day.routine = null;
-        } else {
-          day.kind = 'workout';
-          const priorWorkouts = state.plan.days.slice(0, idx).filter(d => d.kind === 'workout').length;
-          day.routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, priorWorkouts);
-        }
-        savePlan();
-        renderPlan();
-      }
-    } else if (act === 'log-recovery') {
-      const todayStr = ymd(new Date());
-      let startedAt, endedAt;
-      if (dateStr === todayStr) {
-        const now = new Date();
-        endedAt = now.toISOString();
-        startedAt = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
-      } else {
-        const parts = dateStr.split('-');
-        const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
-        endedAt = dt.toISOString();
-        startedAt = new Date(dt.getTime() - 15 * 60 * 1000).toISOString();
-      }
-      
-      const recoverySession = {
-        id: uid(),
-        routineId: 'active-recovery',
-        startedAt,
-        endedAt,
-        notes: '15-min active recovery / stretching completed',
-        entries: {}
-      };
-      
-      state.sessions.unshift(recoverySession);
-      saveSessions();
-      
-      if (typeof confetti === 'function') {
-        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-      }
-      
-      renderDashboard();
-    }
+    handleCalendarAction(act, dateStr);
+  });
+
+  $('dayDetailsContent')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const act = btn.getAttribute('data-plan-action');
+    const dateStr = btn.getAttribute('data-plan-date');
+    handleCalendarAction(act, dateStr);
   });
 }
 
