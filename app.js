@@ -1681,6 +1681,9 @@ function activeSession() {
 }
 
 function activeRoutine(session) {
+  if (session && session.routineId === 'active-recovery') {
+    return { id: 'active-recovery', name: 'Active Recovery', exercises: [] };
+  }
   return state.routines.find(r => r.id === session.routineId) || null;
 }
 
@@ -1688,6 +1691,105 @@ function ensureSessionShape(s) {
   s.entries = s.entries || {};
   s.notes = s.notes || '';
   return s;
+}
+
+function getRecentExercises() {
+  const recentNames = new Set();
+  const completed = state.sessions.filter(s => s.endedAt).slice(0, 3);
+  
+  completed.forEach(s => {
+    const r = state.routines.find(rt => rt.id === s.routineId);
+    if (s.entries) {
+      Object.keys(s.entries).forEach(exId => {
+        let exName = '';
+        const foundInRoutine = r?.exercises?.find(e => e.id === exId);
+        if (foundInRoutine) {
+          exName = foundInRoutine.name;
+        } else {
+          for (const rt of state.routines) {
+            const found = rt.exercises?.find(e => e.id === exId);
+            if (found) {
+              exName = found.name;
+              break;
+            }
+          }
+        }
+        if (exName) {
+          const base = exName.split(' (')[0].trim().toLowerCase();
+          recentNames.add(base);
+        }
+      });
+    }
+  });
+  return recentNames;
+}
+
+function getPreviousLogForExercise(rawName) {
+  if (!rawName) return null;
+  const targetBase = rawName.split(' (')[0].trim().toLowerCase();
+  const completed = state.sessions.filter(s => s.endedAt);
+  
+  for (const s of completed) {
+    const r = state.routines.find(rt => rt.id === s.routineId);
+    if (s.entries) {
+      for (const exId of Object.keys(s.entries)) {
+        let name = '';
+        const foundInRoutine = r?.exercises?.find(e => e.id === exId);
+        if (foundInRoutine) {
+          name = foundInRoutine.name;
+        } else {
+          for (const rt of state.routines) {
+            const found = rt.exercises?.find(e => e.id === exId);
+            if (found) {
+              name = found.name;
+              break;
+            }
+          }
+        }
+        
+        if (name) {
+          const base = name.split(' (')[0].trim().toLowerCase();
+          if (base === targetBase) {
+            const sets = s.entries[exId] || [];
+            if (sets.length > 0) {
+              let maxW = 0;
+              let maxR = 0;
+              sets.forEach(st => {
+                const w = Number(st.w || 0);
+                const r = Number(st.r || 0);
+                if (w > maxW) maxW = w;
+                if (r > maxR) maxR = r;
+              });
+              
+              const dateStr = new Date(s.endedAt || s.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              return {
+                setsCount: sets.length,
+                maxWeight: maxW,
+                maxReps: maxR,
+                dateStr,
+                rawSets: sets
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function pickExerciseFromPool(pool, recentNames) {
+  if (!pool || pool.length === 0) return null;
+  const fresh = pool.filter(ex => {
+    const base = ex.name.split(' (')[0].trim().toLowerCase();
+    return !recentNames.has(base);
+  });
+  const selectedPool = fresh.length > 0 ? fresh : pool;
+  const idx = Math.floor(Math.random() * selectedPool.length);
+  const pick = selectedPool[idx];
+  const origIdx = pool.findIndex(ex => ex.name === pick.name);
+  if (origIdx !== -1) pool.splice(origIdx, 1);
+  return pick;
 }
 
 const expandedGuides = new Set();
@@ -1813,6 +1915,27 @@ function renderWorkout() {
     // populate form guide drawer
     const matched = findLibraryExercise(ex.name);
     const guideEl = exEl.querySelector(`#guide-${CSS.escape(ex.id)}`);
+    const prevLog = getPreviousLogForExercise(ex.name);
+    let overloadHtml = '';
+    if (prevLog) {
+      const overloadWeight = prevLog.maxWeight > 0 ? `${prevLog.maxWeight + 5} lb` : null;
+      const overloadRepsMin = prevLog.maxReps + 1;
+      const overloadRepsMax = prevLog.maxReps + 2;
+      const targetText = overloadWeight 
+        ? `🏋️ Overload Target: Try ${overloadWeight} or ${overloadRepsMin}-${overloadRepsMax} reps`
+        : `💪 Overload Target: Try ${overloadRepsMin}-${overloadRepsMax} reps`;
+      
+      overloadHtml = `
+        <div class="exercise-overload-card" style="margin-bottom: 8px; padding: 8px 10px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 6px; font-size: 12px;">
+          <div style="font-weight: 700; color: var(--accent); margin-bottom: 2px;">⚡ Previous Session (${escapeHtml(prevLog.dateStr)})</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text);">
+            <span>Best Set: ${prevLog.maxWeight > 0 ? `${prevLog.maxWeight} lb x ` : ''}${prevLog.maxReps} reps</span>
+            <span>Logged Sets: ${prevLog.setsCount}</span>
+          </div>
+          <div style="font-weight: 600; color: var(--text-dark);">${targetText}</div>
+        </div>
+      `;
+    }
     
     if (matched) {
       const stepsHtml = (matched.steps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
@@ -1824,6 +1947,7 @@ function renderWorkout() {
       
       guideEl.innerHTML = `
         <div style="padding: 10px 0 6px;">
+          ${overloadHtml}
           <div class="exercise-detail-row" style="margin-top: 0;">
             <span class="detail-label">Target Area:</span>
             <span class="detail-val" style="color: var(--accent);">${escapeHtml(matched.target || 'General')}</span>
@@ -1847,6 +1971,7 @@ function renderWorkout() {
     } else {
       guideEl.innerHTML = `
         <div style="padding: 10px 0 6px;">
+          ${overloadHtml}
           <div class="exercise-detail-heading">General Form Pointers:</div>
           <ol class="exercise-steps-list" style="margin-bottom: 10px;">
             <li><strong>Mind-Muscle Connection:</strong> Focus on the active muscle contracting and stretching throughout the movement.</li>
@@ -2725,11 +2850,13 @@ function saveGoalsFromForm() {
   }
   const durationMin = Number($('primaryMinutes')?.value || state.profile.durationMin || 30);
   const daysPerWeek = Number($('primaryDays')?.value || 3);
+  const splitType = String($('primarySplit')?.value || 'alternating').trim();
 
   const goal = {
     type: t,
     durationMin: durationMin || 30,
     daysPerWeek: daysPerWeek || 3,
+    splitType: splitType,
     createdAt: new Date().toISOString()
   };
 
@@ -2797,6 +2924,9 @@ function hydrateGoalsForm() {
   if (pm) pm.value = String(state.primaryGoal?.durationMin || state.profile.durationMin || 30);
   if (pd) pd.value = String(state.primaryGoal?.daysPerWeek || 3);
   if (st) st.value = state.secondaryGoal?.type || '';
+  
+  const ps = $('primarySplit');
+  if (ps) ps.value = state.primaryGoal?.splitType || 'alternating';
 
   const t = state.primaryGoal?.type;
   if (t === 'bar_hang') {
@@ -2982,6 +3112,24 @@ function renderPlan() {
     }
   };
 
+  const isWarmupOrStretch = (name) => {
+    const base = name.split(' (')[0].trim().toLowerCase();
+    const warmupBases = ["world's greatest stretch", "cat-cow stretch", "jumping jacks", "high knees"];
+    if (warmupBases.includes(base)) return true;
+    
+    const matched = findLibraryExercise(name);
+    if (matched) {
+      for (const group in EXERCISES_BY_GROUP) {
+        if (group === 'Stretching & Mobility') {
+          if (EXERCISES_BY_GROUP[group].some(ex => ex.name.toLowerCase() === matched.name.toLowerCase())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   el.innerHTML = '';
   days.forEach(d => {
     const item = document.createElement('div');
@@ -2989,15 +3137,42 @@ function renderPlan() {
     item.className = `planItem${isToday ? ' today' : ''}`;
 
     const isWorkout = d.kind === 'workout' && d.routine;
-    const badge = isWorkout ? '<span class="planBadge">Workout</span>' : '<span class="planBadge rest">Rest</span>';
     const label = isWorkout ? (d.routine?.name || 'Workout') : 'Recovery / Optional Walk';
 
     let subtitle = '';
     if (isWorkout && d.routine.exercises) {
-      const exNames = d.routine.exercises.slice(0, 3).map(e => e.name).join(', ');
-      subtitle = `Focus: ${exNames}${d.routine.exercises.length > 3 ? '...' : ''}`;
+      const workingExs = d.routine.exercises.filter(e => !isWarmupOrStretch(e.name));
+      const displayExs = workingExs.length > 0 ? workingExs : d.routine.exercises;
+      const exNames = displayExs.slice(0, 3).map(e => e.name.split(' (')[0].trim()).join(', ');
+      subtitle = `Focus: ${exNames}${displayExs.length > 3 ? '...' : ''}`;
     } else {
       subtitle = 'Active recovery, stretching, or light walk';
+    }
+
+    const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === d.date);
+    
+    let badge = '';
+    let actionButtons = '';
+    
+    if (isWorkout) {
+      badge = '<span class="planBadge">Workout</span>';
+      actionButtons = `
+        <button class="btn" data-plan-action="start" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" type="button">Start</button>
+        <button class="btn secondary" data-plan-action="swap" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Swap focus split" type="button">🔁 Swap</button>
+        <button class="btn secondary" data-plan-action="shift" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Shift day" type="button">➡️ Shift</button>
+        <button class="btn danger" data-plan-action="toggle" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Change to Rest" type="button">❌ Rest</button>
+      `;
+    } else {
+      if (hasLoggedRecovery) {
+        badge = '<span class="planBadge rest" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: rgba(16, 185, 129, 0.2);">Rest</span>';
+        actionButtons = `<span class="small" style="color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px;">✅ Completed</span>`;
+      } else {
+        badge = '<span class="planBadge rest">Rest</span>';
+        actionButtons = `
+          <button class="btn" data-plan-action="log-recovery" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Log 15m recovery" type="button">🧘 Log Recovery</button>
+          <button class="btn secondary" data-plan-action="toggle" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Change to Workout" type="button">➕ Workout</button>
+        `;
+      }
     }
 
     item.innerHTML = `
@@ -3008,7 +3183,7 @@ function renderPlan() {
       </div>
       <div class="planActions">
         ${badge}
-        ${isWorkout ? `<button class="btn" data-plan-action="start" data-plan-date="${d.date}" type="button">Start</button>` : ''}
+        ${actionButtons}
       </div>
     `;
     el.appendChild(item);
@@ -3026,7 +3201,92 @@ function wireDashboard() {
     if (!btn) return;
     const act = btn.getAttribute('data-plan-action');
     const dateStr = btn.getAttribute('data-plan-date');
-    if (act === 'start' && dateStr) startPlannedWorkout(dateStr);
+    if (!dateStr || !act) return;
+    
+    if (act === 'start') {
+      startPlannedWorkout(dateStr);
+    } else if (act === 'swap') {
+      const idx = state.plan.days.findIndex(d => d.date === dateStr);
+      if (idx !== -1) {
+        const item = state.plan.days[idx];
+        if (item.routine && item.routine.id) {
+          const parts = item.routine.id.split(':');
+          let dayIndex = parseInt(parts[parts.length - 1], 10);
+          if (isNaN(dayIndex)) dayIndex = 0;
+          const nextDayIndex = dayIndex + 1;
+          const newRoutine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, nextDayIndex);
+          parts[parts.length - 1] = String(nextDayIndex);
+          newRoutine.id = parts.join(':');
+          item.routine = newRoutine;
+          savePlan();
+          renderPlan();
+        }
+      }
+    } else if (act === 'shift') {
+      const idx = state.plan.days.findIndex(d => d.date === dateStr);
+      if (idx !== -1 && idx < state.plan.days.length - 1) {
+        const current = state.plan.days[idx];
+        const next = state.plan.days[idx + 1];
+        
+        const tempKind = current.kind;
+        const tempRoutine = current.routine;
+        
+        current.kind = next.kind;
+        current.routine = next.routine;
+        
+        next.kind = tempKind;
+        next.routine = tempRoutine;
+        
+        savePlan();
+        renderPlan();
+      }
+    } else if (act === 'toggle') {
+      const idx = state.plan.days.findIndex(d => d.date === dateStr);
+      if (idx !== -1) {
+        const day = state.plan.days[idx];
+        if (day.kind === 'workout') {
+          day.kind = 'rest';
+          day.routine = null;
+        } else {
+          day.kind = 'workout';
+          const priorWorkouts = state.plan.days.slice(0, idx).filter(d => d.kind === 'workout').length;
+          day.routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, priorWorkouts);
+        }
+        savePlan();
+        renderPlan();
+      }
+    } else if (act === 'log-recovery') {
+      const todayStr = ymd(new Date());
+      let startedAt, endedAt;
+      if (dateStr === todayStr) {
+        const now = new Date();
+        endedAt = now.toISOString();
+        startedAt = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+      } else {
+        const parts = dateStr.split('-');
+        const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+        endedAt = dt.toISOString();
+        startedAt = new Date(dt.getTime() - 15 * 60 * 1000).toISOString();
+      }
+      
+      const recoverySession = {
+        id: uid(),
+        routineId: 'active-recovery',
+        startedAt,
+        endedAt,
+        notes: '15-min active recovery / stretching completed',
+        entries: {}
+      };
+      
+      state.sessions.unshift(recoverySession);
+      saveSessions();
+      
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      }
+      
+      renderDashboard();
+    }
   });
 }
 
@@ -3983,7 +4243,18 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
   let desc = `Goal: ${goal}, Duration: ${dur}m, Equipment: ${Array.from(eq).join(', ')}`;
   let exercises = [];
 
-  const variant = dayIndex % 3;
+  const splitType = primaryGoal?.splitType || profile?.splitType || 'alternating';
+  
+  let variant = 0;
+  if (splitType === 'full_body') {
+    variant = 2; // Always Full Body
+  } else if (splitType === 'upper_lower') {
+    variant = dayIndex % 2;
+  } else if (splitType === 'ppl') {
+    variant = dayIndex % 3;
+  } else {
+    variant = dayIndex % 3;
+  }
 
   if (goal === 'run_5k' || goal === '5k') {
     if (variant === 0) {
@@ -4051,47 +4322,6 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
         { id: uid(), name: 'Plank shoulder taps — 3 x 20' },
       ];
     }
-  } else if (goal === 'lose_weight' || goal === 'fat_loss') {
-    if (variant === 0) {
-      name = 'Goal Session: Fat Loss (Upper Focus)';
-      exercises = hasDB ? [
-        { id: uid(), name: 'DB Bench / Floor Press' },
-        { id: uid(), name: 'DB Row' },
-        { id: uid(), name: 'DB Shoulder Press' },
-        { id: uid(), name: 'Conditioning finisher (8–12 min)' },
-      ] : [
-        { id: uid(), name: 'Pushups' },
-        { id: uid(), name: 'Bodyweight row / band row' },
-        { id: uid(), name: 'Pike pushups' },
-        { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
-      ];
-    } else if (variant === 1) {
-      name = 'Goal Session: Fat Loss (Lower Focus)';
-      exercises = hasDB ? [
-        { id: uid(), name: 'DB Goblet Squat' },
-        { id: uid(), name: 'DB Romanian Deadlift' },
-        { id: uid(), name: 'DB Lunges' },
-        { id: uid(), name: 'Conditioning finisher (8–12 min)' },
-      ] : [
-        { id: uid(), name: 'Air Squat' },
-        { id: uid(), name: 'Glute bridges' },
-        { id: uid(), name: 'Walking lunges' },
-        { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
-      ];
-    } else {
-      name = 'Goal Session: Fat Loss (Full Body)';
-      exercises = hasDB ? [
-        { id: uid(), name: 'DB Goblet Squat' },
-        { id: uid(), name: 'DB Row' },
-        { id: uid(), name: 'DB Press' },
-        { id: uid(), name: 'Conditioning finisher (8–12 min)' },
-      ] : [
-        { id: uid(), name: 'Air Squat' },
-        { id: uid(), name: 'Pushups' },
-        { id: uid(), name: 'Hip hinge (good morning)' },
-        { id: uid(), name: 'Brisk walk / intervals (10–20 min)' },
-      ];
-    }
   } else if (goal === 'pushups') {
     const baseline = Number(primaryGoal?.bestPushups || primaryGoal?.maxPushups || 10);
     const rep = Math.max(3, Math.floor(baseline * 0.6));
@@ -4117,134 +4347,283 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
         { id: uid(), name: 'Plank shoulder taps — 3 x 20' },
       ];
     }
-  } else if (goal === 'build_muscle' || goal === 'hypertrophy') {
-    if (variant === 0) {
-      name = 'Goal Session: Build Muscle (Upper Focus)';
-      exercises = hasDB ? [
-        { id: uid(), name: 'DB Bench / Floor Press' },
-        { id: uid(), name: 'One-arm DB Row' },
-        { id: uid(), name: 'DB Shoulder Press' },
-        { id: uid(), name: 'DB Bicep Curls' },
-      ] : hasBB ? [
-        { id: uid(), name: 'Bench Press' },
-        { id: uid(), name: 'Barbell Row' },
-        { id: uid(), name: 'Overhead Press' },
-        { id: uid(), name: 'Accessory (arms/shoulders)' },
-      ] : [
-        { id: uid(), name: 'Pushups (volume)' },
-        { id: uid(), name: 'Bodyweight row / band row' },
-        { id: uid(), name: 'Plank (time)' },
-      ];
-    } else if (variant === 1) {
-      name = 'Goal Session: Build Muscle (Lower Focus)';
-      exercises = hasDB ? [
-        { id: uid(), name: 'DB Squat / Split Squat' },
-        { id: uid(), name: 'DB Romanian Deadlift' },
-        { id: uid(), name: 'DB Lunges' },
-        { id: uid(), name: 'Calf raises' },
-      ] : hasBB ? [
-        { id: uid(), name: 'Squat' },
-        { id: uid(), name: 'Barbell Romanian Deadlift' },
-        { id: uid(), name: 'Hip Thrusts' },
-        { id: uid(), name: 'Barbell Standing Calf Raise' },
-      ] : [
-        { id: uid(), name: 'Split squats' },
-        { id: uid(), name: 'Glute bridges' },
-        { id: uid(), name: 'Walking lunges' },
-        { id: uid(), name: 'Single-leg calf raises' },
-      ];
-    } else {
-      name = 'Goal Session: Build Muscle (Full Body)';
-      exercises = hasDB ? [
-        { id: uid(), name: 'DB Squat / Split Squat' },
-        { id: uid(), name: 'DB Bench / Floor Press' },
-        { id: uid(), name: 'One-arm DB Row' },
-        { id: uid(), name: 'DB Shoulder Press' },
-      ] : hasBB ? [
-        { id: uid(), name: 'Squat' },
-        { id: uid(), name: 'Bench Press' },
-        { id: uid(), name: 'Barbell Row' },
-        { id: uid(), name: 'Accessory (arms/shoulders)' },
-      ] : [
-        { id: uid(), name: 'Pushups (volume)' },
-        { id: uid(), name: 'Bodyweight row / band row' },
-        { id: uid(), name: 'Split squats' },
-        { id: uid(), name: 'Plank (time)' },
-      ];
-    }
   } else {
-    const isStrengthBB = (profile?.goal === 'strength' && hasBB);
-    if (isStrengthBB) {
-      if (variant === 0) {
-        name = 'Strength Split: Upper Focus';
-        exercises = [
-          { id: uid(), name: 'Bench Press' },
-          { id: uid(), name: 'Overhead Press' },
-          { id: uid(), name: 'Barbell Row' },
-        ];
-      } else if (variant === 1) {
-        name = 'Strength Split: Lower Focus';
-        exercises = [
-          { id: uid(), name: 'Squat' },
-          { id: uid(), name: 'Deadlift' },
-          { id: uid(), name: 'Barbell Standing Calf Raise' },
-        ];
-      } else {
-        name = 'Strength Split: Full Body';
-        exercises = [
-          { id: uid(), name: 'Squat' },
-          { id: uid(), name: 'Bench Press' },
-          { id: uid(), name: 'Deadlift' },
-        ];
+    const isDynamicGoal = ['lose_weight', 'fat_loss', 'build_muscle', 'hypertrophy', 'general', 'strength'].includes(goal) || (!['run_5k', '5k', 'bar_hang', 'barhang', 'pushups'].includes(goal));
+    if (isDynamicGoal) {
+      let selectedFoci = [];
+      if (splitType === 'ppl') {
+        if (variant === 0) {
+          name = 'Goal Session: Push Focus';
+          selectedFoci = ["Chest", "Shoulders", "Triceps"];
+        } else if (variant === 1) {
+          name = 'Goal Session: Pull Focus';
+          selectedFoci = ["Back", "Biceps"];
+        } else {
+          name = 'Goal Session: Legs & Core Focus';
+          selectedFoci = ["Legs", "Core"];
+        }
+      } else if (splitType === 'upper_lower') {
+        if (variant === 0) {
+          name = 'Goal Session: Upper Focus';
+          selectedFoci = ["Chest", "Back", "Shoulders", "Biceps", "Triceps"];
+        } else {
+          name = 'Goal Session: Lower Focus';
+          selectedFoci = ["Legs", "Core"];
+        }
+      } else if (splitType === 'full_body') {
+        name = 'Goal Session: Full Body';
+        selectedFoci = ["Chest", "Back", "Legs", "Shoulders", "Core"];
+      } else { // alternating
+        if (variant === 0) {
+          name = 'Goal Session: Upper Focus';
+          selectedFoci = ["Chest", "Back", "Shoulders", "Biceps", "Triceps"];
+        } else if (variant === 1) {
+          name = 'Goal Session: Lower Focus';
+          selectedFoci = ["Legs", "Core"];
+        } else {
+          name = 'Goal Session: Full Body';
+          selectedFoci = ["Chest", "Back", "Legs", "Shoulders", "Core"];
+        }
       }
-    } else if (hasDB) {
-      if (variant === 0) {
-        name = 'Dumbbell Split: Upper Focus';
-        exercises = [
-          { id: uid(), name: 'Dumbbell Bench / Floor Press' },
-          { id: uid(), name: 'One-arm Dumbbell Row' },
-          { id: uid(), name: 'Dumbbell Shoulder Press' },
-        ];
-      } else if (variant === 1) {
-        name = 'Dumbbell Split: Lower Focus';
-        exercises = [
-          { id: uid(), name: 'Dumbbell Goblet Squat' },
-          { id: uid(), name: 'Dumbbell Romanian Deadlift' },
-          { id: uid(), name: 'Dumbbell Lunges' },
-        ];
+
+      if (goal === 'lose_weight' || goal === 'fat_loss') {
+        name = name.replace('Goal Session:', 'Goal Session: Fat Loss (');
+        name += ')';
+      } else if (goal === 'build_muscle' || goal === 'hypertrophy') {
+        name = name.replace('Goal Session:', 'Goal Session: Build Muscle (');
+        name += ')';
+      } else if (goal === 'strength') {
+        name = name.replace('Goal Session:', 'Strength Split: ');
       } else {
-        name = 'Dumbbell Split: Full Body';
-        exercises = [
-          { id: uid(), name: 'Dumbbell Goblet Squat' },
-          { id: uid(), name: 'Dumbbell Bench / Floor Press' },
-          { id: uid(), name: 'One-arm Dumbbell Row' },
-          { id: uid(), name: 'Dumbbell Shoulder Press' },
-        ];
+        name = name.replace('Goal Session:', 'General Split: ');
       }
-    } else {
-      if (variant === 0) {
-        name = 'Bodyweight Split: Upper Focus';
-        exercises = [
-          { id: uid(), name: 'Pushups' },
-          { id: uid(), name: 'Bodyweight row / band row' },
-          { id: uid(), name: 'Plank (time)' },
-        ];
-      } else if (variant === 1) {
-        name = 'Bodyweight Split: Lower Focus';
-        exercises = [
-          { id: uid(), name: 'Air Squat' },
-          { id: uid(), name: 'Glute bridges' },
-          { id: uid(), name: 'Split squats' },
-        ];
-      } else {
-        name = 'Bodyweight Split: Full Body';
-        exercises = [
-          { id: uid(), name: 'Air Squat' },
-          { id: uid(), name: 'Pushups' },
-          { id: uid(), name: 'Hip Hinge (Good morning)' },
-          { id: uid(), name: 'Plank (time)' },
-        ];
+
+      const recentNames = getRecentExercises();
+      const matchPool = [];
+      
+      selectedFoci.forEach(focusKey => {
+        const list = EXERCISES_BY_GROUP[focusKey] || [];
+        list.forEach(ex => {
+          if (ex && matchEquipment(ex.type, ex.name, eq)) {
+            matchPool.push({
+              ...ex,
+              sourceGroup: focusKey
+            });
+          }
+        });
+      });
+
+      const maxEx = dur <= 20 ? 3 : dur <= 30 ? 4 : dur <= 45 ? 5 : 6;
+      
+      const groupsMap = {};
+      selectedFoci.forEach(f => { groupsMap[f] = []; });
+      matchPool.forEach(ex => {
+        if (groupsMap[ex.sourceGroup]) {
+          groupsMap[ex.sourceGroup].push(ex);
+        }
+      });
+      
+      const activeGroups = selectedFoci.filter(f => groupsMap[f] && groupsMap[f].length > 0);
+      const selected = [];
+      
+      if (activeGroups.length > 0) {
+        let groupIndex = 0;
+        const maxAttempts = maxEx * 4;
+        let attempts = 0;
+        
+        while (selected.length < maxEx && attempts < maxAttempts) {
+          attempts++;
+          const currentGroup = activeGroups[groupIndex % activeGroups.length];
+          const poolForGroup = groupsMap[currentGroup];
+          
+          if (poolForGroup && poolForGroup.length > 0) {
+            const pick = pickExerciseFromPool(poolForGroup, recentNames);
+            if (pick && !selected.some(s => s.name === pick.name)) {
+              pick.reason = `Primary target movement for ${pick.sourceGroup}`;
+              selected.push(pick);
+            }
+          }
+          groupIndex++;
+        }
       }
+      
+      if (selected.length < maxEx && matchPool.length > 0) {
+        const remainingMatches = matchPool.filter(m => !selected.some(s => s.name === m.name));
+        while (selected.length < maxEx && remainingMatches.length > 0) {
+          const pick = pickExerciseFromPool(remainingMatches, recentNames);
+          if (pick) {
+            pick.reason = `Target movement for ${pick.sourceGroup}`;
+            selected.push(pick);
+          } else {
+            break;
+          }
+        }
+      }
+      
+      if (eq.has('pullupbar') && (selectedFoci.includes('Back') || selectedFoci.includes('Shoulders')) && selected.length > 0) {
+        const pullupEx = { 
+          name: "Pull-ups (or Chin-ups)", 
+          type: "Bodyweight", 
+          info: "Hang from bar, pull chest to bar, control down.",
+          sourceGroup: selectedFoci.includes('Back') ? 'Back' : 'Shoulders',
+          reason: "Injected vertical pull since Pull-up Bar is available"
+        };
+        if (!selected.some(s => s.name.includes("Pull-ups") || s.name.includes("Chin-ups"))) {
+          if (selected.length >= maxEx) {
+            selected[selected.length - 1] = pullupEx;
+          } else {
+            selected.push(pullupEx);
+          }
+        }
+      }
+      
+      if (eq.has('treadmill') && selectedFoci.includes('Cardio') && selected.length > 0) {
+        const machineEx = { 
+          name: "Treadmill or Bike Interval", 
+          type: "Treadmill", 
+          info: "Alternate 1m moderate, 1m fast pace.",
+          sourceGroup: 'Cardio',
+          reason: "Cardio machine interval conditioning"
+        };
+        if (!selected.some(s => s.name.includes("Treadmill") || s.name.includes("Bike"))) {
+          selected[0] = machineEx;
+        }
+      }
+
+      if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
+        const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
+        const allExercises = [
+          ...(EXERCISES_BY_GROUP["Cardio"] || []),
+          ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
+        ];
+        const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eq));
+        
+        if (warmupPool.length > 0) {
+          const currentNames1 = selected.map(ex => ex.name);
+          const cardioCandidates = warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name) && !currentNames1.includes(ex.name));
+          const finalCardioPool = cardioCandidates.length > 0 ? cardioCandidates : warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name));
+          
+          if (finalCardioPool.length > 0) {
+            const pickCardio = finalCardioPool[Math.floor(Math.random() * finalCardioPool.length)];
+            selected.push({
+              ...pickCardio,
+              sourceGroup: 'Warm-up',
+              reason: "Warm-up: Raise heart rate and warm up muscles"
+            });
+          }
+
+          const currentNames2 = selected.map(ex => ex.name);
+          const mobilityCandidates = warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name) && !currentNames2.includes(ex.name));
+          const finalMobilityPool = mobilityCandidates.length > 0 ? mobilityCandidates : warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name));
+          
+          if (finalMobilityPool.length > 0) {
+            let bestMobility = [];
+            const fociLower = selectedFoci.map(f => f.toLowerCase());
+            finalMobilityPool.forEach(ex => {
+              let score = 0;
+              fociLower.forEach(focus => {
+                if (focus === 'back' || focus === 'core') {
+                  if (ex.name === "Cat-Cow Stretch") score += 2;
+                }
+                if (focus === 'legs' || focus === 'shoulders' || focus === 'chest') {
+                  if (ex.name === "World's Greatest Stretch") score += 2;
+                }
+              });
+              bestMobility.push({ ex, score });
+            });
+            bestMobility.sort((a, b) => b.score - a.score);
+            const finalMobility = bestMobility[0].ex;
+            selected.push({
+              ...finalMobility,
+              sourceGroup: 'Warm-up',
+              reason: "Warm-up: Joint mobility for workout preparation"
+            });
+          }
+        }
+      }
+
+      if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
+        const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
+        const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eq));
+        
+        if (matchStretches.length > 0) {
+          const activeFoci = selectedFoci.filter(f => f !== 'Cardio' && f !== 'Stretching & Mobility');
+          const fociToStretch = activeFoci.slice(0, 2);
+          
+          if (fociToStretch.length === 0) {
+            const currentNames = selected.map(ex => ex.name);
+            const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
+            const finalPool = candidates.length > 0 ? candidates : matchStretches;
+            const pick = finalPool[Math.floor(Math.random() * finalPool.length)];
+            selected.push({
+              ...pick,
+              sourceGroup: 'Stretching & Mobility',
+              reason: "Cool-down: General stretching and recovery"
+            });
+          } else {
+            fociToStretch.forEach(focus => {
+              let bestMatches = [];
+              const focusLower = focus.toLowerCase();
+              const currentNames = selected.map(ex => ex.name);
+              const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
+              const poolForFocus = candidates.length > 0 ? candidates : matchStretches;
+              
+              poolForFocus.forEach(ex => {
+                const targetL = (ex.target || '').toLowerCase();
+                const infoL = (ex.info || '').toLowerCase();
+                let score = 0;
+                if (focusLower === 'back') {
+                  if (targetL.includes('back') || targetL.includes('spine') || infoL.includes('back') || infoL.includes('spine')) score += 2;
+                }
+                if (focusLower === 'chest') {
+                  if (targetL.includes('chest') || infoL.includes('chest') || targetL.includes('abs') || infoL.includes('abdominal')) score += 2;
+                }
+                if (focusLower === 'shoulders') {
+                  if (targetL.includes('shoulders') || infoL.includes('shoulders')) score += 2;
+                }
+                if (focusLower === 'legs') {
+                  if (targetL.includes('hips') || targetL.includes('hamstring') || targetL.includes('calves') || infoL.includes('hips') || infoL.includes('hamstring')) score += 2;
+                }
+                if (focusLower === 'core') {
+                  if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
+                }
+                if (focusLower === 'biceps' || focusLower === 'triceps') {
+                  if (targetL.includes('shoulders') || targetL.includes('upper body') || targetL.includes('spine')) score += 1;
+                }
+                if (score > 0) {
+                  bestMatches.push({ ex, score });
+                }
+              });
+              
+              let finalStretch;
+              if (bestMatches.length > 0) {
+                bestMatches.sort((a, b) => b.score - a.score);
+                finalStretch = bestMatches[0].ex;
+              } else {
+                finalStretch = poolForFocus[Math.floor(Math.random() * poolForFocus.length)];
+              }
+              selected.push({
+                ...finalStretch,
+                sourceGroup: 'Stretching & Mobility',
+                reason: `Cool-down: Target stretch for ${focus}`
+              });
+            });
+          }
+        }
+      }
+
+      selected.sort((a, b) => getExerciseTier(a, a.sourceGroup) - getExerciseTier(b, b.sourceGroup));
+
+      const difficulty = primaryGoal?.difficulty || profile?.difficulty || 'intermediate';
+      exercises = selected.map(ex => {
+        const repsDetails = generateRepsForExercise(ex, difficulty);
+        return {
+          id: uid(),
+          name: `${ex.name} (${repsDetails})`,
+          info: ex.info || 'Control movement and focus on form.',
+          reason: ex.reason || 'Workout sequence movement'
+        };
+      });
     }
   }
 
