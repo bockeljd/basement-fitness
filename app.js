@@ -1888,6 +1888,7 @@ function renderWorkout() {
       <div class="exerciseHeader">
         <div>
           <div class="exerciseName">${escapeHtml(ex.name)}</div>
+          ${ex.info ? `<div class="small" style="color: var(--accent); font-weight: 600; margin-top: 1px;">Target: ${escapeHtml(ex.info)}</div>` : ''}
           <div class="small" style="display: flex; gap: 8px; align-items: center; margin-top: 2px;">
             <span>${sets.length} sets logged</span>
             <button class="btn-guide-toggle" data-ex-id="${ex.id}" type="button" style="background: none; border: none; padding: 0; color: var(--accent); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px;">
@@ -3216,6 +3217,7 @@ function showDayPopover(dateStr) {
         
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;">
           <button class="btn" data-plan-action="start" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">Start Session</button>
+          <button class="btn secondary" data-plan-action="edit-workout" data-plan-date="${dateStr}" type="button">✏️ Edit Workout</button>
           <button class="btn secondary" data-plan-action="swap" data-plan-date="${dateStr}" type="button">🔁 Swap Focus</button>
           <button class="btn secondary" data-plan-action="shift" data-plan-date="${dateStr}" type="button">➡️ Shift Day</button>
           <button class="btn danger" data-plan-action="toggle" data-plan-date="${dateStr}" type="button">❌ Make Rest</button>
@@ -3274,12 +3276,218 @@ function closeDayPopover() {
   if (modal) modal.style.display = 'none';
 }
 
+// Inline editing state for calendar day workouts
+let currentEditingDate = null;
+let currentEditingExercises = [];
+
+function showEditWorkoutView(dateStr) {
+  const modal = $('modalDayDetails');
+  const titleEl = $('dayDetailsTitle');
+  const contentEl = $('dayDetailsContent');
+  if (!modal || !titleEl || !contentEl) return;
+
+  const item = (state.plan?.days || []).find(d => d.date === dateStr);
+  if (!item || !item.routine) return;
+
+  currentEditingDate = dateStr;
+  currentEditingExercises = (item.routine.exercises || []).map(ex => {
+    let name = ex.name || '';
+    let info = ex.info || '';
+    if (!info) {
+      const emDashIndex = name.indexOf(' — ');
+      if (emDashIndex !== -1) {
+        info = name.substring(emDashIndex + 3).trim();
+        name = name.substring(0, emDashIndex).trim();
+      } else {
+        const match = name.match(/^(.*?)\s*\(([^)]+)\)$/);
+        if (match) {
+          name = match[1].trim();
+          info = match[2].trim();
+        }
+      }
+    }
+    return {
+      id: ex.id || uid(),
+      name,
+      info
+    };
+  });
+
+  let dateTitle = dateStr;
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dateTitle = 'Edit: ' + dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  } catch {}
+  titleEl.textContent = dateTitle;
+
+  contentEl.innerHTML = `
+    <div style="padding: 10px 0;">
+      <div style="margin-bottom: 16px;">
+        <label class="small" style="display:block; margin-bottom: 6px; font-weight: 700; color: var(--text);">Workout Name</label>
+        <input type="text" id="editPlanWorkoutName" class="input" style="font-weight: 800;" value="${escapeHtml(item.routine.name)}">
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <label class="small" style="display:block; margin-bottom: 6px; font-weight: 700; color: var(--text);">Exercises</label>
+        <div id="editPlanExercisesList" style="display: grid; gap: 10px;">
+          <!-- Populated dynamically -->
+        </div>
+        <button class="btn secondary" id="btnEditPlanAddEx" type="button" style="width: 100%; justify-content: center; font-size: 13px; margin-top: 10px;">➕ Add Custom Exercise</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+        <button class="btn" id="btnEditPlanSave" type="button" style="flex: 1;">Save Changes</button>
+        <button class="btn secondary" id="btnEditPlanCancel" type="button" style="flex: 1;">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  // Bind actions
+  $('btnEditPlanAddEx')?.addEventListener('click', () => {
+    syncEditingExercisesFromDOM();
+    currentEditingExercises.push({ id: uid(), name: '', info: '' });
+    renderEditWorkoutExercises();
+  });
+
+  $('btnEditPlanSave')?.addEventListener('click', () => {
+    saveEditedWorkout();
+  });
+
+  $('btnEditPlanCancel')?.addEventListener('click', () => {
+    showDayPopover(dateStr);
+  });
+
+  renderEditWorkoutExercises();
+}
+
+function syncEditingExercisesFromDOM() {
+  const container = $('editPlanExercisesList');
+  if (!container) return;
+  const rows = container.querySelectorAll('.edit-ex-row');
+  rows.forEach((row) => {
+    const exId = row.getAttribute('data-ex-id');
+    const nameVal = row.querySelector('.editPlanExName')?.value || '';
+    const infoVal = row.querySelector('.editPlanExInfo')?.value || '';
+    const ex = currentEditingExercises.find(e => e.id === exId);
+    if (ex) {
+      ex.name = nameVal.trim();
+      ex.info = infoVal.trim();
+    }
+  });
+}
+
+function renderEditWorkoutExercises() {
+  const container = $('editPlanExercisesList');
+  if (!container) return;
+
+  if (currentEditingExercises.length === 0) {
+    container.innerHTML = `<div class="muted" style="text-align: center; padding: 10px; font-size: 12px;">No exercises in this workout. Add one below.</div>`;
+    return;
+  }
+
+  container.innerHTML = currentEditingExercises.map((ex, idx) => {
+    return `
+      <div class="panel edit-ex-row" data-ex-id="${ex.id}" style="padding: 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg);">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" class="input editPlanExName" style="flex: 1; font-size: 13px; padding: 6px 10px;" value="${escapeHtml(ex.name)}" placeholder="Exercise Name">
+          <button class="btn danger btnEditPlanExDelete" data-idx="${idx}" style="padding: 6px 10px; font-size: 13px;" type="button" title="Remove">✕</button>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" class="input editPlanExInfo" style="flex: 1; font-size: 12px; padding: 6px 10px;" value="${escapeHtml(ex.info)}" placeholder="Sets/Reps or details (e.g. 3 x 8-10 reps)">
+          <div style="display: flex; gap: 4px;">
+            <button class="btn secondary btnEditPlanExMoveUp" data-idx="${idx}" style="padding: 6px 8px; font-size: 11px;" type="button" title="Move Up" ${idx === 0 ? 'disabled' : ''}>▲</button>
+            <button class="btn secondary btnEditPlanExMoveDown" data-idx="${idx}" style="padding: 6px 8px; font-size: 11px;" type="button" title="Move Down" ${idx === currentEditingExercises.length - 1 ? 'disabled' : ''}>▼</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Wire buttons inside the container
+  container.querySelectorAll('.btnEditPlanExDelete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      syncEditingExercisesFromDOM();
+      const idx = parseInt(btn.getAttribute('data-idx'), 10);
+      currentEditingExercises.splice(idx, 1);
+      renderEditWorkoutExercises();
+    });
+  });
+
+  container.querySelectorAll('.btnEditPlanExMoveUp').forEach(btn => {
+    btn.addEventListener('click', () => {
+      syncEditingExercisesFromDOM();
+      const idx = parseInt(btn.getAttribute('data-idx'), 10);
+      if (idx > 0) {
+        const temp = currentEditingExercises[idx];
+        currentEditingExercises[idx] = currentEditingExercises[idx - 1];
+        currentEditingExercises[idx - 1] = temp;
+        renderEditWorkoutExercises();
+      }
+    });
+  });
+
+  container.querySelectorAll('.btnEditPlanExMoveDown').forEach(btn => {
+    btn.addEventListener('click', () => {
+      syncEditingExercisesFromDOM();
+      const idx = parseInt(btn.getAttribute('data-idx'), 10);
+      if (idx < currentEditingExercises.length - 1) {
+        const temp = currentEditingExercises[idx];
+        currentEditingExercises[idx] = currentEditingExercises[idx + 1];
+        currentEditingExercises[idx + 1] = temp;
+        renderEditWorkoutExercises();
+      }
+    });
+  });
+}
+
+function saveEditedWorkout() {
+  const dateStr = currentEditingDate;
+  if (!dateStr) return;
+
+  const item = (state.plan?.days || []).find(d => d.date === dateStr);
+  if (!item || !item.routine) return;
+
+  const nameVal = $('editPlanWorkoutName')?.value?.trim();
+  if (!nameVal) {
+    alert('Please enter a workout name.');
+    return;
+  }
+
+  syncEditingExercisesFromDOM();
+
+  const missingNames = currentEditingExercises.some(ex => !ex.name.trim());
+  if (missingNames) {
+    alert('Please enter a name for all exercises.');
+    return;
+  }
+
+  item.routine.name = nameVal;
+  item.routine.exercises = currentEditingExercises.map(ex => ({
+    id: ex.id,
+    name: ex.name.trim(),
+    info: ex.info.trim()
+  }));
+
+  savePlan();
+  
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+  } else {
+    renderPlan();
+  }
+
+  showDayPopover(dateStr);
+}
+
 function handleCalendarAction(act, dateStr) {
   if (!dateStr || !act) return;
   
   if (act === 'start') {
     closeDayPopover();
     startPlannedWorkout(dateStr);
+  } else if (act === 'edit-workout') {
+    showEditWorkoutView(dateStr);
   } else if (act === 'swap') {
     const idx = state.plan.days.findIndex(d => d.date === dateStr);
     if (idx !== -1) {
