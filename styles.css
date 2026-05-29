@@ -1640,6 +1640,74 @@ select.input {
   cursor: default;
 }
 
+/* Detailed Responsive Cell Styles */
+.calendar-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.calendar-cell-emoji {
+  font-size: 11px;
+}
+
+.calendar-cell-body {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .calendar-cell {
+    aspect-ratio: auto;
+    min-height: 85px;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 6px;
+  }
+  
+  .calendar-cell-emoji {
+    /* Hide the emoji in the header on desktop since we display the text labels */
+    display: none;
+  }
+  
+  .calendar-cell-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    margin-top: 2px;
+    text-align: left;
+  }
+  
+  .calendar-cell-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  
+  .calendar-cell.rest .calendar-cell-name {
+    color: var(--muted);
+  }
+  
+  .calendar-cell.completed-recovery .calendar-cell-name {
+    color: var(--success);
+  }
+  
+  .calendar-cell-exercises {
+    font-size: 9.5px;
+    color: var(--muted);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 
 
 

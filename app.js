@@ -3135,19 +3135,43 @@ function renderMonthCalendar() {
     let cellClass = 'calendar-cell';
     if (isToday) cellClass += ' today';
     
-    let badgeHtml = '';
+    let emoji = '';
+    let bodyHtml = '';
     const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === day.date);
     
     if (isWorkout) {
       cellClass += ' workout';
-      badgeHtml = `<span class="calendar-cell-badge" title="${escapeHtml(day.routine.name)}">💪</span>`;
+      emoji = '💪';
+      
+      const exPreviews = (day.routine.exercises || [])
+        .map(ex => ex.name.split(' (')[0].trim())
+        .slice(0, 2)
+        .join(', ');
+        
+      bodyHtml = `
+        <div class="calendar-cell-body">
+          <div class="calendar-cell-name">${escapeHtml(day.routine.name)}</div>
+          <div class="calendar-cell-exercises">${escapeHtml(exPreviews)}</div>
+        </div>
+      `;
     } else {
       if (hasLoggedRecovery) {
         cellClass += ' completed-recovery';
-        badgeHtml = `<span class="calendar-cell-badge">🧘</span>`;
+        emoji = '🧘';
+        bodyHtml = `
+          <div class="calendar-cell-body">
+            <div class="calendar-cell-name">Recovery</div>
+            <div class="calendar-cell-exercises">15m session logged</div>
+          </div>
+        `;
       } else {
         cellClass += ' rest';
-        badgeHtml = ``;
+        bodyHtml = `
+          <div class="calendar-cell-body">
+            <div class="calendar-cell-name">Rest</div>
+            <div class="calendar-cell-exercises">Active recovery or rest</div>
+          </div>
+        `;
       }
     }
 
@@ -3156,8 +3180,11 @@ function renderMonthCalendar() {
 
     html += `
       <div class="${cellClass}" data-calendar-date="${day.date}" title="${escapeHtml(tooltipText)}">
-        <div class="calendar-cell-num">${dayNum}</div>
-        ${badgeHtml}
+        <div class="calendar-cell-header">
+          <div class="calendar-cell-num">${dayNum}</div>
+          <div class="calendar-cell-emoji">${emoji}</div>
+        </div>
+        ${bodyHtml}
       </div>
     `;
   });
