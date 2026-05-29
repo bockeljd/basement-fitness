@@ -3180,11 +3180,9 @@ function renderMonthCalendar() {
 
     html += `
       <div class="${cellClass}" data-calendar-date="${day.date}" title="${escapeHtml(tooltipText)}">
-        <div class="calendar-cell-header">
-          <div class="calendar-cell-num">${dayNum}</div>
-          <div class="calendar-cell-emoji">${emoji}</div>
-        </div>
+        <div class="calendar-cell-num">${dayNum}</div>
         ${bodyHtml}
+        ${emoji ? `<span class="calendar-cell-emoji">${emoji}</span>` : ''}
       </div>
     `;
   });
@@ -3295,12 +3293,12 @@ function showDayPopover(dateStr) {
   }
 
   contentEl.innerHTML = html;
-  modal.style.display = 'flex';
+  modal.classList.add('active');
 }
 
 function closeDayPopover() {
   const modal = $('modalDayDetails');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('active');
 }
 
 // Inline editing state for calendar day workouts

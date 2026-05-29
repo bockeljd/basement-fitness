@@ -1641,15 +1641,10 @@ select.input {
 }
 
 /* Detailed Responsive Cell Styles */
-.calendar-cell-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
 .calendar-cell-emoji {
   font-size: 11px;
+  align-self: center;
+  margin-bottom: 2px;
 }
 
 .calendar-cell-body {
