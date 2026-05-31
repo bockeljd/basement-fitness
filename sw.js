@@ -1,13 +1,13 @@
 const CACHE_NAME = 'basement-fitness-v8';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/manifest.webmanifest',
-  '/favicon.ico',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  './',
+  'index.html',
+  'styles.css',
+  'app.js',
+  'manifest.webmanifest',
+  'favicon.ico',
+  'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 
 // Install: Cache essential assets
@@ -47,7 +47,7 @@ self.addEventListener('fetch', (e) => {
         // Fetch in background to update cache
         fetch(e.request).then((networkResponse) => {
           if (networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, networkResponse));
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, networkResponse.clone()));
           }
         }).catch(() => {});
         return cachedResponse;

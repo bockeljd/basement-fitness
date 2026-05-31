@@ -1682,6 +1682,14 @@ function activeRoutine(session) {
 function ensureSessionShape(s) {
   s.entries = s.entries || {};
   s.notes = s.notes || '';
+  if (!s.exercises || s.exercises.length === 0) {
+    const r = activeRoutine(s);
+    if (r && r.exercises) {
+      s.exercises = r.exercises.map(ex => ({ id: ex.id, name: ex.name, info: ex.info || '' }));
+    } else {
+      s.exercises = [];
+    }
+  }
   return s;
 }
 
@@ -1694,15 +1702,20 @@ function getRecentExercises() {
     if (s.entries) {
       Object.keys(s.entries).forEach(exId => {
         let exName = '';
-        const foundInRoutine = r?.exercises?.find(e => e.id === exId);
-        if (foundInRoutine) {
-          exName = foundInRoutine.name;
+        const foundInSession = s.exercises?.find(e => e.id === exId);
+        if (foundInSession) {
+          exName = foundInSession.name;
         } else {
-          for (const rt of state.routines) {
-            const found = rt.exercises?.find(e => e.id === exId);
-            if (found) {
-              exName = found.name;
-              break;
+          const foundInRoutine = r?.exercises?.find(e => e.id === exId);
+          if (foundInRoutine) {
+            exName = foundInRoutine.name;
+          } else {
+            for (const rt of state.routines) {
+              const found = rt.exercises?.find(e => e.id === exId);
+              if (found) {
+                exName = found.name;
+                break;
+              }
             }
           }
         }
@@ -1726,15 +1739,20 @@ function getPreviousLogForExercise(rawName) {
     if (s.entries) {
       for (const exId of Object.keys(s.entries)) {
         let name = '';
-        const foundInRoutine = r?.exercises?.find(e => e.id === exId);
-        if (foundInRoutine) {
-          name = foundInRoutine.name;
+        const foundInSession = s.exercises?.find(e => e.id === exId);
+        if (foundInSession) {
+          name = foundInSession.name;
         } else {
-          for (const rt of state.routines) {
-            const found = rt.exercises?.find(e => e.id === exId);
-            if (found) {
-              name = found.name;
-              break;
+          const foundInRoutine = r?.exercises?.find(e => e.id === exId);
+          if (foundInRoutine) {
+            name = foundInRoutine.name;
+          } else {
+            for (const rt of state.routines) {
+              const found = rt.exercises?.find(e => e.id === exId);
+              if (found) {
+                name = found.name;
+                break;
+              }
             }
           }
         }
@@ -2042,7 +2060,8 @@ function startRoutine(routineId) {
     startedAt: new Date().toISOString(),
     endedAt: null,
     notes: '',
-    entries: {}
+    entries: {},
+    exercises: (r.exercises || []).map(ex => ({ id: ex.id, name: ex.name, info: ex.info || '' }))
   };
   state.sessions.unshift(s);
   state.activeSessionId = s.id;
@@ -2090,8 +2109,13 @@ function addExercise() {
   const name = prompt('Exercise name?');
   if (!name) return;
   r.exercises = r.exercises || [];
-  r.exercises.push({ id: uid(), name: name.trim() });
+  const newEx = { id: uid(), name: name.trim() };
+  r.exercises.push(newEx);
   saveRoutines();
+  
+  s.exercises = s.exercises || [];
+  s.exercises.push({ ...newEx, info: '' });
+  saveSessions();
   renderWorkout();
 }
 
@@ -2105,6 +2129,12 @@ function renameExercise(exId) {
   if (!name) return;
   ex.name = name.trim();
   saveRoutines();
+  
+  if (s.exercises) {
+    const sEx = s.exercises.find(e => e.id === exId);
+    if (sEx) sEx.name = name.trim();
+  }
+  saveSessions();
   renderWorkout();
 }
 
@@ -2218,14 +2248,11 @@ function importData(file) {
 }
 
 function resetAll() {
-  if (!confirm('Reset all local data (routines + workout history)?')) return;
-  localStorage.removeItem(KEYS.routines);
-  localStorage.removeItem(KEYS.sessions);
-  localStorage.removeItem(KEYS.active);
-  seedIfEmpty();
-  loadState();
-  renderRoutines();
-  renderWorkout();
+  if (!confirm('Reset all local data (routines, history, goals, profile, plan settings)?')) return;
+  Object.values(KEYS).forEach(key => {
+    localStorage.removeItem(key);
+  });
+  window.location.reload();
 }
 
 // Timer
@@ -2514,11 +2541,23 @@ function addRest(sec) {
 // Dashboard (daily/weekly/monthly goals)
 function startOfDay(d) {
   const x = new Date(d);
+  if (isNaN(x.getTime())) {
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    return now;
+  }
   x.setHours(0,0,0,0);
   return x;
 }
 function ymd(d) {
-  const x = startOfDay(d);
+  const x = new Date(d);
+  if (isNaN(x.getTime())) {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
   const yyyy = x.getFullYear();
   const mm = String(x.getMonth()+1).padStart(2,'0');
   const dd = String(x.getDate()).padStart(2,'0');
@@ -3016,21 +3055,50 @@ function ensurePlanGenerated() {
   
   const today = ymd(new Date());
   
-  // Clean up any past days
+  // Clean up any past days and remove any previously corrupted invalid days
   if (state.plan && Array.isArray(state.plan.days)) {
-    state.plan.days = state.plan.days.filter(d => d.date >= today);
+    state.plan.days = state.plan.days.filter(d => d.date >= today && d.date !== 'NaN-NaN-NaN');
   } else {
-    state.plan = { generatedAt: new Date().toISOString(), days: [] };
+    state.plan = { 
+      generatedAt: new Date().toISOString(), 
+      days: [],
+      goalType: state.primaryGoal?.type,
+      daysPerWeek: state.primaryGoal?.daysPerWeek,
+      splitType: state.primaryGoal?.splitType,
+      difficulty: state.primaryGoal?.difficulty,
+      equipment: state.primaryGoal?.equipment ? [...state.primaryGoal.equipment] : []
+    };
   }
 
-  // Detect stale plan data — if any workout day still has the old "Goal Session:" prefix
-  // baked into the stored routine name, force a full regeneration so names and rep schemes
-  // are updated to the new goal-aware format.
+  // Detect stale plan data based on goal settings metadata or legacy naming
+  const planGoalType = state.plan?.goalType;
+  const planDaysPerWeek = state.plan?.daysPerWeek;
+  const planSplitType = state.plan?.splitType;
+  const planDifficulty = state.plan?.difficulty;
+  const planEquipmentStr = state.plan?.equipment ? JSON.stringify(state.plan.equipment) : '';
+  const currentEquipmentStr = state.primaryGoal?.equipment ? JSON.stringify(state.primaryGoal.equipment) : '';
+
+  const isPlanStale = !planGoalType || 
+    planGoalType !== state.primaryGoal?.type ||
+    planDaysPerWeek !== state.primaryGoal?.daysPerWeek ||
+    planSplitType !== state.primaryGoal?.splitType ||
+    planDifficulty !== state.primaryGoal?.difficulty ||
+    planEquipmentStr !== currentEquipmentStr;
+
   const hasStaleNames = state.plan.days.some(d =>
     d.kind === 'workout' && d.routine?.name && /^Goal Session:/i.test(d.routine.name)
   );
-  if (hasStaleNames) {
-    state.plan = { generatedAt: new Date().toISOString(), days: [] };
+
+  if (isPlanStale || hasStaleNames) {
+    state.plan = { 
+      generatedAt: new Date().toISOString(), 
+      days: [],
+      goalType: state.primaryGoal?.type,
+      daysPerWeek: state.primaryGoal?.daysPerWeek,
+      splitType: state.primaryGoal?.splitType,
+      difficulty: state.primaryGoal?.difficulty,
+      equipment: state.primaryGoal?.equipment ? [...state.primaryGoal.equipment] : []
+    };
   }
   
   // If remaining plan days is less than 30, extend it to 30 days
@@ -3043,7 +3111,15 @@ function ensurePlanGenerated() {
 function extendPlan() {
   if (!state.primaryGoal) return;
   
-  state.plan = state.plan || { generatedAt: new Date().toISOString(), days: [] };
+  state.plan = state.plan || { 
+    generatedAt: new Date().toISOString(), 
+    days: [],
+    goalType: state.primaryGoal?.type,
+    daysPerWeek: state.primaryGoal?.daysPerWeek,
+    splitType: state.primaryGoal?.splitType,
+    difficulty: state.primaryGoal?.difficulty,
+    equipment: state.primaryGoal?.equipment ? [...state.primaryGoal.equipment] : []
+  };
   state.plan.days = state.plan.days || [];
   
   const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
@@ -3051,6 +3127,11 @@ function extendPlan() {
   
   if (state.plan.days.length === 0) {
     state.plan.generatedAt = new Date().toISOString();
+    state.plan.goalType = state.primaryGoal?.type;
+    state.plan.daysPerWeek = state.primaryGoal?.daysPerWeek;
+    state.plan.splitType = state.primaryGoal?.splitType;
+    state.plan.difficulty = state.primaryGoal?.difficulty;
+    state.plan.equipment = state.primaryGoal?.equipment ? [...state.primaryGoal.equipment] : [];
   }
   
   let genDate = new Date(state.plan.generatedAt);
@@ -3063,8 +3144,12 @@ function extendPlan() {
     let nextDate;
     if (state.plan.days.length > 0) {
       const lastDayStr = state.plan.days[state.plan.days.length - 1].date;
-      const [y, m, d] = lastDayStr.split('-').map(Number);
-      nextDate = new Date(y, m - 1, d + 1);
+      if (lastDayStr && lastDayStr !== 'NaN-NaN-NaN') {
+        const [y, m, d] = lastDayStr.split('-').map(Number);
+        nextDate = new Date(y, m - 1, d + 1);
+      } else {
+        nextDate = new Date();
+      }
     } else {
       nextDate = new Date();
     }
@@ -3125,7 +3210,15 @@ function regeneratePlan() {
     }
   }
 
-  state.plan = { generatedAt: new Date().toISOString(), days: planDays };
+  state.plan = { 
+    generatedAt: new Date().toISOString(), 
+    days: planDays,
+    goalType: state.primaryGoal?.type,
+    daysPerWeek: state.primaryGoal?.daysPerWeek,
+    splitType: state.primaryGoal?.splitType,
+    difficulty: state.primaryGoal?.difficulty,
+    equipment: state.primaryGoal?.equipment ? [...state.primaryGoal.equipment] : []
+  };
   savePlan();
   renderPlan();
 }
@@ -5632,14 +5725,19 @@ function renderHistoryLogs() {
         const sets = s.entries[exId] || [];
         if (sets.length > 0) {
           let exName = 'Exercise';
-          const routineEx = r?.exercises?.find(e => e.id === exId);
-          if (routineEx) {
-            exName = routineEx.name;
+          const sessionEx = s.exercises?.find(e => e.id === exId);
+          if (sessionEx) {
+            exName = sessionEx.name;
           } else {
-            state.routines.forEach(rt => {
-              const found = rt.exercises?.find(e => e.id === exId);
-              if (found) exName = found.name;
-            });
+            const routineEx = r?.exercises?.find(e => e.id === exId);
+            if (routineEx) {
+              exName = routineEx.name;
+            } else {
+              state.routines.forEach(rt => {
+                const found = rt.exercises?.find(e => e.id === exId);
+                if (found) exName = found.name;
+              });
+            }
           }
           
           const setsSummary = sets.map((st, idx) => `#${idx + 1}: ${st.w} lb x ${st.r}`).join(' · ');
