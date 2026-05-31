@@ -2728,7 +2728,10 @@ function renderDashboard() {
     }
   }
   const sg = $('secondaryGoal');
-  if (sg) sg.textContent = state.secondaryGoal?.type ? state.secondaryGoal.type : 'None';
+  if (sg) {
+    const type = state.secondaryGoal?.type;
+    sg.textContent = type ? `Finisher: ${type.charAt(0).toUpperCase() + type.slice(1)}` : 'Finisher: None';
+  }
 
   const workoutsCompleted = getWeeklyWorkoutsCompleted();
   const workoutsTarget = getWeeklyWorkoutsTarget();
