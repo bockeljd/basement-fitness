@@ -1703,6 +1703,44 @@ select.input {
   }
 }
 
+/* Goal equipment selector grid */
+.goal-equipment-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
+.eq-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--panel-bg, var(--bg));
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
 
+.eq-check:hover {
+  border-color: var(--accent);
+}
 
+.eq-check input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.eq-check:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb, 99, 102, 241), 0.08);
+  color: var(--accent);
+  font-weight: 700;
+}

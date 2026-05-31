@@ -1570,23 +1570,11 @@ function seedIfEmpty() {
     store.set(KEYS.profile, { goal: 'general', durationMin: 30, equipment: ['bodyweight'] });
   }
 
-  // Seed a default primary goal if none exists so the calendar is populated out of the box
+  // Seed a default empty goal so the calendar shows a 'set goal' prompt instead of
+  // a confusing pre-baked plan. Users must explicitly set their goal in Settings.
   const pg = store.get(KEYS.primaryGoal, null);
   if (!pg) {
-    const defaultPrimary = {
-      type: 'lose_weight',
-      durationMin: 30,
-      daysPerWeek: 3,
-      createdAt: new Date().toISOString(),
-      startWeightLbs: 180,
-      currentWeightLbs: 180,
-      weightHistory: [
-        { date: ymd(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)), weight: 182.4 },
-        { date: ymd(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)), weight: 181.2 },
-        { date: ymd(new Date()), weight: 180.0 }
-      ]
-    };
-    store.set(KEYS.primaryGoal, defaultPrimary);
+    // No default seeded — user will see the 'Set a goal' CTA on the dashboard
   }
 }
 
@@ -2856,14 +2844,26 @@ function saveGoalsFromForm() {
   const durationMin = Number($('primaryMinutes')?.value || state.profile.durationMin || 30);
   const daysPerWeek = Number($('primaryDays')?.value || 3);
   const splitType = String($('primarySplit')?.value || 'alternating').trim();
+  const difficulty = String($('primaryDifficulty')?.value || 'intermediate').trim();
+
+  // Collect equipment from the goal form checkboxes
+  const eqChecks = document.querySelectorAll('#goalEquipment input[data-goal-eq]:checked');
+  let equipment = Array.from(eqChecks).map(cb => cb.getAttribute('data-goal-eq')).filter(Boolean);
+  if (equipment.length === 0) equipment = ['bodyweight'];
 
   const goal = {
     type: t,
     durationMin: durationMin || 30,
     daysPerWeek: daysPerWeek || 3,
     splitType: splitType,
+    difficulty: difficulty,
+    equipment: equipment,
     createdAt: new Date().toISOString()
   };
+
+  // Sync equipment back to profile so Quick Start stays consistent
+  state.profile.equipment = equipment;
+  saveProfile();
 
   if (t === 'custom') {
     const txt = String($('primaryCustomText')?.value || '').trim();
@@ -2892,7 +2892,7 @@ function saveGoalsFromForm() {
     if (baselineVal) goal.startWeightLbs = baselineVal;
     if (progressVal) {
       goal.currentWeightLbs = progressVal;
-      
+
       // Update weight trend history
       goal.weightHistory = state.primaryGoal?.weightHistory || [];
       const todayStr = ymd(new Date());
@@ -2915,6 +2915,15 @@ function saveGoalsFromForm() {
   saveSecondaryGoal();
   regeneratePlan();
   renderDashboard();
+
+  // Show confirmation
+  const btn = $('btnSaveGoals');
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Goal saved & plan updated!';
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+  }
 }
 
 function hydrateGoalsForm() {
@@ -2924,14 +2933,22 @@ function hydrateGoalsForm() {
   const st = $('secondaryType');
   const base = $('primaryBaseline');
   const prog = $('primaryProgress');
+  const diff = $('primaryDifficulty');
 
   if (pt) pt.value = state.primaryGoal?.type || '';
   if (pm) pm.value = String(state.primaryGoal?.durationMin || state.profile.durationMin || 30);
   if (pd) pd.value = String(state.primaryGoal?.daysPerWeek || 3);
   if (st) st.value = state.secondaryGoal?.type || '';
-  
+  if (diff) diff.value = state.primaryGoal?.difficulty || state.profile?.difficulty || 'intermediate';
+
   const ps = $('primarySplit');
   if (ps) ps.value = state.primaryGoal?.splitType || 'alternating';
+
+  // Hydrate equipment checkboxes from the goal's equipment, falling back to profile
+  const goalEq = new Set(state.primaryGoal?.equipment || state.profile?.equipment || ['bodyweight']);
+  document.querySelectorAll('#goalEquipment input[data-goal-eq]').forEach(cb => {
+    cb.checked = goalEq.has(cb.getAttribute('data-goal-eq'));
+  });
 
   const t = state.primaryGoal?.type;
   if (t === 'bar_hang') {
@@ -2966,6 +2983,16 @@ function ensurePlanGenerated() {
   if (state.plan && Array.isArray(state.plan.days)) {
     state.plan.days = state.plan.days.filter(d => d.date >= today);
   } else {
+    state.plan = { generatedAt: new Date().toISOString(), days: [] };
+  }
+
+  // Detect stale plan data — if any workout day still has the old "Goal Session:" prefix
+  // baked into the stored routine name, force a full regeneration so names and rep schemes
+  // are updated to the new goal-aware format.
+  const hasStaleNames = state.plan.days.some(d =>
+    d.kind === 'workout' && d.routine?.name && /^Goal Session:/i.test(d.routine.name)
+  );
+  if (hasStaleNames) {
     state.plan = { generatedAt: new Date().toISOString(), days: [] };
   }
   
@@ -3143,14 +3170,25 @@ function renderMonthCalendar() {
       cellClass += ' workout';
       emoji = '💪';
       
+      // Strip boilerplate prefixes so calendar cells show only the meaningful split label
+      const rawName = day.routine.name || '';
+      const cellName = rawName
+        .replace(/^Goal Session:\s*(Build Muscle|Fat Loss|)\s*\(?/i, '')
+        .replace(/^Goal Session:\s*/i, '')
+        .replace(/^Strength Split:\s*/i, '')
+        .replace(/^General Split:\s*/i, '')
+        .replace(/\)$/, '')
+        .trim();
+      
       const exPreviews = (day.routine.exercises || [])
+        .filter(ex => !ex.name.toLowerCase().startsWith('warm-up') && !ex.name.toLowerCase().startsWith('cool down'))
         .map(ex => ex.name.split(' (')[0].trim())
         .slice(0, 2)
         .join(', ');
         
       bodyHtml = `
         <div class="calendar-cell-body">
-          <div class="calendar-cell-name">${escapeHtml(day.routine.name)}</div>
+          <div class="calendar-cell-name">${escapeHtml(cellName)}</div>
           <div class="calendar-cell-exercises">${escapeHtml(exPreviews)}</div>
         </div>
       `;
@@ -3223,15 +3261,26 @@ function showDayPopover(dateStr) {
 
   let html = '';
   if (isWorkout) {
+    // Strip boilerplate prefixes for clean display in the modal header
+    const modalTitle = (item.routine.name || '')
+      .replace(/^Goal Session:\s*(Build Muscle|Fat Loss|)\s*\(?/i, '')
+      .replace(/^Goal Session:\s*/i, '')
+      .replace(/^Strength Split:\s*/i, '')
+      .replace(/^General Split:\s*/i, '')
+      .replace(/\)$/, '')
+      .trim() || item.routine.name;
+
     const exercisesHtml = item.routine.exercises.map(ex => {
-      const baseName = ex.name.split(' (')[0].trim();
-      return `<li style="margin-bottom: 6px; font-size: 13px;"><strong>${escapeHtml(baseName)}</strong> - <span class="muted">${escapeHtml(ex.info)}</span></li>`;
+      const parts = ex.name.split(' (');
+      const baseName = parts[0].trim();
+      const reps = parts[1] ? parts[1].replace(')', '').trim() : '';
+      return `<li style="margin-bottom: 6px; font-size: 13px;"><strong>${escapeHtml(baseName)}</strong> ${reps ? `<span style="color: var(--accent); font-weight: 700;">(${escapeHtml(reps)})</span>` : ''} - <span class="muted">${escapeHtml(ex.info || '')}</span></li>`;
     }).join('');
 
     html = `
       <div style="padding: 10px 0;">
-        <h4 style="font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 8px;">${escapeHtml(item.routine.name)}</h4>
-        <p class="muted" style="font-size: 12px; margin-bottom: 12px;">Scheduled Split Workout</p>
+        <h4 style="font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 4px;">${escapeHtml(modalTitle)}</h4>
+        <p class="muted" style="font-size: 12px; margin-bottom: 12px;">${escapeHtml(item.routine.name)}</p>
         
         <div class="panel" style="margin-bottom: 16px;">
           <div class="panelTitle" style="font-size: 11px; text-transform: uppercase; margin-bottom: 6px;">Exercise Sequence</div>
@@ -3624,13 +3673,13 @@ function renderPlan() {
     toggleBtn.textContent = state.calendarView === 'month' ? '📝 List View' : '📅 Month View';
   }
 
-  if (state.calendarView === 'month') {
-    renderMonthCalendar();
+  if (!state.primaryGoal) {
+    el.innerHTML = '<div class="muted">Set a primary goal to generate a plan.</div>';
     return;
   }
 
-  if (!state.primaryGoal) {
-    el.innerHTML = '<div class="muted">Set a primary goal to generate a plan.</div>';
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
     return;
   }
 
@@ -3872,32 +3921,60 @@ function matchEquipment(exType, exName, eqSet) {
   return matches;
 }
 
-function generateRepsForExercise(ex, difficulty) {
-  const nameL = ex.name.toLowerCase();
-  const typeL = ex.type.toLowerCase();
-  
+function generateRepsForExercise(ex, difficulty, goal = 'general') {
+  const nameL = (ex.name || '').toLowerCase();
+  const typeL = (ex.type || '').toLowerCase();
+
+  // Stretching / cool-down — always holds, regardless of goal
   if (typeL === 'stretching') {
-    if (difficulty === 'beginner') return '2 sets x 30s hold';
-    if (difficulty === 'advanced') return '3 sets x 60s hold';
-    return '2 sets x 45s hold';
+    if (difficulty === 'beginner') return '2 sets × 30s hold';
+    if (difficulty === 'advanced') return '3 sets × 60s hold';
+    return '2 sets × 45s hold';
   }
-  
-  if (nameL.includes('plank') || nameL.includes('hold')) {
-    if (difficulty === 'beginner') return '3 sets x 30s hold';
-    if (difficulty === 'advanced') return '4 sets x 60s hold';
-    return '3 sets x 45s hold';
+
+  // Isometric holds (plank, wall sit, etc.)
+  if (nameL.includes('plank') || nameL.includes('hold') || nameL.includes('wall sit')) {
+    if (difficulty === 'beginner') return '3 sets × 20s hold';
+    if (difficulty === 'advanced') return '4 sets × 60s hold';
+    return '3 sets × 40s hold';
   }
-  
-  if (nameL.includes('burpee') || nameL.includes('jack') || nameL.includes('climber') || nameL.includes('knee')) {
-    if (difficulty === 'beginner') return '3 sets x 30s work';
-    if (difficulty === 'advanced') return '4 sets x 45s work';
-    return '3 sets x 40s work';
+
+  // Cardio / HIIT movements
+  if (nameL.includes('burpee') || nameL.includes('jack') || nameL.includes('climber') || nameL.includes('high knee') || nameL.includes('sprint')) {
+    if (difficulty === 'beginner') return '3 sets × 30s work / 30s rest';
+    if (difficulty === 'advanced') return '4 sets × 45s work / 15s rest';
+    return '3 sets × 40s work / 20s rest';
   }
-  
-  if (difficulty === 'beginner') return '2 sets x 10-12 reps';
-  if (difficulty === 'advanced') return '4 sets x 8-12 reps';
-  return '3 sets x 10-12 reps';
+
+  // ── Goal-specific rep schemes ──
+
+  // Strength: low reps, heavy — 4–5 sets × 3–6 reps
+  if (goal === 'strength') {
+    if (difficulty === 'beginner') return '3 sets × 6–8 reps (heavy)';
+    if (difficulty === 'advanced') return '5 sets × 3–5 reps (heavy)';
+    return '4 sets × 4–6 reps (heavy)';
+  }
+
+  // Muscle building / hypertrophy: moderate-heavy, 8–12 reps
+  if (goal === 'build_muscle' || goal === 'hypertrophy') {
+    if (difficulty === 'beginner') return '3 sets × 10–12 reps';
+    if (difficulty === 'advanced') return '4 sets × 8–12 reps (controlled)';
+    return '3 sets × 8–12 reps';
+  }
+
+  // Fat loss / weight loss: higher reps, shorter rest, circuit style
+  if (goal === 'lose_weight' || goal === 'fat_loss') {
+    if (difficulty === 'beginner') return '3 sets × 15 reps (30s rest)';
+    if (difficulty === 'advanced') return '4 sets × 20 reps (15s rest)';
+    return '3 sets × 15–20 reps (20s rest)';
+  }
+
+  // General / fallback
+  if (difficulty === 'beginner') return '2 sets × 10–12 reps';
+  if (difficulty === 'advanced') return '4 sets × 8–12 reps';
+  return '3 sets × 10–12 reps';
 }
+
 
 function getExerciseTier(ex, groupName) {
   const nameL = ex.name.toLowerCase();
@@ -3977,7 +4054,7 @@ function swapExerciseAtIndex(idx) {
   }
 
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
-  const repsDetails = generateRepsForExercise(pick, state.lastGenParams.difficulty);
+  const repsDetails = generateRepsForExercise(pick, state.lastGenParams?.difficulty || 'intermediate', state.primaryGoal?.type || 'general');
 
   let swapReason = '';
   if (group === 'Warm-up') {
@@ -4359,7 +4436,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     else if (difficulty === 'advanced') difficultyBadge = "Advanced";
 
     const exercisesMapped = selected.map(ex => {
-      const repsDetails = generateRepsForExercise(ex, difficulty);
+      const repsDetails = generateRepsForExercise(ex, difficulty, state.primaryGoal?.type || 'general');
       return {
         id: uid(),
         name: ex.name,
@@ -4702,7 +4779,8 @@ function secondaryFinisher(secondaryGoal, eq) {
 function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal = null, dayIndex = 0) {
   const goal = primaryGoal?.type || profile?.goal || 'general';
   const dur = Number(primaryGoal?.durationMin || profile?.durationMin || 30);
-  const eq = new Set(profile?.equipment || ['bodyweight']);
+  // Prefer equipment from the goal (set in Settings), fall back to profile (set in Quick Start)
+  const eq = new Set(primaryGoal?.equipment || profile?.equipment || ['bodyweight']);
 
   const wantsRun = eq.has('treadmill') || eq.has('bike');
   const hasPullup = eq.has('pullupbar');
@@ -4730,24 +4808,24 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
     if (variant === 0) {
       name = 'Goal Session: 5K - Intervals';
       exercises = [
-        { id: uid(), name: 'Warm-up (5 min)' },
-        { id: uid(), name: wantsRun ? 'Intervals: run 1 min / walk 1 min (12–20 min)' : 'Intervals: run/walk (12–20 min)' },
-        { id: uid(), name: 'Easy pace (5–10 min)' },
-        { id: uid(), name: 'Cool down + stretch (5 min)' },
+        { id: uid(), name: 'Warm-up jog (5 min)', info: 'Easy conversational pace. Loosen hips and ankles before picking up speed.' },
+        { id: uid(), name: wantsRun ? 'Intervals: run 1 min hard / walk 1 min (12–20 min)' : 'Intervals: run/walk alternating (12–20 min)', info: 'Hard = 7–8/10 effort. Recovery walk = fully catch breath. Aim for consistent splits each interval.' },
+        { id: uid(), name: 'Easy pace cool-down (5–10 min)', info: 'Drop to 50% effort. Focus on breathing slowing down before you stop.' },
+        { id: uid(), name: 'Standing leg & calf stretch (5 min)', info: 'Hold each stretch 30–45 seconds. Priority: calves, hip flexors, hamstrings.' },
       ];
     } else if (variant === 1) {
       name = 'Goal Session: 5K - Tempo Run';
       exercises = [
-        { id: uid(), name: 'Warm-up (5 min)' },
-        { id: uid(), name: wantsRun ? 'Tempo run: sustained moderate pace (15–20 min)' : 'Brisk walk/jog tempo intervals (15–20 min)' },
-        { id: uid(), name: 'Cool down + stretch (5 min)' },
+        { id: uid(), name: 'Warm-up jog (5 min)', info: 'Start slow. Build pace gradually over the first 2 minutes.' },
+        { id: uid(), name: wantsRun ? 'Tempo run: sustained moderate-hard pace (15–20 min)' : 'Brisk walk/jog tempo intervals (15–20 min)', info: 'Target 6–7/10 effort — comfortably uncomfortable. You should be able to say a few words, not hold a conversation.' },
+        { id: uid(), name: 'Cool-down walk + stretch (5 min)', info: 'Slow to a walk immediately. Stretch hip flexors and quads while warm.' },
       ];
     } else {
       name = 'Goal Session: 5K - Recovery & Hills';
       exercises = [
-        { id: uid(), name: 'Warm-up (5 min)' },
-        { id: uid(), name: wantsRun ? 'Hill repeats or light recovery jog (10–15 min)' : 'Brisk walk with incline/hills (10–15 min)' },
-        { id: uid(), name: 'Cool down + stretch (5 min)' },
+        { id: uid(), name: 'Warm-up walk/jog (5 min)', info: 'Very easy. Today is about active recovery and building leg strength, not speed.' },
+        { id: uid(), name: wantsRun ? 'Hill repeats or light recovery jog (10–15 min)' : 'Brisk walk with incline/hills (10–15 min)', info: 'Hill repeats: run up at hard effort, walk back down. Light jog: stay at 5/10 effort throughout.' },
+        { id: uid(), name: 'Cool-down + full lower body stretch (5 min)', info: 'Focus on calves, IT band, and glutes — common tight spots after hills.' },
       ];
     }
   } else if (goal === 'bar_hang' || goal === 'barhang') {
@@ -4758,38 +4836,38 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
     if (variant === 0) {
       name = 'Goal Session: Grip & Upper Hang';
       exercises = hasPullup ? [
-        { id: uid(), name: `Dead hang — ${sets} x ${work}s (rest 60–90s)` },
-        { id: uid(), name: 'Scapular pull-ups — 3 x 8' },
-        { id: uid(), name: 'Farmer carry / grip — 3 x 45s' },
-        { id: uid(), name: 'Hollow hold — 3 x 25s' },
+        { id: uid(), name: `Dead hang — ${sets} × ${work}s (rest 60–90s)`, info: 'Full grip, relaxed shoulders. Count the seconds out loud. Stop before your grip fails completely.' },
+        { id: uid(), name: 'Scapular pull-ups — 3 × 8', info: 'Arms straight, depress shoulder blades down and back. No elbow bend. This builds the base for longer hangs.' },
+        { id: uid(), name: 'Farmer carry / grip — 3 × 45s', info: 'Walk slowly with heavy load. Grip as hard as you can without bending the wrists.' },
+        { id: uid(), name: 'Hollow hold — 3 × 25s', info: 'Lower back pressed into the floor, ribs down, legs low. This trains the body tension needed for a strong hang.' },
       ] : [
-        { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
-        { id: uid(), name: 'Forearm extensor work — 3 x 20' },
-        { id: uid(), name: 'Plank — 3 x 30s' },
+        { id: uid(), name: `Towel grip holds — ${sets} × ${work}s`, info: 'Wrap a towel around a door handle or bar. Squeeze as hard as possible while hanging or holding.' },
+        { id: uid(), name: 'Forearm extensor work — 3 × 20', info: 'Use a light weight or band. Extend wrist upward against resistance to balance the grip muscles.' },
+        { id: uid(), name: 'Plank — 3 × 30s', info: 'Build the core stability that supports your hang. Keep hips level, don\'t let them sag.' },
       ];
     } else if (variant === 1) {
       name = 'Goal Session: Core & Pull Hang';
       exercises = hasPullup ? [
-        { id: uid(), name: `Active hang — ${sets - 1} x ${work + 5}s` },
-        { id: uid(), name: 'L-sit hang or knee raises — 3 x 10' },
-        { id: uid(), name: 'Chin-up holds — 3 x 15s' },
-        { id: uid(), name: 'Plank — 3 x 45s' },
+        { id: uid(), name: `Active hang — ${sets - 1} × ${work + 5}s`, info: 'Pull shoulder blades down and engage lats slightly — don\'t fully hang passive. This is the position you\'ll need for longer holds.' },
+        { id: uid(), name: 'L-sit hang or knee raises — 3 × 10', info: 'Lift knees toward chest while hanging. This builds the core-grip connection critical for a 2-minute hang.' },
+        { id: uid(), name: 'Chin-up holds — 3 × 15s', info: 'Hold at top (chin over bar). Focuses the shoulder girdle in a shortened position.' },
+        { id: uid(), name: 'Plank — 3 × 45s', info: 'Squeeze everything. Tight core = more efficient hang.' },
       ] : [
-        { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
-        { id: uid(), name: 'Pinch grip holds — 3 x 30s' },
-        { id: uid(), name: 'Hollow hold — 3 x 30s' },
+        { id: uid(), name: `Towel grip holds — ${sets} × ${work}s`, info: 'Wrap towel over a bar or door. Hold as hard as possible for the full duration.' },
+        { id: uid(), name: 'Pinch grip holds — 3 × 30s', info: 'Pinch a plate or book with thumb and fingers. Trains the thumb side of grip often missed in regular hanging.' },
+        { id: uid(), name: 'Hollow hold — 3 × 30s', info: 'Core tension practice. Lower back down, abs tight, legs straight at 45°.' },
       ];
     } else {
       name = 'Goal Session: Shoulder Stability Hang';
       exercises = hasPullup ? [
-        { id: uid(), name: `Dead hang — ${sets} x ${work}s` },
-        { id: uid(), name: 'Passive to active hang transitions — 3 x 8' },
-        { id: uid(), name: 'Farmer carry / grip — 3 x 45s' },
-        { id: uid(), name: 'Shoulder taps — 3 x 20' },
+        { id: uid(), name: `Dead hang — ${sets} × ${work}s`, info: 'Aim for relaxed but controlled. Let the shoulder joint decompress. Don\'t shrug up — think "long neck".' },
+        { id: uid(), name: 'Passive to active hang transitions — 3 × 8', info: 'Switch between fully passive (no muscle) and fully active (scaps down, lats engaged) every 3 seconds. Teaches control.' },
+        { id: uid(), name: 'Farmer carry / grip — 3 × 45s', info: 'Maintain upright posture while carrying heavy. Forearms and grip endurance builder.' },
+        { id: uid(), name: 'Shoulder taps — 3 × 20', info: 'In plank position, tap each shoulder alternately without rotating. Stabilizes the shoulder girdle.' },
       ] : [
-        { id: uid(), name: `Towel grip holds — ${sets} x ${work}s` },
-        { id: uid(), name: 'Wrist curls — 3 x 15' },
-        { id: uid(), name: 'Plank shoulder taps — 3 x 20' },
+        { id: uid(), name: `Towel grip holds — ${sets} × ${work}s`, info: 'Go as long as possible each set. Rest 90 seconds between.' },
+        { id: uid(), name: 'Wrist curls — 3 × 15', info: 'Forearm on knee, curl wrist up with a light weight. Addresses flexor strength directly.' },
+        { id: uid(), name: 'Plank shoulder taps — 3 × 20', info: 'Slow and controlled. No hip rotation. Builds the link between shoulder stability and core.' },
       ];
     }
   } else if (goal === 'pushups') {
@@ -4798,23 +4876,23 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
     if (variant === 0) {
       name = 'Goal Session: Pushup Volume';
       exercises = [
-        { id: uid(), name: `Pushups — 6 x ${rep} (rest 60s)` },
-        { id: uid(), name: 'Incline pushups — 3 x 12' },
-        { id: uid(), name: 'Plank — 3 x 30s' },
+        { id: uid(), name: `Pushups — 6 × ${rep} reps (60s rest)`, info: 'Full chest-to-floor range. Lock out at the top. If form breaks, stop the set — quality over quantity.' },
+        { id: uid(), name: 'Incline pushups — 3 × 12', info: 'Hands elevated on bench or step. Easier angle — use this to push extra volume when regular pushups are too fatiguing.' },
+        { id: uid(), name: 'Plank — 3 × 30s', info: 'After pushups, a plank locks in the core stability that makes your pushup base stronger.' },
       ];
     } else if (variant === 1) {
       name = 'Goal Session: Pushup Strength';
       exercises = [
-        { id: uid(), name: `Close-grip pushups — 4 x ${Math.max(2, Math.floor(rep * 0.7))} (rest 60s)` },
-        { id: uid(), name: 'Decline pushups — 3 x 10' },
-        { id: uid(), name: 'Hollow hold — 3 x 30s' },
+        { id: uid(), name: `Close-grip pushups — 4 × ${Math.max(2, Math.floor(rep * 0.7))} reps (60s rest)`, info: 'Hands under shoulders, elbows track close to ribs. Harder, builds tricep and chest strength directly.' },
+        { id: uid(), name: 'Decline pushups — 3 × 10', info: 'Feet elevated — shifts load to upper chest and shoulders. Do these slow: 2 seconds down, 1 second up.' },
+        { id: uid(), name: 'Hollow hold — 3 × 30s', info: 'Core bracing practice. A tight core is what lets you push more reps without your hips sagging.' },
       ];
     } else {
       name = 'Goal Session: Pushup Endurance';
       exercises = [
-        { id: uid(), name: `Wide-grip pushups — 4 x ${rep} (rest 45s)` },
-        { id: uid(), name: 'Scapular pushups — 3 x 15' },
-        { id: uid(), name: 'Plank shoulder taps — 3 x 20' },
+        { id: uid(), name: `Wide-grip pushups — 4 × ${rep} reps (45s rest)`, info: 'Wider stance hits the chest more. Shorter rest builds endurance — the key to hitting 30 pushups non-stop.' },
+        { id: uid(), name: 'Scapular pushups — 3 × 15', info: 'Arms straight, protract and retract shoulder blades only. Trains the serratus — critical for full pushup strength.' },
+        { id: uid(), name: 'Plank shoulder taps — 3 × 20', info: 'Slow tap, no hip sway. Builds rotational stability needed for high rep pushup sets.' },
       ];
     }
   } else {
@@ -5086,22 +5164,22 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
       const difficulty = primaryGoal?.difficulty || profile?.difficulty || 'intermediate';
       exercises = selected.map(ex => {
-        const repsDetails = generateRepsForExercise(ex, difficulty);
+        // Pass the goal type so rep/set schemes are goal-appropriate
+        const repsDetails = generateRepsForExercise(ex, difficulty, goal);
         return {
           id: uid(),
           name: `${ex.name} (${repsDetails})`,
-          info: ex.info || 'Control movement and focus on form.',
+          info: ex.info || 'Control movement, breathe through the rep, and focus on form.',
           reason: ex.reason || 'Workout sequence movement'
         };
       });
     }
   }
 
-  const maxEx = dur <= 20 ? 3 : dur <= 30 ? 4 : 6;
-  exercises = exercises.slice(0, maxEx);
-
+  // Only apply the exercise cap to the core working set (warm-up & cool-down are additive).
+  // DO NOT re-slice after appending finishers — that would cut the cool-down.
   const fin = secondaryFinisher(secondaryGoal, eq);
-  if (fin.length && exercises.length < maxEx) exercises = [...exercises, ...fin].slice(0, maxEx);
+  if (fin.length) exercises = [...exercises, ...fin];
 
   const idGoal = (primaryGoal?.type || goal);
   return {
