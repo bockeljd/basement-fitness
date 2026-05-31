@@ -2763,11 +2763,48 @@ function renderDashboard() {
     if (kpiPrimaryLabel) kpiPrimaryLabel.textContent = label;
     if (kpiPrimaryVal) kpiPrimaryVal.textContent = valText;
     if (kpiPrimaryFill) kpiPrimaryFill.style.width = `${pct}%`;
+
+    const checkinArea = $('primaryGoalCheckinArea');
+    const checkinNotice = $('checkpointDueNotice');
+    if (checkinArea) {
+      checkinArea.style.display = 'flex';
+      const due = isCheckpointDue();
+      if (due) {
+        if (checkinNotice) {
+          checkinNotice.innerHTML = `⚡ Check-in Due!`;
+          checkinNotice.style.color = '#fbbf24';
+          checkinNotice.style.animation = 'pulse 1.5s infinite alternate';
+        }
+      } else {
+        if (checkinNotice) {
+          checkinNotice.style.animation = 'none';
+          checkinNotice.style.color = 'var(--muted)';
+          const checkpoints = g.checkpoints || [];
+          if (checkpoints.length > 0) {
+            const lastCp = checkpoints[checkpoints.length - 1];
+            try {
+              const diffTime = Date.now() - new Date(lastCp.date).getTime();
+              const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+              checkinNotice.textContent = `Check-in: ${diffDays === 0 ? 'today' : `${diffDays}d ago`}`;
+            } catch {
+              checkinNotice.textContent = `Checked-in`;
+            }
+          } else {
+            checkinNotice.textContent = `No check-ins yet`;
+          }
+        }
+      }
+    }
   } else {
     if (kpiPrimaryLabel) kpiPrimaryLabel.textContent = 'Primary Goal';
     if (kpiPrimaryVal) kpiPrimaryVal.textContent = 'Not Set';
     if (kpiPrimaryFill) kpiPrimaryFill.style.width = '0%';
+    const checkinArea = $('primaryGoalCheckinArea');
+    if (checkinArea) checkinArea.style.display = 'none';
   }
+
+  // Render checkpoint history in Settings
+  renderCheckpointsHistory();
 
   const badge = $('streakBadge');
   if (badge) {
@@ -3806,6 +3843,22 @@ function wireDashboard() {
     const act = btn.getAttribute('data-plan-action');
     const dateStr = btn.getAttribute('data-plan-date');
     handleCalendarAction(act, dateStr);
+  });
+
+  // Checkpoints event listeners
+  $('btnPrimaryCheckin')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showCheckpointModal();
+  });
+  $('kpiPrimary')?.addEventListener('click', () => {
+    if (state.primaryGoal) showCheckpointModal();
+  });
+  $('btnManualCheckin')?.addEventListener('click', () => {
+    showCheckpointModal();
+  });
+  $('btnCheckpointClose')?.addEventListener('click', closeCheckpointModal);
+  $('modalCheckpoint')?.addEventListener('click', (e) => {
+    if (e.target === $('modalCheckpoint')) closeCheckpointModal();
   });
 }
 
@@ -5641,6 +5694,357 @@ function deleteSession(sessionId) {
   
   renderHistoryLogs();
   renderDashboard();
+}
+
+// ── Goal Checkpoints & Workout Auto-Adjustment Features ──
+
+function isCheckpointDue() {
+  if (!state.primaryGoal) return false;
+  const g = state.primaryGoal;
+  const lastDateStr = g.checkpoints && g.checkpoints.length > 0
+    ? g.checkpoints[g.checkpoints.length - 1].date
+    : g.createdAt || ymd(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+  
+  const lastTime = new Date(lastDateStr).getTime();
+  const nowTime = new Date().getTime();
+  const diffDays = (nowTime - lastTime) / (1000 * 60 * 60 * 24);
+  if (diffDays >= 7) return true;
+
+  const lastDateYmd = ymd(new Date(lastDateStr));
+  const workoutsCompleted = state.sessions.filter(s => 
+    s.endedAt && 
+    ymd(new Date(s.endedAt)) > lastDateYmd && 
+    s.routineId !== 'active-recovery'
+  ).length;
+
+  if (workoutsCompleted >= 5) return true;
+  return false;
+}
+
+function showCheckpointModal() {
+  const modal = $('modalCheckpoint');
+  const content = $('checkpointContent');
+  if (!modal || !content || !state.primaryGoal) return;
+
+  const g = state.primaryGoal;
+  let metricLabel = 'Current progress value:';
+  let metricInputHtml = '';
+  let currentValue = '';
+
+  if (g.type === 'lose_weight') {
+    metricLabel = 'What is your current weight (lbs) today?';
+    currentValue = g.currentWeightLbs || g.startWeightLbs || '';
+    metricInputHtml = `<input type="number" id="checkpointVal" class="input" step="0.1" value="${escapeHtml(currentValue)}" placeholder="e.g. 175.5" required>`;
+  } else if (g.type === 'pushups') {
+    metricLabel = 'What is your current max pushups in a single set?';
+    currentValue = g.bestPushups || g.maxPushups || '';
+    metricInputHtml = `<input type="number" id="checkpointVal" class="input" step="1" value="${escapeHtml(currentValue)}" placeholder="e.g. 20" required>`;
+  } else if (g.type === 'bar_hang') {
+    metricLabel = 'What is your current best bar hang time (seconds)?';
+    currentValue = g.bestHangSec || g.maxHangSec || '';
+    metricInputHtml = `<input type="number" id="checkpointVal" class="input" step="1" value="${escapeHtml(currentValue)}" placeholder="e.g. 45" required>`;
+  } else if (g.type === 'run_5k') {
+    metricLabel = 'What is your current best 5K time (minutes)?';
+    currentValue = g.best5kMin || '';
+    const hasRun10 = g.canRun10Min ? 'checked' : '';
+    metricInputHtml = `
+      <div style="display: grid; gap: 10px;">
+        <input type="number" id="checkpointVal" class="input" step="0.1" value="${escapeHtml(currentValue)}" placeholder="e.g. 28.5 (leave empty if not run yet)">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; font-weight: 600;">
+          <input type="checkbox" id="checkpointCanRun10" ${hasRun10}> 🏃 Can you now run continuously for 10 minutes?
+        </label>
+      </div>
+    `;
+  } else if (g.type === 'custom') {
+    metricLabel = 'Update your custom progress metric or note:';
+    currentValue = g.customText || '';
+    metricInputHtml = `<input type="text" id="checkpointVal" class="input" value="${escapeHtml(currentValue)}" placeholder="e.g. Completed 3 weeks of consistency" required>`;
+  } else {
+    metricLabel = 'Current progress (estimated 1RM, muscle measurements, or progress note):';
+    currentValue = g.currentProgressNote || '';
+    metricInputHtml = `<input type="text" id="checkpointVal" class="input" value="${escapeHtml(currentValue)}" placeholder="e.g. Squat 225 lbs x 5 reps" required>`;
+  }
+
+  content.innerHTML = `
+    <form id="checkpointForm" style="padding: 10px 0;">
+      <div class="panel" style="margin-bottom: 16px; background: rgba(99, 102, 241, 0.04); border-color: rgba(99, 102, 241, 0.15);">
+        <div style="font-weight: 800; font-size: 14.5px; color: var(--accent); margin-bottom: 4px;">Goal: ${escapeHtml(g.type.replace('_', ' '))}</div>
+        <div class="small" style="font-weight: 500;">Current difficulty: <strong style="text-transform: uppercase;">${escapeHtml(g.difficulty || 'intermediate')}</strong> · Duration: <strong>${escapeHtml(g.durationMin || 30)}m</strong></div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label class="small" style="display:block; margin-bottom:6px; font-weight:700;">${metricLabel}</label>
+        ${metricInputHtml}
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label class="small" style="display:block; margin-bottom:8px; font-weight:700;">How are the workouts feeling?</label>
+        <div style="display:grid; gap:10px;">
+          <label class="panel" style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding: 10px; border-radius: 8px; margin: 0; background: var(--bg); transition: border-color 0.15s;">
+            <input type="radio" name="workoutFeel" value="too_hard">
+            <div>
+              <strong style="color: #ef4444;">🥵 Too hard</strong>
+              <div class="muted" style="font-size: 11px; margin-top: 2px;">I am struggling to complete it / feeling excessively fatigued.</div>
+            </div>
+          </label>
+          <label class="panel" style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding: 10px; border-radius: 8px; margin: 0; background: var(--bg); transition: border-color 0.15s;">
+            <input type="radio" name="workoutFeel" value="just_right" checked>
+            <div>
+              <strong style="color: var(--accent);">🙂 Just right</strong>
+              <div class="muted" style="font-size: 11px; margin-top: 2px;">It's challenging but manageable and I feel good.</div>
+            </div>
+          </label>
+          <label class="panel" style="display:flex; align-items:center; gap:10px; font-size:13.5px; cursor:pointer; padding: 10px; border-radius: 8px; margin: 0; background: var(--bg); transition: border-color 0.15s;">
+            <input type="radio" name="workoutFeel" value="too_easy">
+            <div>
+              <strong style="color: #10b981;">🥱 Too easy</strong>
+              <div class="muted" style="font-size: 11px; margin-top: 2px;">I am breezing through workouts without much effort.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn" id="btnSaveCheckpoint" type="submit" style="width: 100%; justify-content: center; font-size: 14px; padding: 10px;">Save Check-in & Adjust Plan</button>
+    </form>
+  `;
+
+  modal.classList.add('active');
+
+  const form = $('checkpointForm');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveCheckpoint();
+    });
+  }
+}
+
+function closeCheckpointModal() {
+  const modal = $('modalCheckpoint');
+  if (modal) modal.classList.remove('active');
+}
+
+function saveCheckpoint() {
+  if (!state.primaryGoal) return;
+  
+  const g = state.primaryGoal;
+  const valInput = $('checkpointVal');
+  const feelInput = document.querySelector('input[name="workoutFeel"]:checked');
+  const canRun10Input = $('checkpointCanRun10');
+
+  const feelVal = feelInput ? feelInput.value : 'just_right';
+  const todayStr = ymd(new Date());
+
+  let newVal = null;
+  let textVal = '';
+  if (valInput) {
+    textVal = valInput.value.trim();
+    newVal = Number(textVal);
+  }
+
+  let adjustmentNote = 'No adjustments made.';
+  let deltaMsg = '';
+  let valDisplay = textVal;
+
+  const oldDiff = g.difficulty || 'intermediate';
+  const oldDur = g.durationMin || 30;
+  const oldFreq = g.daysPerWeek || 3;
+
+  if (g.type === 'lose_weight') {
+    const sw = g.startWeightLbs || 180;
+    const prevWeight = g.currentWeightLbs || sw;
+    g.currentWeightLbs = newVal || prevWeight;
+    
+    g.weightHistory = g.weightHistory || [];
+    const existsIdx = g.weightHistory.findIndex(h => h.date === todayStr);
+    if (existsIdx !== -1) {
+      g.weightHistory[existsIdx].weight = g.currentWeightLbs;
+    } else {
+      g.weightHistory.push({ date: todayStr, weight: g.currentWeightLbs });
+    }
+    g.weightHistory.sort((a, b) => a.date.localeCompare(b.date));
+    
+    const diff = prevWeight - g.currentWeightLbs;
+    if (diff > 0) {
+      deltaMsg = `Lost ${diff.toFixed(1)} lbs since last weight record!`;
+    } else if (diff < 0) {
+      deltaMsg = `Gained ${Math.abs(diff).toFixed(1)} lbs.`;
+    } else {
+      deltaMsg = `Weight maintained at ${g.currentWeightLbs} lbs.`;
+    }
+    valDisplay = `${g.currentWeightLbs} lbs`;
+  } else if (g.type === 'pushups') {
+    const prevPushups = g.bestPushups || g.maxPushups || 0;
+    if (newVal > prevPushups) {
+      g.bestPushups = newVal;
+      deltaMsg = `New pushup record: +${newVal - prevPushups} reps!`;
+    } else {
+      g.bestPushups = newVal || prevPushups;
+      deltaMsg = `Pushups logged: ${g.bestPushups} reps (record: ${prevPushups}).`;
+    }
+    valDisplay = `${g.bestPushups} reps`;
+  } else if (g.type === 'bar_hang') {
+    const prevHang = g.bestHangSec || g.maxHangSec || 0;
+    if (newVal > prevHang) {
+      g.bestHangSec = newVal;
+      deltaMsg = `New hang record: +${newVal - prevHang}s!`;
+    } else {
+      g.bestHangSec = newVal || prevHang;
+      deltaMsg = `Hang time logged: ${g.bestHangSec}s (record: ${prevHang}s).`;
+    }
+    valDisplay = `${g.bestHangSec}s`;
+  } else if (g.type === 'run_5k') {
+    const oldCanRun = g.canRun10Min;
+    if (canRun10Input) {
+      g.canRun10Min = canRun10Input.checked;
+    }
+    const prev5k = g.best5kMin || 0;
+    if (newVal) {
+      g.best5kMin = newVal;
+      if (prev5k && newVal < prev5k) {
+        deltaMsg = `5K run improved by ${(prev5k - newVal).toFixed(1)} min!`;
+      } else {
+        deltaMsg = `5K run logged: ${newVal} min.`;
+      }
+    }
+    if (g.canRun10Min && !oldCanRun) {
+      deltaMsg += (deltaMsg ? ' ' : '') + 'Unlocked continuous running level! 🏃';
+    }
+    valDisplay = newVal ? `${newVal} min` : (g.canRun10Min ? 'Run level' : 'Walk/Run level');
+  } else if (g.type === 'custom') {
+    g.customText = textVal;
+    deltaMsg = `Checkpoint logged: "${textVal}"`;
+    valDisplay = textVal;
+  } else {
+    g.currentProgressNote = textVal;
+    deltaMsg = `Progress logged: "${textVal}"`;
+    valDisplay = textVal;
+  }
+
+  let newDiff = oldDiff;
+  let newDur = oldDur;
+  let newFreq = oldFreq;
+
+  if (feelVal === 'too_hard') {
+    if (oldDiff === 'advanced') {
+      newDiff = 'intermediate';
+      adjustmentNote = 'Difficulty decreased to Intermediate for recovery.';
+    } else if (oldDiff === 'intermediate') {
+      newDiff = 'beginner';
+      adjustmentNote = 'Difficulty decreased to Beginner to rebuild base strength.';
+    } else {
+      if (oldDur > 15) {
+        newDur = oldDur - 15;
+        adjustmentNote = `Workout duration shortened to ${newDur}m to manage fatigue.`;
+      } else {
+        if (oldFreq > 2) {
+          newFreq = oldFreq - 1;
+          adjustmentNote = `Training frequency reduced to ${newFreq}x/week for extra rest.`;
+        } else {
+          adjustmentNote = 'Reps & workload scaled back for extra recovery.';
+        }
+      }
+    }
+  } else if (feelVal === 'too_easy') {
+    if (oldDiff === 'beginner') {
+      newDiff = 'intermediate';
+      adjustmentNote = 'Difficulty increased to Intermediate to keep progress moving.';
+    } else if (oldDiff === 'intermediate') {
+      newDiff = 'advanced';
+      adjustmentNote = 'Difficulty increased to Advanced! Time to push harder. 🔥';
+    } else {
+      if (oldDur < 60) {
+        newDur = oldDur + 15;
+        adjustmentNote = `Workout duration extended to ${newDur}m for extra training volume.`;
+      } else {
+        if (oldFreq < 6) {
+          newFreq = oldFreq + 1;
+          adjustmentNote = `Weekly frequency increased to ${newFreq}x/week for higher conditioning.`;
+        } else {
+          adjustmentNote = 'Workload target and rep parameters scaled up!';
+        }
+      }
+    }
+  } else {
+    adjustmentNote = 'Plan is perfectly on track! Workload and difficulty maintained.';
+  }
+
+  g.difficulty = newDiff;
+  g.durationMin = newDur;
+  g.daysPerWeek = newFreq;
+
+  g.checkpoints = g.checkpoints || [];
+  g.checkpoints.push({
+    date: todayStr,
+    value: valDisplay,
+    feel: feelVal,
+    note: `${deltaMsg ? deltaMsg + ' ' : ''}${adjustmentNote}`
+  });
+
+  state.primaryGoal = g;
+  savePrimaryGoal();
+  
+  regeneratePlan();
+  closeCheckpointModal();
+
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+  }
+
+  alert(`🏁 Check-in Saved!\n\n${deltaMsg ? deltaMsg + '\n' : ''}Adjustment: ${adjustmentNote}`);
+  renderDashboard();
+}
+
+function renderCheckpointsHistory() {
+  const container = $('settingsCheckpointsList');
+  const wrapper = $('settingsCheckpointsSection');
+  if (!container || !wrapper) return;
+
+  const g = state.primaryGoal;
+  if (!g) {
+    wrapper.style.display = 'none';
+    return;
+  }
+
+  wrapper.style.display = 'block';
+  const history = g.checkpoints || [];
+
+  if (history.length === 0) {
+    container.innerHTML = `<div class="muted" style="font-size: 11px; text-align: center; padding: 6px 0;">No checkpoints logged yet. Check-in from the dashboard to start!</div>`;
+    return;
+  }
+
+  const renderedList = [...history].reverse().map(item => {
+    let feelBadgeColor = 'var(--accent)';
+    let feelLabel = 'Just right';
+    if (item.feel === 'too_hard') {
+      feelBadgeColor = '#ef4444';
+      feelLabel = 'Too hard';
+    } else if (item.feel === 'too_easy') {
+      feelBadgeColor = '#10b981';
+      feelLabel = 'Too easy';
+    }
+
+    let formattedDate = item.date;
+    try {
+      const [y, m, d] = item.date.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      formattedDate = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+    } catch {}
+
+    return `
+      <div style="padding: 8px; border: 1.5px solid var(--border); border-radius: 6px; background: var(--bg); display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; font-size: 11.5px; color: var(--text);">${escapeHtml(formattedDate)}</span>
+          <span style="background: ${feelBadgeColor}15; color: ${feelBadgeColor}; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 4px; text-transform: uppercase;">${feelLabel}</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text); font-weight: 500;">Value: <strong>${escapeHtml(item.value)}</strong></div>
+        <div style="font-size: 11px; color: var(--muted); line-height: 1.3;">${escapeHtml(item.note)}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = renderedList;
 }
 
 function applyTheme() {

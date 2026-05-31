@@ -115,14 +115,18 @@
             </div>
             
             <!-- Primary Goal Highlight KPI -->
-            <div class="kpi-card highlight" id="kpiPrimary">
+            <div class="kpi-card highlight" id="kpiPrimary" style="cursor: pointer;">
               <div class="kpi-card-header">
                 <span class="kpi-label" id="kpiPrimaryLabel">Primary Goal</span>
                 <span class="kpi-icon">🎯</span>
               </div>
               <div class="kpi-content">
                 <span class="kpi-value" id="kpiPrimaryVal">Not Set</span>
-                <div class="kpi-bar"><div class="kpi-fill" id="kpiPrimaryFill"></div></div>
+                <div class="kpi-bar" style="margin-bottom: 6px;"><div class="kpi-fill" id="kpiPrimaryFill"></div></div>
+                <div id="primaryGoalCheckinArea" style="display: none; align-items: center; justify-content: space-between; margin-top: 8px;">
+                  <span id="checkpointDueNotice" style="font-size: 11px; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 4px;">⚡ Check-in Due!</span>
+                  <button class="btn" id="btnPrimaryCheckin" type="button" style="padding: 4px 8px; font-size: 10px; font-weight: 800; border-radius: 4px; line-height: 1;">🏁 Check-in</button>
+                </div>
               </div>
             </div>
           </div>
@@ -522,7 +526,16 @@
             <div class="panel">
               <div class="panelTitle">Current Goal Status</div>
               <div id="primaryGoal" class="muted" style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Not set</div>
-              <div class="muted" id="secondaryGoal" style="font-weight: 600; font-size: 13px;">None</div>
+              <div class="muted" id="secondaryGoal" style="font-weight: 600; font-size: 13px; margin-bottom: 12px;">None</div>
+              <div id="settingsCheckpointsSection" style="border-top: 1px solid var(--border); padding-top: 12px; display: none; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 12px; font-weight: 800; color: var(--text);">🏁 Checkpoint History</span>
+                  <button class="btn secondary" id="btnManualCheckin" type="button" style="padding: 4px 8px; font-size: 10.5px; font-weight: 800; border-radius: 4px; line-height: 1;">🏁 Log Check-in</button>
+                </div>
+                <div id="settingsCheckpointsList" class="muted" style="font-size: 12px; display: grid; gap: 8px;">
+                  <!-- Checkpoints history rendered here -->
+                </div>
+              </div>
             </div>
 
             <!-- Data Management (moved from header for clean UI) -->
@@ -579,6 +592,19 @@
         <button class="modal-close" id="btnDayDetailsClose" type="button">&times;</button>
       </div>
       <div class="modal-content" id="dayDetailsContent" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Goal Checkpoint Check-in -->
+  <div id="modalCheckpoint" class="modal-overlay">
+    <div class="modal-container" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🏁 Goal Check-in</h3>
+        <button class="modal-close" id="btnCheckpointClose" type="button">&times;</button>
+      </div>
+      <div class="modal-content" id="checkpointContent" style="max-height: 70vh; overflow-y: auto;">
         <!-- Populated dynamically via JS -->
       </div>
     </div>
