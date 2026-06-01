@@ -4921,12 +4921,12 @@ function secondaryFinisher(secondaryGoal, eq) {
   if (s === 'steps') return [{ 
     id: uid(), 
     name: 'Walk (10–20 min)', 
-    info: 'Low-intensity recovery walk to accumulate daily steps and promote circulation.' 
+    info: 'A continuous, low-intensity recovery walk (treadmill or outdoors) to accumulate steps and reduce muscle soreness.' 
   }];
   if (s === 'zone2' && (eq.has('treadmill') || eq.has('bike'))) return [{ 
     id: uid(), 
     name: 'Zone 2 cardio (15–25 min)', 
-    info: 'Steady-state aerobic cardio (treadmill or stationary bike) at a conversational pace.' 
+    info: 'Steady-state aerobic exercise (light jog, incline walk, or stationary bike) at a conversational pace. You should be able to speak full sentences easily without gasping for breath (roughly 60–70% of your maximum heart rate).' 
   }];
   if (s === 'mobility') return [{ 
     id: uid(), 
@@ -4936,7 +4936,7 @@ function secondaryFinisher(secondaryGoal, eq) {
   if (s === 'protein') return [{ 
     id: uid(), 
     name: 'Protein check (hit target today)', 
-    info: 'Log/verify that you met your target protein intake goal (e.g. 0.8g to 1g per lb of body weight) to support muscle recovery.' 
+    info: 'Verify that you consumed 0.8g to 1.0g of protein per pound of target body weight today (e.g. from lean meats, eggs, dairy, fish, or protein shakes) to repair and rebuild muscle tissues.' 
   }];
   return [];
 }
