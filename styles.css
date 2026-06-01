@@ -1744,3 +1744,16 @@ select.input {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* Settings Form Grid */
+.settings-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+  .settings-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
