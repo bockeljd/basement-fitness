@@ -1724,6 +1724,7 @@ select.input {
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   user-select: none;
+  white-space: nowrap;
 }
 
 .eq-check:hover {
@@ -1756,4 +1757,14 @@ select.input {
   .settings-form-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.settings-form-grid label,
+.settings-dynamic-fields label {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  height: 18px;
+  margin-bottom: 4px;
 }

@@ -2886,24 +2886,24 @@ function updateGoalFieldVisibility() {
   if (t === 'bar_hang') {
     baseWrap.hidden = false;
     progWrap.hidden = false;
-    baseLabel.textContent = 'Baseline max hang (seconds)';
-    progLabel.textContent = 'Current best hang (seconds)';
+    baseLabel.textContent = 'Baseline hang (sec)';
+    progLabel.textContent = 'Best hang (sec)';
     baseHint.textContent = 'Enter your best hang today (e.g., 30).';
-    progHint.textContent = 'Update as you improve; we’ll scale intervals from this.';
+    progHint.textContent = 'We’ll scale intervals from this.';
   } else if (t === 'pushups') {
     baseWrap.hidden = false;
     progWrap.hidden = false;
-    baseLabel.textContent = 'Baseline max pushups (reps)';
-    progLabel.textContent = 'Current best pushups (reps)';
+    baseLabel.textContent = 'Baseline pushups (reps)';
+    progLabel.textContent = 'Best pushups (reps)';
     baseHint.textContent = 'Enter your current max reps (e.g., 12).';
     progHint.textContent = 'Update as your max increases.';
   } else if (t === 'run_5k') {
     baseWrap.hidden = false;
     progWrap.hidden = false;
-    baseLabel.textContent = 'Baseline: can run 10 min? (1=yes, 0=no)';
-    progLabel.textContent = 'Best 5K time (minutes, optional)';
+    baseLabel.textContent = 'Can run 10m? (1=Y, 0=N)';
+    progLabel.textContent = 'Best 5K time (min)';
     baseHint.textContent = 'Use 1 if yes, 0 if no.';
-    progHint.textContent = 'Optional: enter best time in minutes when you have it.';
+    progHint.textContent = 'Optional: enter best time in minutes.';
   } else if (t === 'lose_weight') {
     baseWrap.hidden = false;
     progWrap.hidden = false;
