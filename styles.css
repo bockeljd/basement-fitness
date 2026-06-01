@@ -1705,9 +1705,15 @@ select.input {
 
 /* Goal equipment selector grid */
 .goal-equipment-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 8px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 580px) {
+  .goal-equipment-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .eq-check {
@@ -1725,6 +1731,8 @@ select.input {
   transition: border-color 0.15s, background 0.15s;
   user-select: none;
   white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .eq-check:hover {
