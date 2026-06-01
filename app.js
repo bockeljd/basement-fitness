@@ -2930,6 +2930,14 @@ function saveGoalsFromForm() {
   let equipment = Array.from(eqChecks).map(cb => cb.getAttribute('data-goal-eq')).filter(Boolean);
   if (equipment.length === 0) equipment = ['bodyweight'];
 
+  // Collect avoidJoints from settings checkboxes
+  const avoidChecks = document.querySelectorAll('#goalAvoidJoints input[data-goal-avoid]:checked');
+  const avoidJoints = Array.from(avoidChecks).map(cb => cb.getAttribute('data-goal-avoid')).filter(Boolean);
+
+  // Collect prioritized muscle groups from settings checkboxes
+  const priorityChecks = document.querySelectorAll('#goalPriorities input[data-goal-priority]:checked');
+  const priorities = Array.from(priorityChecks).map(cb => cb.getAttribute('data-goal-priority')).filter(Boolean);
+
   const goal = {
     type: t,
     durationMin: durationMin || 30,
@@ -2937,11 +2945,15 @@ function saveGoalsFromForm() {
     splitType: splitType,
     difficulty: difficulty,
     equipment: equipment,
+    avoidJoints: avoidJoints,
+    priorities: priorities,
     createdAt: new Date().toISOString()
   };
 
-  // Sync equipment back to profile so Quick Start stays consistent
+  // Sync back to profile so Quick Start stays consistent
   state.profile.equipment = equipment;
+  state.profile.avoidJoints = avoidJoints;
+  state.profile.priorities = priorities;
   saveProfile();
 
   if (t === 'custom') {
@@ -3027,6 +3039,18 @@ function hydrateGoalsForm() {
   const goalEq = new Set(state.primaryGoal?.equipment || state.profile?.equipment || ['bodyweight']);
   document.querySelectorAll('#goalEquipment input[data-goal-eq]').forEach(cb => {
     cb.checked = goalEq.has(cb.getAttribute('data-goal-eq'));
+  });
+
+  // Hydrate avoidJoints checkboxes
+  const goalAvoid = new Set(state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || []);
+  document.querySelectorAll('#goalAvoidJoints input[data-goal-avoid]').forEach(cb => {
+    cb.checked = goalAvoid.has(cb.getAttribute('data-goal-avoid'));
+  });
+
+  // Hydrate priorities checkboxes
+  const goalPriorities = new Set(state.primaryGoal?.priorities || state.profile?.priorities || []);
+  document.querySelectorAll('#goalPriorities input[data-goal-priority]').forEach(cb => {
+    cb.checked = goalPriorities.has(cb.getAttribute('data-goal-priority'));
   });
 
   const t = state.primaryGoal?.type;
@@ -4174,6 +4198,7 @@ function swapExerciseAtIndex(idx) {
   if (!group) return;
 
   const eqSet = new Set(state.lastGenParams.equipment || ['bodyweight']);
+  const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
   let pool;
   if (group === 'Warm-up') {
     const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
@@ -4181,10 +4206,10 @@ function swapExerciseAtIndex(idx) {
       ...(EXERCISES_BY_GROUP["Cardio"] || []),
       ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
     ];
-    pool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet));
+    pool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
   } else {
     pool = (EXERCISES_BY_GROUP[group] || []).filter(ex => {
-      return matchEquipment(ex.type, ex.name, eqSet);
+      return matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints);
     });
   }
 
@@ -4338,11 +4363,12 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     
     // Determine movement structure and select exercises
     let matchPool = [];
+    const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
     
     selectedFoci.forEach(focusKey => {
       const list = EXERCISES_BY_GROUP[focusKey] || [];
       list.forEach(ex => {
-        if (matchEquipment(ex.type, ex.name, eqSet)) {
+        if (matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints)) {
           matchPool.push({
             ...ex,
             sourceGroup: focusKey
@@ -4441,7 +4467,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
         ...(EXERCISES_BY_GROUP["Cardio"] || []),
         ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
       ];
-      const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet));
+      const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
       
       if (warmupPool.length > 0) {
         // 1. Dynamic Heart-rate Warm-up (Jumping Jacks or High Knees)
@@ -4496,7 +4522,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     // Inject cool-down stretches matched to active muscle focus areas (max 2 stretches)
     if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
       const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
-      const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet));
+      const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
       
       if (matchStretches.length > 0) {
         // Find targeted muscle foci (excluding Cardio and Stretching)
@@ -4915,6 +4941,41 @@ function wireQuickStart() {
   });
 }
 
+function isExerciseExcludedForJoints(ex, avoidJoints) {
+  if (!avoidJoints || avoidJoints.length === 0) return false;
+  const name = (ex.name || '').toLowerCase();
+  const target = (ex.target || '').toLowerCase();
+  const info = (ex.info || '').toLowerCase();
+  
+  if (avoidJoints.includes('knees')) {
+    if (name.includes('squat') || name.includes('lunge') || name.includes('burpee') || 
+        name.includes('jumping jack') || name.includes('high knees') || name.includes('thruster') ||
+        name.includes('jump') || target.includes('quads') || target.includes('knees')) {
+      return true;
+    }
+  }
+  if (avoidJoints.includes('back')) {
+    if (name.includes('deadlift') || name.includes('back squat') || name.includes('kettlebell swing') ||
+        name.includes('good morning') || target.includes('lower back') || target.includes('erector') || 
+        info.includes('lower back') || target.includes('spine')) {
+      return true;
+    }
+  }
+  if (avoidJoints.includes('shoulders')) {
+    if ((name.includes('press') && (name.includes('overhead') || name.includes('shoulder') || name.includes('military') || name.includes('incline'))) ||
+        name.includes('dip') || name.includes('handstand') || target.includes('shoulders') || target.includes('deltoid') || target.includes('cuff')) {
+      return true;
+    }
+  }
+  if (avoidJoints.includes('impact')) {
+    if (name.includes('burpee') || name.includes('jumping jack') || name.includes('high knees') || 
+        name.includes('jump') || name.includes('mountain climber') || name.includes('rope')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function secondaryFinisher(secondaryGoal, eq) {
   const s = secondaryGoal?.type;
   if (!s) return [];
@@ -5111,13 +5172,24 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
         name = name.replace('Goal Session:', 'General Split: ');
       }
 
+      const avoidJoints = primaryGoal?.avoidJoints || profile?.avoidJoints || [];
+      const priorities = primaryGoal?.priorities || profile?.priorities || [];
+
+      if (priorities.length > 0) {
+        selectedFoci.sort((a, b) => {
+          const aPri = priorities.includes(a) ? 1 : 0;
+          const bPri = priorities.includes(b) ? 1 : 0;
+          return bPri - aPri;
+        });
+      }
+
       const recentNames = getRecentExercises();
       const matchPool = [];
       
       selectedFoci.forEach(focusKey => {
         const list = EXERCISES_BY_GROUP[focusKey] || [];
         list.forEach(ex => {
-          if (ex && matchEquipment(ex.type, ex.name, eq)) {
+          if (ex && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints)) {
             matchPool.push({
               ...ex,
               sourceGroup: focusKey
@@ -5209,7 +5281,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
           ...(EXERCISES_BY_GROUP["Cardio"] || []),
           ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
         ];
-        const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eq));
+        const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints));
         
         if (warmupPool.length > 0) {
           const currentNames1 = selected.map(ex => ex.name);
@@ -5257,7 +5329,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
       if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
         const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
-        const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eq));
+        const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints));
         
         if (matchStretches.length > 0) {
           const activeFoci = selectedFoci.filter(f => f !== 'Cardio' && f !== 'Stretching & Mobility');
