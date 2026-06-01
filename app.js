@@ -4918,10 +4918,26 @@ function wireQuickStart() {
 function secondaryFinisher(secondaryGoal, eq) {
   const s = secondaryGoal?.type;
   if (!s) return [];
-  if (s === 'steps') return [{ id: uid(), name: 'Walk (10–20 min)' }];
-  if (s === 'zone2' && (eq.has('treadmill') || eq.has('bike'))) return [{ id: uid(), name: 'Zone 2 cardio (15–25 min)' }];
-  if (s === 'mobility') return [{ id: uid(), name: 'Mobility flow (8–12 min)' }];
-  if (s === 'protein') return [{ id: uid(), name: 'Protein check (hit target today)' }];
+  if (s === 'steps') return [{ 
+    id: uid(), 
+    name: 'Walk (10–20 min)', 
+    info: 'Low-intensity recovery walk to accumulate daily steps and promote circulation.' 
+  }];
+  if (s === 'zone2' && (eq.has('treadmill') || eq.has('bike'))) return [{ 
+    id: uid(), 
+    name: 'Zone 2 cardio (15–25 min)', 
+    info: 'Steady-state aerobic cardio (treadmill or stationary bike) at a conversational pace.' 
+  }];
+  if (s === 'mobility') return [{ 
+    id: uid(), 
+    name: 'Mobility flow (8–12 min)', 
+    info: "Perform 2-3 rounds of: 5x World's Greatest Stretch (per side), 10x Cat-Cow, and 1 minute of Child's Pose." 
+  }];
+  if (s === 'protein') return [{ 
+    id: uid(), 
+    name: 'Protein check (hit target today)', 
+    info: 'Log/verify that you met your target protein intake goal (e.g. 0.8g to 1g per lb of body weight) to support muscle recovery.' 
+  }];
   return [];
 }
 
