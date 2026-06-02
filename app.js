@@ -35,6 +35,17 @@ const KEYS = {
   workoutLibrary: 'bf:workoutLibrary'
 };
 
+// Weekly scheduling patterns (mapping daysPerWeek to Sunday-Saturday true/false arrays)
+const WEEKLY_PATTERNS = {
+  1: [false, true, false, false, false, false, false], // Monday
+  2: [false, false, true, false, true, false, false],  // Tuesday, Thursday
+  3: [false, true, false, true, false, true, false],   // Monday, Wednesday, Friday
+  4: [false, true, true, false, true, true, false],    // Monday, Tuesday, Thursday, Friday
+  5: [false, true, true, true, false, true, true],     // Monday, Tuesday, Wednesday, Friday, Saturday
+  6: [false, true, true, true, true, true, true],      // Monday to Saturday
+  7: [true, true, true, true, true, true, true]        // Every day
+};
+
 // Curated Workout Ideas Library
 const WORKOUT_LIBRARY = [
   {
@@ -3154,7 +3165,7 @@ function extendPlan() {
   state.plan.days = state.plan.days || [];
   
   const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
-  const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
+  const pattern = WEEKLY_PATTERNS[daysPerWeek] || WEEKLY_PATTERNS[3];
   
   if (state.plan.days.length === 0) {
     state.plan.generatedAt = new Date().toISOString();
@@ -3186,8 +3197,8 @@ function extendPlan() {
     }
     
     const dateStr = ymd(nextDate);
-    const daysSinceStart = Math.round((nextDate - genDate) / 86400000);
-    const isWorkoutDay = (daysSinceStart % cadence) === 0;
+    const dayOfWeek = nextDate.getDay();
+    const isWorkoutDay = pattern[dayOfWeek];
     
     if (isWorkoutDay) {
       const workoutCount = state.plan.days.filter(d => d.kind === 'workout').length;
@@ -3217,13 +3228,14 @@ function regeneratePlan() {
   // Build 30-day calendar plan
   const now = new Date();
   const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
-  const cadence = Math.max(1, Math.floor(7 / daysPerWeek));
+  const pattern = WEEKLY_PATTERNS[daysPerWeek] || WEEKLY_PATTERNS[3];
 
   const planDays = [];
   let workoutCount = 0;
   for (let i = 0; i < 30; i++) {
     const d = new Date(now.getTime() + i * 86400000);
-    const isWorkoutDay = (i % cadence) === 0;
+    const dayOfWeek = d.getDay();
+    const isWorkoutDay = pattern[dayOfWeek];
     if (isWorkoutDay) {
       const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, workoutCount);
       workoutCount++;
