@@ -1776,3 +1776,38 @@ select.input {
   height: 18px;
   margin-bottom: 4px;
 }
+
+/* Superset Visual Groupings */
+.superset-block {
+  border-left: 4px solid var(--accent);
+  padding: 10px 0 10px 14px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  background: rgba(99, 102, 241, 0.015);
+  border-radius: 6px 18px 18px 6px;
+  display: grid;
+  gap: 12px;
+}
+
+.superset-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.superset-badge {
+  background: var(--accent-gradient);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  display: inline-block;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+}

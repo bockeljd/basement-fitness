@@ -1860,6 +1860,140 @@ function findLibraryExercise(rawName) {
   return bestScore > 2 ? bestMatch : null;
 }
 
+function createExerciseDom(ex, s, subIndex = null, supersetTag = '') {
+  const sets = s.entries[ex.id] || [];
+  const isExpanded = expandedGuides.has(ex.id);
+  const guideStyle = isExpanded ? 'max-height: none; opacity: 1; margin-top: 8px; border-top: 1px dashed var(--border);' : '';
+  const iconStyle = isExpanded ? 'transform: rotate(180deg);' : '';
+
+  const prefix = subIndex ? `<span class="superset-badge" style="margin-right: 6px;">${supersetTag}${subIndex}</span>` : '';
+
+  const exEl = document.createElement('div');
+  exEl.className = 'exercise';
+  exEl.innerHTML = `
+    <div class="exerciseHeader">
+      <div>
+        <div class="exerciseName" style="display: flex; align-items: center; flex-wrap: wrap;">${prefix}${escapeHtml(ex.name)}</div>
+        ${ex.info ? `<div class="small" style="color: var(--accent); font-weight: 600; margin-top: 1px;">Target: ${escapeHtml(ex.info)}</div>` : ''}
+        <div class="small" style="display: flex; gap: 8px; align-items: center; margin-top: 2px;">
+          <span>${sets.length} sets logged</span>
+          <button class="btn-guide-toggle" data-ex-id="${ex.id}" type="button" style="background: none; border: none; padding: 0; color: var(--accent); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+            <span>📖 Form Guide</span> <span class="guide-toggle-icon" style="font-size: 8px; transition: transform 0.2s ease; ${iconStyle}">▼</span>
+          </button>
+        </div>
+      </div>
+      <div class="row" style="gap: 4px;">
+        <button class="btn secondary" data-action="swapExercise" data-ex="${ex.id}" type="button">Swap</button>
+        <button class="btn secondary" data-action="setSuperset" data-ex="${ex.id}" type="button">Group</button>
+        <button class="btn secondary" data-action="renameExercise" data-ex="${ex.id}" type="button">Rename</button>
+        <button class="btn danger" data-action="removeExercise" data-ex="${ex.id}" type="button">Remove</button>
+      </div>
+    </div>
+    
+    <!-- Collapsible Form Guide Drawer -->
+    <div class="exercise-dir-details" id="guide-${ex.id}" style="${guideStyle} padding-top: 0; border-top: none;">
+      <!-- Filled dynamically below -->
+    </div>
+
+    <div class="sets" id="sets-${ex.id}"></div>
+    <div class="row wrap" style="margin-top:10px">
+      <input class="input" style="width: 100px;" inputmode="decimal" placeholder="Weight" data-field="w" data-ex="${ex.id}" />
+      <input class="input" style="width: 80px;" inputmode="numeric" placeholder="Reps" data-field="r" data-ex="${ex.id}" />
+      <button class="btn" data-action="logSet" data-ex="${ex.id}" type="button">Log set</button>
+    </div>
+  `;
+
+  // populate form guide drawer
+  const matched = findLibraryExercise(ex.name);
+  const guideEl = exEl.querySelector(`#guide-${CSS.escape(ex.id)}`);
+  const prevLog = getPreviousLogForExercise(ex.name);
+  let overloadHtml = '';
+  if (prevLog) {
+    const overloadWeight = prevLog.maxWeight > 0 ? `${prevLog.maxWeight + 5} lb` : null;
+    const overloadRepsMin = prevLog.maxReps + 1;
+    const overloadRepsMax = prevLog.maxReps + 2;
+    const targetText = overloadWeight 
+      ? `🏋️ Overload Target: Try ${overloadWeight} or ${overloadRepsMin}-${overloadRepsMax} reps`
+      : `💪 Overload Target: Try ${overloadRepsMin}-${overloadRepsMax} reps`;
+    
+    overloadHtml = `
+      <div class="exercise-overload-card" style="margin-bottom: 8px; padding: 8px 10px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 6px; font-size: 12px;">
+        <div style="font-weight: 700; color: var(--accent); margin-bottom: 2px;">⚡ Previous Session (${escapeHtml(prevLog.dateStr)})</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text);">
+          <span>Best Set: ${prevLog.maxWeight > 0 ? `${prevLog.maxWeight} lb x ` : ''}${prevLog.maxReps} reps</span>
+          <span>Logged Sets: ${prevLog.setsCount}</span>
+        </div>
+        <div style="font-weight: 600; color: var(--text-dark);">${targetText}</div>
+      </div>
+    `;
+  }
+  
+  if (matched) {
+    const stepsHtml = (matched.steps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
+    const proTipHtml = matched.proTip ? `
+      <div class="exercise-pro-tip" style="margin-bottom: 6px;">
+        <strong>💡 Pro Tip:</strong> ${escapeHtml(matched.proTip)}
+      </div>
+    ` : '';
+    
+    guideEl.innerHTML = `
+      <div style="padding: 10px 0 6px;">
+        ${overloadHtml}
+        <div class="exercise-detail-row" style="margin-top: 0;">
+          <span class="detail-label">Target Area:</span>
+          <span class="detail-val" style="color: var(--accent);">${escapeHtml(matched.target || 'General')}</span>
+        </div>
+        <div class="exercise-detail-row">
+          <span class="detail-label">Difficulty:</span>
+          <span class="detail-val">${escapeHtml(matched.difficulty || 'Intermediate')}</span>
+        </div>
+        <div class="exercise-detail-row">
+          <span class="detail-label">Equipment:</span>
+          <span class="detail-val" style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(99, 102, 241, 0.08); padding: 1px 4px; border-radius: 4px;">${escapeHtml(matched.type || 'Bodyweight')}</span>
+        </div>
+        
+        <div class="exercise-detail-heading">How to Perform:</div>
+        <ol class="exercise-steps-list" style="margin-bottom: 10px;">
+          ${stepsHtml}
+        </ol>
+        ${proTipHtml}
+      </div>
+    `;
+  } else {
+    guideEl.innerHTML = `
+      <div style="padding: 10px 0 6px;">
+        ${overloadHtml}
+        <div class="exercise-detail-heading">General Form Pointers:</div>
+        <ol class="exercise-steps-list" style="margin-bottom: 10px;">
+          <li><strong>Mind-Muscle Connection:</strong> Focus on the active muscle contracting and stretching throughout the movement.</li>
+          <li><strong>Controlled Eccentrics:</strong> Lower the weight slowly (2-3 seconds) to maintain tension and protect joints.</li>
+          <li><strong>Full Range of Motion:</strong> Perform the complete movement path without short-cutting or using momentum.</li>
+          <li><strong>Proper Breathing:</strong> Inhale on the release/lowering, exhale on the contraction/push. Do not hold your breath.</li>
+          <li><strong>Spine Safety:</strong> Brace your core and maintain a neutral/flat back on all movements.</li>
+        </ol>
+        <div class="exercise-pro-tip" style="margin-bottom: 6px;">
+          <strong>💡 Pro Tip:</strong> If you feel joint pain or lose form, reduce the weight immediately or perform a bodyweight alternative.
+        </div>
+      </div>
+    `;
+  }
+
+  // render sets list
+  const setsEl = exEl.querySelector(`#sets-${CSS.escape(ex.id)}`);
+  setsEl.innerHTML = sets.map((st, idx) => {
+    const ts = st.ts ? new Date(st.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    return `
+      <div class="setRow">
+        <div class="small" style="font-weight:700">Set #${idx+1} · ${escapeHtml(String(st.w ?? ''))} lb</div>
+        <div class="small">${escapeHtml(String(st.r ?? ''))} reps · ${escapeHtml(ts)}</div>
+        <button class="btn danger" style="padding: 4px 8px; font-size: 11px;" data-action="deleteSet" data-ex="${ex.id}" data-idx="${idx}" type="button">Del</button>
+      </div>
+    `;
+  }).join('');
+
+  return exEl;
+}
+
 function renderWorkout() {
   const s = activeSession();
   const activeTabBtn = $('tabActiveWorkout');
@@ -1894,138 +2028,52 @@ function renderWorkout() {
   const exercises = (r?.exercises || []);
   if (exercises.length === 0) {
     list.innerHTML = '<div class="muted">No exercises in this workout. Tap "Add Custom Exercise" below to start.</div>';
+    return;
   }
 
-  exercises.forEach(ex => {
-    const exEl = document.createElement('div');
-    exEl.className = 'exercise';
-
-    const sets = s.entries[ex.id] || [];
-    const isExpanded = expandedGuides.has(ex.id);
-    const guideStyle = isExpanded ? 'max-height: none; opacity: 1; margin-top: 8px; border-top: 1px dashed var(--border);' : '';
-    const iconStyle = isExpanded ? 'transform: rotate(180deg);' : '';
-
-    exEl.innerHTML = `
-      <div class="exerciseHeader">
-        <div>
-          <div class="exerciseName">${escapeHtml(ex.name)}</div>
-          ${ex.info ? `<div class="small" style="color: var(--accent); font-weight: 600; margin-top: 1px;">Target: ${escapeHtml(ex.info)}</div>` : ''}
-          <div class="small" style="display: flex; gap: 8px; align-items: center; margin-top: 2px;">
-            <span>${sets.length} sets logged</span>
-            <button class="btn-guide-toggle" data-ex-id="${ex.id}" type="button" style="background: none; border: none; padding: 0; color: var(--accent); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px;">
-              <span>📖 Form Guide</span> <span class="guide-toggle-icon" style="font-size: 8px; transition: transform 0.2s ease; ${iconStyle}">▼</span>
-            </button>
-          </div>
-        </div>
-        <div class="row">
-          <button class="btn secondary" data-action="renameExercise" data-ex="${ex.id}" type="button">Rename</button>
-          <button class="btn danger" data-action="removeExercise" data-ex="${ex.id}" type="button">Remove</button>
-        </div>
-      </div>
+  // Pre-process exercises to identify consecutive superset blocks
+  let i = 0;
+  while (i < exercises.length) {
+    const ex = exercises[i];
+    const sTag = String(ex.superset || '').trim().toUpperCase();
+    
+    if (sTag) {
+      // Find consecutive exercises with the same superset tag
+      let j = i + 1;
+      while (j < exercises.length && String(exercises[j].superset || '').trim().toUpperCase() === sTag) {
+        j++;
+      }
       
-      <!-- Collapsible Form Guide Drawer -->
-      <div class="exercise-dir-details" id="guide-${ex.id}" style="${guideStyle} padding-top: 0; border-top: none;">
-        <!-- Filled dynamically below -->
-      </div>
-
-      <div class="sets" id="sets-${ex.id}"></div>
-      <div class="row wrap" style="margin-top:10px">
-        <input class="input" style="width: 100px;" inputmode="decimal" placeholder="Weight" data-field="w" data-ex="${ex.id}" />
-        <input class="input" style="width: 80px;" inputmode="numeric" placeholder="Reps" data-field="r" data-ex="${ex.id}" />
-        <button class="btn" data-action="logSet" data-ex="${ex.id}" type="button">Log set</button>
-      </div>
-    `;
-
-    list.appendChild(exEl);
-
-    // populate form guide drawer
-    const matched = findLibraryExercise(ex.name);
-    const guideEl = exEl.querySelector(`#guide-${CSS.escape(ex.id)}`);
-    const prevLog = getPreviousLogForExercise(ex.name);
-    let overloadHtml = '';
-    if (prevLog) {
-      const overloadWeight = prevLog.maxWeight > 0 ? `${prevLog.maxWeight + 5} lb` : null;
-      const overloadRepsMin = prevLog.maxReps + 1;
-      const overloadRepsMax = prevLog.maxReps + 2;
-      const targetText = overloadWeight 
-        ? `🏋️ Overload Target: Try ${overloadWeight} or ${overloadRepsMin}-${overloadRepsMax} reps`
-        : `💪 Overload Target: Try ${overloadRepsMin}-${overloadRepsMax} reps`;
-      
-      overloadHtml = `
-        <div class="exercise-overload-card" style="margin-bottom: 8px; padding: 8px 10px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 6px; font-size: 12px;">
-          <div style="font-weight: 700; color: var(--accent); margin-bottom: 2px;">⚡ Previous Session (${escapeHtml(prevLog.dateStr)})</div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text);">
-            <span>Best Set: ${prevLog.maxWeight > 0 ? `${prevLog.maxWeight} lb x ` : ''}${prevLog.maxReps} reps</span>
-            <span>Logged Sets: ${prevLog.setsCount}</span>
-          </div>
-          <div style="font-weight: 600; color: var(--text-dark);">${targetText}</div>
-        </div>
-      `;
+      const count = j - i;
+      if (count > 1) {
+        // We have a superset block!
+        const blockEl = document.createElement('div');
+        blockEl.className = 'superset-block';
+        
+        // Add header
+        const headerEl = document.createElement('div');
+        headerEl.className = 'superset-header';
+        headerEl.innerHTML = `<span class="superset-badge">Superset ${sTag}</span> <span>Perform alternating sets</span>`;
+        blockEl.appendChild(headerEl);
+        
+        // Render all exercises in the superset
+        for (let k = i; k < j; k++) {
+          const innerEx = exercises[k];
+          const innerEl = createExerciseDom(innerEx, s, k - i + 1, sTag);
+          blockEl.appendChild(innerEl);
+        }
+        
+        list.appendChild(blockEl);
+        i = j; // skip forward
+        continue;
+      }
     }
     
-    if (matched) {
-      const stepsHtml = (matched.steps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-      const proTipHtml = matched.proTip ? `
-        <div class="exercise-pro-tip" style="margin-bottom: 6px;">
-          <strong>💡 Pro Tip:</strong> ${escapeHtml(matched.proTip)}
-        </div>
-      ` : '';
-      
-      guideEl.innerHTML = `
-        <div style="padding: 10px 0 6px;">
-          ${overloadHtml}
-          <div class="exercise-detail-row" style="margin-top: 0;">
-            <span class="detail-label">Target Area:</span>
-            <span class="detail-val" style="color: var(--accent);">${escapeHtml(matched.target || 'General')}</span>
-          </div>
-          <div class="exercise-detail-row">
-            <span class="detail-label">Difficulty:</span>
-            <span class="detail-val">${escapeHtml(matched.difficulty || 'Intermediate')}</span>
-          </div>
-          <div class="exercise-detail-row">
-            <span class="detail-label">Equipment:</span>
-            <span class="detail-val" style="text-transform: uppercase; font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(99, 102, 241, 0.08); padding: 1px 4px; border-radius: 4px;">${escapeHtml(matched.type || 'Bodyweight')}</span>
-          </div>
-          
-          <div class="exercise-detail-heading">How to Perform:</div>
-          <ol class="exercise-steps-list" style="margin-bottom: 10px;">
-            ${stepsHtml}
-          </ol>
-          ${proTipHtml}
-        </div>
-      `;
-    } else {
-      guideEl.innerHTML = `
-        <div style="padding: 10px 0 6px;">
-          ${overloadHtml}
-          <div class="exercise-detail-heading">General Form Pointers:</div>
-          <ol class="exercise-steps-list" style="margin-bottom: 10px;">
-            <li><strong>Mind-Muscle Connection:</strong> Focus on the active muscle contracting and stretching throughout the movement.</li>
-            <li><strong>Controlled Eccentrics:</strong> Lower the weight slowly (2-3 seconds) to maintain tension and protect joints.</li>
-            <li><strong>Full Range of Motion:</strong> Perform the complete movement path without short-cutting or using momentum.</li>
-            <li><strong>Proper Breathing:</strong> Inhale on the release/lowering, exhale on the contraction/push. Do not hold your breath.</li>
-            <li><strong>Spine Safety:</strong> Brace your core and maintain a neutral/flat back on all movements.</li>
-          </ol>
-          <div class="exercise-pro-tip" style="margin-bottom: 6px;">
-            <strong>💡 Pro Tip:</strong> If you feel joint pain or lose form, reduce the weight immediately or perform a bodyweight alternative.
-          </div>
-        </div>
-      `;
-    }
-
-    // render sets list
-    const setsEl = exEl.querySelector(`#sets-${CSS.escape(ex.id)}`);
-    setsEl.innerHTML = sets.map((st, idx) => {
-      const ts = st.ts ? new Date(st.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-      return `
-        <div class="setRow">
-          <div class="small" style="font-weight:700">Set #${idx+1} · ${escapeHtml(String(st.w ?? ''))} lb</div>
-          <div class="small">${escapeHtml(String(st.r ?? ''))} reps · ${escapeHtml(ts)}</div>
-          <button class="btn danger" style="padding: 4px 8px; font-size: 11px;" data-action="deleteSet" data-ex="${ex.id}" data-idx="${idx}" type="button">Del</button>
-        </div>
-      `;
-    }).join('');
-  });
+    // Normal single exercise
+    const singleEl = createExerciseDom(ex, s);
+    list.appendChild(singleEl);
+    i++;
+  }
 
   // Bind click listeners for guide toggle buttons
   list.querySelectorAll('.btn-guide-toggle').forEach(btn => {
@@ -2161,6 +2209,192 @@ function removeExercise(exId) {
   if (!confirm('Remove exercise (and keep logged sets)?')) return;
   r.exercises = (r.exercises || []).filter(e => e.id !== exId);
   saveRoutines();
+  renderWorkout();
+}
+
+function swapExercise(exId) {
+  const s = activeSession();
+  if (!s) return;
+  const r = activeRoutine(s);
+  if (!r) return;
+  const ex = r.exercises?.find(e => e.id === exId);
+  if (!ex) return;
+
+  // Set current exercise name in the modal
+  $('swapCurrentExerciseName').textContent = ex.name;
+
+  // Identify the muscle group of the current exercise
+  const baseName = ex.name.split(' (')[0].trim().toLowerCase();
+  let groupName = null;
+  for (const [group, list] of Object.entries(EXERCISES_BY_GROUP)) {
+    if (list.some(e => e.name.toLowerCase() === baseName)) {
+      groupName = group;
+      break;
+    }
+  }
+
+  // Populate Recommended Alternatives List
+  const altListEl = $('swapAlternativesList');
+  altListEl.innerHTML = '';
+
+  const eq = new Set(state.primaryGoal?.equipment || state.profile?.equipment || ['bodyweight']);
+  const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
+
+  let alternatives = [];
+  if (groupName) {
+    alternatives = (EXERCISES_BY_GROUP[groupName] || []).filter(item => {
+      const matchName = item.name.toLowerCase() !== baseName;
+      return matchName && matchEquipment(item.type, item.name, eq) && !isExerciseExcludedForJoints(item, avoidJoints);
+    });
+  }
+
+  if (alternatives.length === 0) {
+    altListEl.innerHTML = '<div class="muted" style="font-size: 12px; padding: 4px 0;">No recommended alternatives found matching equipment/safety constraints.</div>';
+  } else {
+    // Show up to 5 alternatives
+    alternatives.slice(0, 5).forEach(alt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn secondary';
+      btn.style.width = '100%';
+      btn.style.textAlign = 'left';
+      btn.style.justifyContent = 'flex-start';
+      btn.style.padding = '8px 12px';
+      btn.style.fontSize = '13px';
+      btn.innerHTML = `
+        <div style="font-weight: 700; color: var(--text-dark);">${escapeHtml(alt.name)}</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 1px;">${escapeHtml(alt.info || '')}</div>
+      `;
+      btn.addEventListener('click', () => {
+        confirmAndExecuteSwap(exId, alt.name, alt.info || '');
+      });
+      altListEl.appendChild(btn);
+    });
+  }
+
+  // Populate General Select Dropdown with all exercises categorized
+  const selectEl = $('swapAllLibrarySelect');
+  selectEl.innerHTML = '<option value="">-- Choose from entire library --</option>';
+  
+  // Categorize standard exercises
+  for (const [group, list] of Object.entries(EXERCISES_BY_GROUP)) {
+    const optGroup = document.createElement('optgroup');
+    optGroup.label = group;
+    list.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify({ name: item.name, info: item.info || '' });
+      opt.textContent = item.name;
+      optGroup.appendChild(opt);
+    });
+    selectEl.appendChild(optGroup);
+  }
+
+  // Button click confirm for select dropdown
+  const confirmBtn = $('btnConfirmSwapExercise');
+  const newConfirmBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+  newConfirmBtn.addEventListener('click', () => {
+    const val = $('swapAllLibrarySelect').value;
+    if (!val) {
+      alert('Select an exercise or pick a recommended alternative.');
+      return;
+    }
+    const data = JSON.parse(val);
+    confirmAndExecuteSwap(exId, data.name, data.info);
+  });
+
+  // Display modal
+  $('modalSwapExercise').style.display = 'flex';
+}
+
+function confirmAndExecuteSwap(exId, newName, newInfo) {
+  const s = activeSession();
+  if (!s) return;
+  const r = activeRoutine(s);
+  if (!r) return;
+
+  const ex = r.exercises?.find(e => e.id === exId);
+  if (!ex) return;
+
+  const confirmMsg = `Are you sure you want to swap "${ex.name}" for "${newName}"?`;
+  if (!confirm(confirmMsg)) return;
+
+  // Format reps based on difficulty
+  const difficulty = state.primaryGoal?.difficulty || state.profile?.difficulty || 'intermediate';
+  const goal = state.primaryGoal?.type || state.profile?.goal || 'general';
+  
+  // Find exercise details in database or synthesize
+  let baseEx = null;
+  for (const [group, list] of Object.entries(EXERCISES_BY_GROUP)) {
+    const found = list.find(e => e.name.toLowerCase() === newName.toLowerCase());
+    if (found) {
+      baseEx = found;
+      break;
+    }
+  }
+  if (!baseEx) baseEx = { name: newName, type: 'Bodyweight', info: newInfo };
+
+  const repsDetails = generateRepsForExercise(baseEx, difficulty, goal);
+  const formattedName = `${newName} (${repsDetails})`;
+
+  // Mutate routine exercises
+  ex.name = formattedName;
+  ex.info = newInfo || '';
+  saveRoutines();
+
+  // Mutate session exercises
+  if (s.exercises) {
+    const sEx = s.exercises.find(e => e.id === exId);
+    if (sEx) {
+      sEx.name = formattedName;
+      sEx.info = newInfo || '';
+    }
+  }
+  saveSessions();
+
+  // Hide modal & render updates
+  $('modalSwapExercise').style.display = 'none';
+  renderWorkout();
+}
+
+function setSuperset(exId) {
+  const s = activeSession();
+  if (!s) return;
+  const r = activeRoutine(s);
+  if (!r) return;
+  
+  // Find current exercise in the routine
+  const ex = r.exercises?.find(e => e.id === exId);
+  if (!ex) return;
+  
+  const currentTag = ex.superset || '';
+  const newTag = prompt('Enter superset tag (e.g. A, B, C) to pair consecutive exercises, or leave blank to clear:', currentTag);
+  if (newTag === null) return; // cancelled
+  
+  const formattedTag = newTag.trim().toUpperCase();
+  
+  // Mutate routine exercise
+  if (formattedTag) {
+    ex.superset = formattedTag;
+  } else {
+    delete ex.superset;
+  }
+  saveRoutines();
+  
+  // Mutate session exercise if exists
+  if (s.exercises) {
+    const sEx = s.exercises.find(e => e.id === exId);
+    if (sEx) {
+      if (formattedTag) {
+        sEx.superset = formattedTag;
+      } else {
+        delete sEx.superset;
+      }
+    }
+  }
+  saveSessions();
+  
   renderWorkout();
 }
 
@@ -3447,7 +3681,8 @@ function showDayPopover(dateStr) {
       const parts = ex.name.split(' (');
       const baseName = parts[0].trim();
       const reps = parts[1] ? parts[1].replace(')', '').trim() : '';
-      return `<li style="margin-bottom: 6px; font-size: 13px;"><strong>${escapeHtml(baseName)}</strong> ${reps ? `<span style="color: var(--accent); font-weight: 700;">(${escapeHtml(reps)})</span>` : ''} - <span class="muted">${escapeHtml(ex.info || '')}</span></li>`;
+      const sBadge = ex.superset ? `<span class="superset-badge" style="padding: 1px 5px; font-size: 9px; margin-right: 6px; box-shadow: none; line-height: 1;">${ex.superset}</span>` : '';
+      return `<li style="margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap;">${sBadge}<strong>${escapeHtml(baseName)}</strong>&nbsp;${reps ? `<span style="color: var(--accent); font-weight: 700;">(${escapeHtml(reps)})</span>` : ''}&nbsp;-&nbsp;<span class="muted">${escapeHtml(ex.info || '')}</span></li>`;
     }).join('');
 
     html = `
@@ -5449,6 +5684,15 @@ function wire() {
   $('btnEndWorkout')?.addEventListener('click', endWorkout);
   $('btnTheme')?.addEventListener('click', toggleTheme);
 
+  $('btnSwapExerciseClose')?.addEventListener('click', () => {
+    $('modalSwapExercise').style.display = 'none';
+  });
+  $('modalSwapExercise')?.addEventListener('click', (e) => {
+    if (e.target === $('modalSwapExercise')) {
+      $('modalSwapExercise').style.display = 'none';
+    }
+  });
+
   $('btnTimerStartStop')?.addEventListener('click', () => {
     state.timer.running ? stopTimer() : startTimer();
   });
@@ -5481,8 +5725,8 @@ function wire() {
     if (!btn) return;
     const action = btn.getAttribute('data-action');
     const exId = btn.getAttribute('data-ex');
-    if (!action || !exId) return;
     if (action === 'logSet') logSet(exId);
+    if (action === 'swapExercise') swapExercise(exId);
     if (action === 'renameExercise') renameExercise(exId);
     if (action === 'removeExercise') removeExercise(exId);
     if (action === 'deleteSet') {
@@ -5592,6 +5836,9 @@ function renderAnalytics() {
   if (currentChart === 'consistency') {
     if (desc) desc.textContent = 'Weekly workout completions for the last 7 weeks.';
     renderConsistencyChart(container);
+  } else if (currentChart === 'volume') {
+    if (desc) desc.textContent = 'Weekly muscle group training sets (last 7 days).';
+    renderVolumeChart(container);
   } else {
     if (desc) desc.textContent = 'Body weight progression tracking (lbs).';
     renderWeightChart(container);
@@ -5766,6 +6013,213 @@ function renderWeightChart(container) {
     </svg>
   `;
 
+  container.innerHTML = svgContent;
+}
+
+function getWeeklyMuscleVolume() {
+  const volumes = {
+    'Chest': 0,
+    'Back': 0,
+    'Legs': 0,
+    'Shoulders': 0,
+    'Core': 0,
+    'Arms': 0
+  };
+
+  const midnightToday = new Date();
+  midnightToday.setHours(0, 0, 0, 0);
+  const sevenDaysAgoStart = midnightToday.getTime() - 6 * 24 * 60 * 60 * 1000;
+
+  const completedSessions = (state.sessions || []).filter(s => {
+    if (!s.endedAt) return false;
+    const endedTime = new Date(s.endedAt).getTime();
+    return endedTime >= sevenDaysAgoStart;
+  });
+
+  completedSessions.forEach(s => {
+    if (!s.entries) return;
+    
+    Object.keys(s.entries).forEach(exId => {
+      const sets = s.entries[exId] || [];
+      const setSuccessCount = sets.length;
+      if (setSuccessCount === 0) return;
+
+      let exName = '';
+      const sessionEx = s.exercises?.find(e => e.id === exId);
+      if (sessionEx) {
+        exName = sessionEx.name;
+      } else {
+        const r = activeRoutine(s) || (state.workoutLibrary || []).find(w => w.id === s.routineId);
+        const routineEx = r?.exercises?.find(e => e.id === exId);
+        if (routineEx) {
+          exName = routineEx.name;
+        } else {
+          state.routines.forEach(rt => {
+            const found = rt.exercises?.find(e => e.id === exId);
+            if (found) exName = found.name;
+          });
+        }
+      }
+
+      if (!exName) return;
+
+      const baseName = exName.split(' (')[0].trim().toLowerCase();
+      let group = null;
+      for (const [gName, list] of Object.entries(EXERCISES_BY_GROUP)) {
+        if (list.some(item => item.name.toLowerCase() === baseName)) {
+          group = gName;
+          break;
+        }
+      }
+
+      if (group === 'Biceps' || group === 'Triceps') {
+        group = 'Arms';
+      }
+
+      if (!group || (group !== 'Chest' && group !== 'Back' && group !== 'Legs' && group !== 'Shoulders' && group !== 'Core' && group !== 'Arms')) {
+        const words = baseName.split(/[^a-zA-Z0-9'-]+/);
+        const hasWord = (w) => words.includes(w);
+        const hasMatch = (arr) => arr.some(w => baseName.includes(w));
+
+        if (hasMatch(['chest', 'bench', 'fly', 'pushup', 'push-up', 'pec'])) {
+          group = 'Chest';
+        } else if (hasMatch(['row', 'pull', 'deadlift', 'shrug', 'back']) || words.some(w => w === 'lat' || w === 'lats' || w.startsWith('chin'))) {
+          group = 'Back';
+        } else if (hasMatch(['squat', 'lunge', 'leg', 'calf', 'quad', 'hamstring', 'glute'])) {
+          group = 'Legs';
+        } else if (hasMatch(['shoulder', 'overhead', 'raise', 'delt']) || (hasWord('press') && (hasWord('military') || hasWord('overhead')))) {
+          group = 'Shoulders';
+        } else if (hasMatch(['abs', 'core', 'crunch', 'plank', 'situp', 'sit-up', 'twist', 'hollow'])) {
+          group = 'Core';
+        } else if (hasMatch(['curl', 'bicep', 'tricep', 'dip', 'arm']) || (hasWord('extension') && (hasWord('overhead') || hasWord('tricep')))) {
+          group = 'Arms';
+        }
+      }
+
+      if (volumes[group] !== undefined) {
+        volumes[group] += setSuccessCount;
+      }
+    });
+  });
+
+  return volumes;
+}
+
+function renderVolumeChart(container) {
+  const volumes = getWeeklyMuscleVolume();
+  const totalVolume = Object.values(volumes).reduce((a, b) => a + b, 0);
+
+  if (totalVolume === 0) {
+    container.innerHTML = `
+      <svg viewBox="0 0 500 160" width="100%" height="100%">
+        <text x="250" y="80" text-anchor="middle" fill="var(--muted)" font-size="13" font-family="'Outfit', sans-serif">
+          No workout sets logged in the last 7 days.
+        </text>
+      </svg>
+    `;
+    return;
+  }
+
+  const heightVal = 160;
+  const widthVal = 500;
+  const paddingLeft = 80;
+  const paddingRight = 45;
+  const paddingTop = 15;
+  const paddingBottom = 20;
+
+  const graphWidth = widthVal - paddingLeft - paddingRight;
+  const graphHeight = heightVal - paddingTop - paddingBottom;
+
+  const groups = ['Chest', 'Back', 'Legs', 'Shoulders', 'Core', 'Arms'];
+  const gradients = {
+    'Chest': 'url(#chestGrad)',
+    'Back': 'url(#backGrad)',
+    'Legs': 'url(#legsGrad)',
+    'Shoulders': 'url(#shouldersGrad)',
+    'Core': 'url(#coreGrad)',
+    'Arms': 'url(#armsGrad)'
+  };
+
+  const maxSets = Math.max(...Object.values(volumes), 5);
+  const rowHeight = graphHeight / 6;
+  const barHeight = 12;
+
+  let svgContent = `
+    <svg viewBox="0 0 ${widthVal} ${heightVal}" width="100%" height="100%">
+      <defs>
+        <!-- Chest: Rose to Warm Coral -->
+        <linearGradient id="chestGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#ec4899" />
+          <stop offset="100%" stop-color="#f43f5e" />
+        </linearGradient>
+        <!-- Back: Violet to Indigo -->
+        <linearGradient id="backGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8b5cf6" />
+          <stop offset="100%" stop-color="#6366f1" />
+        </linearGradient>
+        <!-- Legs: Emerald to Teal -->
+        <linearGradient id="legsGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#10b981" />
+          <stop offset="100%" stop-color="#0d9488" />
+        </linearGradient>
+        <!-- Shoulders: Amber to Orange -->
+        <linearGradient id="shouldersGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f59e0b" />
+          <stop offset="100%" stop-color="#ea580c" />
+        </linearGradient>
+        <!-- Core: Cyan to Sky Blue -->
+        <linearGradient id="coreGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#06b6d4" />
+          <stop offset="100%" stop-color="#0284c7" />
+        </linearGradient>
+        <!-- Arms: Fuchsia to Purple -->
+        <linearGradient id="armsGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#d946ef" />
+          <stop offset="100%" stop-color="#a855f7" />
+        </linearGradient>
+      </defs>
+  `;
+
+  // Draw vertical grid lines
+  const gridStep = Math.ceil(maxSets / 4);
+  for (let val = gridStep; val <= maxSets; val += gridStep) {
+    const x = paddingLeft + (val / maxSets) * graphWidth;
+    svgContent += `
+      <line x1="${x}" y1="${paddingTop}" x2="${x}" y2="${heightVal - paddingBottom}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3,3" />
+      <text x="${x}" y="${heightVal - 5}" text-anchor="middle" font-size="8" fill="var(--muted)">${val}</text>
+    `;
+  }
+
+  // Draw left baseline
+  svgContent += `
+    <line x1="${paddingLeft}" y1="${paddingTop}" x2="${paddingLeft}" y2="${heightVal - paddingBottom}" stroke="var(--border)" stroke-width="1.2" />
+  `;
+
+  // Draw bars and labels
+  groups.forEach((group, i) => {
+    const val = volumes[group] || 0;
+    const barW = val > 0 ? Math.max(3, (val / maxSets) * graphWidth) : 0;
+    const y = paddingTop + i * rowHeight + (rowHeight - barHeight) / 2;
+    const textY = y + (barHeight / 2) + 3.5;
+
+    svgContent += `
+      <text x="${paddingLeft - 12}" y="${textY}" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--text)" font-family="'Outfit', sans-serif">${group}</text>
+    `;
+
+    if (val > 0) {
+      svgContent += `
+        <rect x="${paddingLeft}" y="${y}" width="${barW}" height="${barHeight}" rx="4" fill="${gradients[group]}" />
+        <text x="${paddingLeft + barW + 8}" y="${textY}" font-size="10" font-weight="700" fill="var(--text)" font-family="'Outfit', sans-serif">${val}</text>
+      `;
+    } else {
+      svgContent += `
+        <rect x="${paddingLeft}" y="${y}" width="0" height="${barHeight}" rx="4" fill="var(--border)" />
+        <text x="${paddingLeft + 8}" y="${textY}" font-size="10" font-weight="500" fill="var(--muted)" font-family="'Outfit', sans-serif">0</text>
+      `;
+    }
+  });
+
+  svgContent += `</svg>`;
   container.innerHTML = svgContent;
 }
 
