@@ -446,6 +446,24 @@
                 </div>
               </div>
 
+              <!-- Cloud Sync Configuration -->
+              <div class="panel" id="settingsCloudSyncPanel">
+                <div class="panelTitle" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>☁️ Cloud Sync</span>
+                  <span id="cloudSyncBadge" class="streak-badge" style="background: var(--muted); color: var(--text); font-size: 10px; padding: 2px 6px;">Disconnected</span>
+                </div>
+                <p class="muted" style="margin-bottom: 12px; line-height: 1.4;">Sync your logs, plans, and routines across devices automatically.</p>
+                <div id="cloudSyncStatusArea" style="margin-bottom: 12px; display: none;">
+                  <div class="small" style="font-weight: 700; color: var(--text);">Logged in as: <span id="cloudSyncUsernameText" style="color: var(--accent);"></span></div>
+                  <div class="small muted" style="margin-top: 2px;">Last synced: <span id="cloudSyncTimeText">Never</span></div>
+                </div>
+                <div class="row wrap" style="gap: 8px;">
+                  <button class="btn primary-gradient" id="btnCloudSyncLogin" type="button" style="padding: 6px 12px; font-size: 12px;">Enable Cloud Sync</button>
+                  <button class="btn secondary" id="btnCloudSyncForce" type="button" style="padding: 6px 12px; font-size: 12px; display: none;">Sync Now</button>
+                  <button class="btn danger" id="btnCloudSyncLogout" type="button" style="padding: 6px 12px; font-size: 12px; display: none;">Disable Sync</button>
+                </div>
+              </div>
+
               <!-- Goal Configuration -->
               <div class="panel">
                 <div class="panelTitle">Goal configuration</div>
@@ -619,7 +637,7 @@
     </main>
 
     <footer class="footer">
-      <div class="muted">Local-only. No accounts. Installable as a PWA.</div>
+      <div class="muted">Local-first. Optional Cloud Sync. Installable as a PWA.</div>
     </footer>
   </div>
 
@@ -693,6 +711,45 @@
         <button class="btn primary-gradient btn-large" id="btnConfirmSwapExercise" type="button" style="width: 100%; justify-content: center; display: flex; font-size: 14.5px;">
           Confirm Swap
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Cloud Sync (Login/Register) -->
+  <div id="modalCloudSync" class="modal-overlay">
+    <div class="modal-container" style="max-width: 380px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cloudSyncModalTitle">☁️ Enable Cloud Sync</h3>
+        <button class="modal-close" id="btnCloudSyncClose" type="button">&times;</button>
+      </div>
+      <div class="modal-content" style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="pill-group" id="cloudAuthModeToggle" style="margin: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr;">
+          <button type="button" class="pill-btn active" data-auth-mode="login" style="text-align: center;">Sign In</button>
+          <button type="button" class="pill-btn" data-auth-mode="register" style="text-align: center;">Create Account</button>
+        </div>
+        
+        <div id="cloudSyncAlert" class="small" style="display: none; padding: 8px 10px; border-radius: 6px; font-weight: 600; line-height: 1.4;"></div>
+
+        <form id="cloudSyncForm" style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label class="small" style="font-weight: 700; display: block; margin-bottom: 4px;">Username</label>
+            <input type="text" id="cloudUsernameInput" class="input" style="width: 100%; font-weight: 700;" placeholder="Letters, numbers, underscores" required />
+          </div>
+
+          <div id="cloudDisplayNameField" style="display: none;">
+            <label class="small" style="font-weight: 700; display: block; margin-bottom: 4px;">Display Name</label>
+            <input type="text" id="cloudDisplayNameInput" class="input" style="width: 100%; font-weight: 700;" placeholder="e.g. Jordan" />
+          </div>
+
+          <div>
+            <label class="small" style="font-weight: 700; display: block; margin-bottom: 4px;">Password</label>
+            <input type="password" id="cloudPasswordInput" class="input" style="width: 100%; font-weight: 700;" placeholder="••••••••" required />
+          </div>
+
+          <button class="btn primary-gradient btn-large" id="btnCloudSyncSubmit" type="submit" style="width: 100%; justify-content: center; display: flex; font-size: 15px; margin-top: 10px;">
+            Sign In
+          </button>
+        </form>
       </div>
     </div>
   </div>

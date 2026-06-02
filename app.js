@@ -1635,14 +1635,23 @@ function loadState() {
   state.workoutLibrary = store.get(KEYS.workoutLibrary, WORKOUT_LIBRARY);
 }
 
-function saveRoutines() { store.set(KEYS.routines, state.routines); }
-function saveSessions() { store.set(KEYS.sessions, state.sessions); }
-function saveActive() { store.set(KEYS.active, state.activeSessionId); }
-function saveProfile() { store.set(KEYS.profile, state.profile); }
+let syncTimeout = null;
+function triggerCloudSync() {
+  if (!localStorage.getItem('bf:cloudUser')) return;
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => {
+    cloudPushInBackground();
+  }, 1500);
+}
+
+function saveRoutines() { store.set(KEYS.routines, state.routines); triggerCloudSync(); }
+function saveSessions() { store.set(KEYS.sessions, state.sessions); triggerCloudSync(); }
+function saveActive() { store.set(KEYS.active, state.activeSessionId); triggerCloudSync(); }
+function saveProfile() { store.set(KEYS.profile, state.profile); triggerCloudSync(); }
 function saveTheme() { store.set(KEYS.theme, state.theme); }
-function savePrimaryGoal() { store.set(KEYS.primaryGoal, state.primaryGoal); }
-function saveSecondaryGoal() { store.set(KEYS.secondaryGoal, state.secondaryGoal); }
-function savePlan() { store.set(KEYS.plan, state.plan); }
+function savePrimaryGoal() { store.set(KEYS.primaryGoal, state.primaryGoal); triggerCloudSync(); }
+function saveSecondaryGoal() { store.set(KEYS.secondaryGoal, state.secondaryGoal); triggerCloudSync(); }
+function savePlan() { store.set(KEYS.plan, state.plan); triggerCloudSync(); }
 function saveCalendarView() { store.set(KEYS.calendarView, state.calendarView); }
 
 function fmtTimer(sec) {
@@ -2708,6 +2717,301 @@ function importData(file) {
     }
   };
   reader.readAsText(file);
+}
+
+function updateCloudSyncStatusUI() {
+  const badge = $('cloudSyncBadge');
+  const statusArea = $('cloudSyncStatusArea');
+  const userText = $('cloudSyncUsernameText');
+  const timeText = $('cloudSyncTimeText');
+  const loginBtn = $('btnCloudSyncLogin');
+  const forceBtn = $('btnCloudSyncForce');
+  const logoutBtn = $('btnCloudSyncLogout');
+
+  if (!badge) return;
+
+  const user = localStorage.getItem('bf:cloudUser');
+  const lastSynced = localStorage.getItem('bf:cloudLastSynced') || 'Never';
+
+  if (user) {
+    badge.textContent = 'Active';
+    badge.style.background = 'rgba(16, 185, 129, 0.15)';
+    badge.style.color = '#10b981';
+    
+    if (statusArea) statusArea.style.display = 'block';
+    if (userText) userText.textContent = localStorage.getItem('bf:cloudDisplayName') || user;
+    if (timeText) timeText.textContent = lastSynced;
+
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (forceBtn) forceBtn.style.display = 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+  } else {
+    badge.textContent = 'Disconnected';
+    badge.style.background = 'var(--border)';
+    badge.style.color = 'var(--text)';
+    
+    if (statusArea) statusArea.style.display = 'none';
+
+    if (loginBtn) loginBtn.style.display = 'inline-flex';
+    if (forceBtn) forceBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  }
+}
+
+async function cloudPushInBackground() {
+  const user = localStorage.getItem('bf:cloudUser');
+  const pass = localStorage.getItem('bf:cloudPass');
+  if (!user || !pass) return;
+
+  const data = {
+    profile: state.profile,
+    primaryGoal: state.primaryGoal,
+    secondaryGoal: state.secondaryGoal,
+    plan: state.plan,
+    routines: state.routines,
+    sessions: state.sessions
+  };
+
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'push', username: user, password: pass, data })
+    });
+    const body = await res.json();
+    if (body.success) {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      localStorage.setItem('bf:cloudLastSynced', timeStr);
+      updateCloudSyncStatusUI();
+    }
+  } catch (err) {
+    console.warn('Background sync failed:', err);
+  }
+}
+
+async function cloudPush() {
+  const user = localStorage.getItem('bf:cloudUser');
+  const pass = localStorage.getItem('bf:cloudPass');
+  if (!user || !pass) {
+    alert('Please enable cloud sync first.');
+    return;
+  }
+
+  const data = {
+    profile: state.profile,
+    primaryGoal: state.primaryGoal,
+    secondaryGoal: state.secondaryGoal,
+    plan: state.plan,
+    routines: state.routines,
+    sessions: state.sessions
+  };
+
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'push', username: user, password: pass, data })
+    });
+    const body = await res.json();
+    if (body.success) {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      localStorage.setItem('bf:cloudLastSynced', timeStr);
+      updateCloudSyncStatusUI();
+      alert('Data pushed to cloud successfully!');
+    } else {
+      alert(`Sync failed: ${body.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    alert(`Sync failed: ${err.message}`);
+  }
+}
+
+async function cloudPull() {
+  const user = localStorage.getItem('bf:cloudUser');
+  const pass = localStorage.getItem('bf:cloudPass');
+  if (!user || !pass) return;
+
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'pull', username: user, password: pass })
+    });
+    const body = await res.json();
+    if (body.success && body.data) {
+      const data = body.data;
+      if (data.profile) state.profile = data.profile;
+      if (data.primaryGoal) state.primaryGoal = data.primaryGoal;
+      if (data.secondaryGoal) state.secondaryGoal = data.secondaryGoal;
+      if (data.plan) state.plan = data.plan;
+      if (data.routines) state.routines = data.routines;
+      if (data.sessions) state.sessions = data.sessions;
+
+      store.set(KEYS.profile, state.profile);
+      store.set(KEYS.primaryGoal, state.primaryGoal);
+      store.set(KEYS.secondaryGoal, state.secondaryGoal);
+      store.set(KEYS.plan, state.plan);
+      store.set(KEYS.routines, state.routines);
+      store.set(KEYS.sessions, state.sessions);
+
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      localStorage.setItem('bf:cloudLastSynced', timeStr);
+      
+      applyTheme();
+      hydrateGoalsForm();
+      updateCloudSyncStatusUI();
+      renderRoutines();
+      renderWorkout();
+      renderDashboard();
+      if (state.calendarView === 'month') {
+        renderMonthCalendar();
+      } else {
+        renderPlan();
+      }
+      return true;
+    }
+  } catch (err) {
+    console.warn('Startup cloud pull failed:', err);
+  }
+  return false;
+}
+
+function cloudLogout() {
+  if (!confirm('Disable cloud sync? Your settings will remain saved locally, but will no longer be backed up to the cloud.')) return;
+  localStorage.removeItem('bf:cloudUser');
+  localStorage.removeItem('bf:cloudPass');
+  localStorage.removeItem('bf:cloudDisplayName');
+  localStorage.removeItem('bf:cloudLastSynced');
+  updateCloudSyncStatusUI();
+  alert('Cloud sync disabled.');
+}
+
+function showCloudSyncModal() {
+  $('modalCloudSync').classList.add('active');
+  $('cloudUsernameInput').value = '';
+  $('cloudPasswordInput').value = '';
+  $('cloudDisplayNameInput').value = '';
+  $('cloudSyncAlert').style.display = 'none';
+  setCloudAuthMode('login');
+}
+
+function closeCloudSyncModal() {
+  $('modalCloudSync').classList.remove('active');
+}
+
+function setCloudAuthMode(mode) {
+  const container = $('modalCloudSync');
+  const title = $('cloudSyncModalTitle');
+  const submitBtn = $('btnCloudSyncSubmit');
+  const dispField = $('cloudDisplayNameField');
+
+  container.querySelectorAll('#cloudAuthModeToggle button').forEach(btn => {
+    if (btn.getAttribute('data-auth-mode') === mode) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  if (mode === 'login') {
+    title.textContent = '☁️ Enable Cloud Sync';
+    submitBtn.textContent = 'Sign In';
+    dispField.style.display = 'none';
+    $('cloudDisplayNameInput').required = false;
+  } else {
+    title.textContent = '☁️ Create Sync Account';
+    submitBtn.textContent = 'Create Account';
+    dispField.style.display = 'block';
+    $('cloudDisplayNameInput').required = true;
+  }
+}
+
+async function handleCloudAuthSubmit(e) {
+  e.preventDefault();
+  
+  const toggleBtn = $('cloudAuthModeToggle').querySelector('button.active');
+  const action = toggleBtn.getAttribute('data-auth-mode') === 'register' ? 'register' : 'login';
+  
+  const username = $('cloudUsernameInput').value.trim();
+  const password = $('cloudPasswordInput').value;
+  const displayName = $('cloudDisplayNameInput').value.trim();
+  
+  const alertBox = $('cloudSyncAlert');
+  alertBox.style.display = 'block';
+  alertBox.style.background = 'rgba(99, 102, 241, 0.08)';
+  alertBox.style.color = 'var(--accent)';
+  alertBox.textContent = 'Connecting...';
+
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, username, password, displayName })
+    });
+    
+    const body = await res.json();
+    if (!res.ok || !body.success) {
+      alertBox.style.background = 'rgba(239, 68, 68, 0.1)';
+      alertBox.style.color = '#ef4444';
+      alertBox.textContent = body.error || 'Authentication failed.';
+      return;
+    }
+
+    localStorage.setItem('bf:cloudUser', body.user.username);
+    localStorage.setItem('bf:cloudPass', password);
+    localStorage.setItem('bf:cloudDisplayName', body.user.displayName);
+    
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    localStorage.setItem('bf:cloudLastSynced', timeStr);
+    
+    if (action === 'register') {
+      await cloudPushInBackground();
+      alert('Cloud sync enabled! Your local data has been backed up.');
+    } else {
+      const data = body.data;
+      if (data) {
+        if (data.sessions?.length > 0 || data.routines?.length > 0) {
+          if (confirm('A saved workout database was found in the cloud for this account. Would you like to load it and replace your current local data?')) {
+            if (data.profile) state.profile = data.profile;
+            if (data.primaryGoal) state.primaryGoal = data.primaryGoal;
+            if (data.secondaryGoal) state.secondaryGoal = data.secondaryGoal;
+            if (data.plan) state.plan = data.plan;
+            if (data.routines) state.routines = data.routines;
+            if (data.sessions) state.sessions = data.sessions;
+
+            store.set(KEYS.profile, state.profile);
+            store.set(KEYS.primaryGoal, state.primaryGoal);
+            store.set(KEYS.secondaryGoal, state.secondaryGoal);
+            store.set(KEYS.plan, state.plan);
+            store.set(KEYS.routines, state.routines);
+            store.set(KEYS.sessions, state.sessions);
+
+            applyTheme();
+            hydrateGoalsForm();
+            renderRoutines();
+            renderWorkout();
+            renderDashboard();
+            if (state.calendarView === 'month') {
+              renderMonthCalendar();
+            } else {
+              renderPlan();
+            }
+          } else {
+            await cloudPushInBackground();
+          }
+        } else {
+          await cloudPushInBackground();
+        }
+      }
+    }
+
+    updateCloudSyncStatusUI();
+    closeCloudSyncModal();
+  } catch (err) {
+    alertBox.style.background = 'rgba(239, 68, 68, 0.1)';
+    alertBox.style.color = '#ef4444';
+    alertBox.textContent = `Error connecting to sync server: ${err.message}`;
+  }
 }
 
 function resetAll() {
@@ -6177,6 +6481,25 @@ function wire() {
     switchProfileTo(targetUser);
   });
 
+  $('btnCloudSyncLogin')?.addEventListener('click', showCloudSyncModal);
+  $('btnCloudSyncClose')?.addEventListener('click', closeCloudSyncModal);
+  $('btnCloudSyncForce')?.addEventListener('click', cloudPush);
+  $('btnCloudSyncLogout')?.addEventListener('click', cloudLogout);
+
+  $('cloudAuthModeToggle')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-auth-mode]');
+    if (!btn) return;
+    setCloudAuthMode(btn.getAttribute('data-auth-mode'));
+  });
+
+  $('cloudSyncForm')?.addEventListener('submit', handleCloudAuthSubmit);
+
+  $('modalCloudSync')?.addEventListener('click', (e) => {
+    if (e.target === $('modalCloudSync')) {
+      closeCloudSyncModal();
+    }
+  });
+
   $('btnTimerStartStop')?.addEventListener('click', () => {
     state.timer.running ? stopTimer() : startTimer();
   });
@@ -7324,6 +7647,11 @@ function boot() {
   
   hydrateGoalsForm();
   renderProfileSwitcher();
+  updateCloudSyncStatusUI();
+  
+  if (localStorage.getItem('bf:cloudUser')) {
+    cloudPull();
+  }
   
   $('timer').textContent = fmtTimer(5);
   switchTimerMode('countdown'); // Ensure it sets up correctly on boot
