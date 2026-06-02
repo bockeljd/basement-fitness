@@ -1635,6 +1635,10 @@ function switchTab(tabId) {
     }
   });
 
+  if (tabId === 'schedule') {
+    renderPlan();
+  }
+
   // Scroll to top of app
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }

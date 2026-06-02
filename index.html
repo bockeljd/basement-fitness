@@ -38,6 +38,10 @@
         <span class="tab-icon">📊</span>
         <span class="tab-text">Dashboard</span>
       </button>
+      <button class="tab-btn" data-tab="schedule" type="button">
+        <span class="tab-icon">📅</span>
+        <span class="tab-text">Schedule</span>
+      </button>
       <button class="tab-btn" data-tab="ideas" type="button">
         <span class="tab-icon">💡</span>
         <span class="tab-text">Workout Ideas</span>
@@ -154,7 +158,11 @@
           <div id="activityFeed" class="activity-feed"></div>
         </section>
 
-        <section class="card" id="cardPlan" style="margin-top: 16px;">
+      </div>
+
+      <!-- Tab 1b: Schedule Panel -->
+      <div id="panel-schedule" class="tab-panel">
+        <section class="card" id="cardPlan">
           <div class="cardHeader">
             <h2>Calendar</h2>
             <div class="row wrap" style="gap: 8px;">
@@ -169,22 +177,8 @@
 
       <!-- Tab 2: Workout Ideas & Generator Panel -->
       <div id="panel-ideas" class="tab-panel">
-        <!-- Curated Workout Library Section -->
-        <section class="card" id="cardIdeas">
-          <div class="cardHeader">
-            <div>
-              <h2 style="font-size: 18px; font-weight: 900;">Curated Workout Library</h2>
-              <div class="muted">Select from our expert-curated workout templates to get started instantly.</div>
-            </div>
-          </div>
-          
-          <div class="ideas-grid" id="ideasGrid" style="display: grid; gap: 16px; margin-top: 14px;">
-            <!-- Populate dynamically via javascript -->
-          </div>
-        </section>
-
         <!-- Custom Workout Generator Section -->
-        <section class="card" id="cardGenerator" style="margin-top: 20px;">
+        <section class="card" id="cardGenerator">
           <div class="cardHeader">
             <div>
               <h2 style="font-size: 18px; font-weight: 900;">Custom Workout Generator</h2>
@@ -302,6 +296,20 @@
             </div>
             <hr class="divider" style="margin: 12px 0; border: none; border-top: 1px solid var(--border);" />
             <div id="previewExercisesList" class="preview-exercises" style="display: grid; gap: 10px;"></div>
+          </div>
+        </section>
+
+        <!-- Curated Workout Library Section -->
+        <section class="card" id="cardIdeas" style="margin-top: 20px;">
+          <div class="cardHeader">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 900;">Curated Workout Library</h2>
+              <div class="muted">Select from our expert-curated workout templates to get started instantly.</div>
+            </div>
+          </div>
+          
+          <div class="ideas-grid" id="ideasGrid" style="display: grid; gap: 16px; margin-top: 14px;">
+            <!-- Populate dynamically via javascript -->
           </div>
         </section>
       </div>
