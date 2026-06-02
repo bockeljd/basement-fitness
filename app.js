@@ -1700,7 +1700,7 @@ function ensureSessionShape(s) {
   if (!s.exercises || s.exercises.length === 0) {
     const r = activeRoutine(s);
     if (r && r.exercises) {
-      s.exercises = r.exercises.map(ex => ({ id: ex.id, name: ex.name, info: ex.info || '' }));
+      s.exercises = r.exercises.map(ex => ({ id: ex.id, name: ex.name, info: ex.info || '', superset: ex.superset || '' }));
     } else {
       s.exercises = [];
     }
@@ -2025,7 +2025,7 @@ function renderWorkout() {
   const list = $('exerciseList');
   list.innerHTML = '';
 
-  const exercises = (r?.exercises || []);
+  const exercises = (s.exercises || r?.exercises || []);
   if (exercises.length === 0) {
     list.innerHTML = '<div class="muted">No exercises in this workout. Tap "Add Custom Exercise" below to start.</div>';
     return;
@@ -2124,7 +2124,7 @@ function startRoutine(routineId) {
     endedAt: null,
     notes: '',
     entries: {},
-    exercises: (r.exercises || []).map(ex => ({ id: ex.id, name: ex.name, info: ex.info || '' }))
+    exercises: (r.exercises || []).map(ex => ({ id: ex.id, name: ex.name, info: ex.info || '', superset: ex.superset || '' }))
   };
   state.sessions.unshift(s);
   state.activeSessionId = s.id;
@@ -2186,18 +2186,27 @@ function renameExercise(exId) {
   const s = activeSession();
   if (!s) return;
   const r = activeRoutine(s);
-  const ex = r?.exercises?.find(e => e.id === exId);
-  if (!ex) return;
-  const name = prompt('New exercise name?', ex.name);
-  if (!name) return;
-  ex.name = name.trim();
-  saveRoutines();
   
-  if (s.exercises) {
-    const sEx = s.exercises.find(e => e.id === exId);
-    if (sEx) sEx.name = name.trim();
+  const sEx = s.exercises?.find(e => e.id === exId);
+  const currentName = sEx ? sEx.name : '';
+  
+  const name = prompt('New exercise name?', currentName);
+  if (!name) return;
+  const trimmedName = name.trim();
+  
+  if (r) {
+    const ex = r.exercises?.find(e => e.id === exId);
+    if (ex) {
+      ex.name = trimmedName;
+      saveRoutines();
+    }
   }
-  saveSessions();
+  
+  if (sEx) {
+    sEx.name = trimmedName;
+    saveSessions();
+  }
+  
   renderWorkout();
 }
 
@@ -2205,10 +2214,19 @@ function removeExercise(exId) {
   const s = activeSession();
   if (!s) return;
   const r = activeRoutine(s);
-  if (!r) return;
+  
   if (!confirm('Remove exercise (and keep logged sets)?')) return;
-  r.exercises = (r.exercises || []).filter(e => e.id !== exId);
-  saveRoutines();
+  
+  if (r) {
+    r.exercises = (r.exercises || []).filter(e => e.id !== exId);
+    saveRoutines();
+  }
+  
+  if (s.exercises) {
+    s.exercises = s.exercises.filter(e => e.id !== exId);
+    saveSessions();
+  }
+  
   renderWorkout();
 }
 
@@ -2216,8 +2234,7 @@ function swapExercise(exId) {
   const s = activeSession();
   if (!s) return;
   const r = activeRoutine(s);
-  if (!r) return;
-  const ex = r.exercises?.find(e => e.id === exId);
+  const ex = s.exercises?.find(e => e.id === exId);
   if (!ex) return;
 
   // Set current exercise name in the modal
@@ -2312,9 +2329,8 @@ function confirmAndExecuteSwap(exId, newName, newInfo) {
   const s = activeSession();
   if (!s) return;
   const r = activeRoutine(s);
-  if (!r) return;
 
-  const ex = r.exercises?.find(e => e.id === exId);
+  const ex = s.exercises?.find(e => e.id === exId);
   if (!ex) return;
 
   const confirmMsg = `Are you sure you want to swap "${ex.name}" for "${newName}"?`;
@@ -2338,19 +2354,19 @@ function confirmAndExecuteSwap(exId, newName, newInfo) {
   const repsDetails = generateRepsForExercise(baseEx, difficulty, goal);
   const formattedName = `${newName} (${repsDetails})`;
 
-  // Mutate routine exercises
-  ex.name = formattedName;
-  ex.info = newInfo || '';
-  saveRoutines();
-
-  // Mutate session exercises
-  if (s.exercises) {
-    const sEx = s.exercises.find(e => e.id === exId);
-    if (sEx) {
-      sEx.name = formattedName;
-      sEx.info = newInfo || '';
+  // Mutate routine exercises if template routine exists
+  if (r) {
+    const rEx = r.exercises?.find(e => e.id === exId);
+    if (rEx) {
+      rEx.name = formattedName;
+      rEx.info = newInfo || '';
+      saveRoutines();
     }
   }
+
+  // Mutate session exercises
+  ex.name = formattedName;
+  ex.info = newInfo || '';
   saveSessions();
 
   // Hide modal & render updates
@@ -2362,38 +2378,36 @@ function setSuperset(exId) {
   const s = activeSession();
   if (!s) return;
   const r = activeRoutine(s);
-  if (!r) return;
   
-  // Find current exercise in the routine
-  const ex = r.exercises?.find(e => e.id === exId);
-  if (!ex) return;
+  // Find current tag from session exercise first
+  const sEx = s.exercises?.find(e => e.id === exId);
+  const currentTag = sEx?.superset || '';
   
-  const currentTag = ex.superset || '';
   const newTag = prompt('Enter superset tag (e.g. A, B, C) to pair consecutive exercises, or leave blank to clear:', currentTag);
   if (newTag === null) return; // cancelled
   
   const formattedTag = newTag.trim().toUpperCase();
   
-  // Mutate routine exercise
-  if (formattedTag) {
-    ex.superset = formattedTag;
-  } else {
-    delete ex.superset;
-  }
-  saveRoutines();
-  
-  // Mutate session exercise if exists
-  if (s.exercises) {
-    const sEx = s.exercises.find(e => e.id === exId);
-    if (sEx) {
+  if (r) {
+    const ex = r.exercises?.find(e => e.id === exId);
+    if (ex) {
       if (formattedTag) {
-        sEx.superset = formattedTag;
+        ex.superset = formattedTag;
       } else {
-        delete sEx.superset;
+        delete ex.superset;
       }
+      saveRoutines();
     }
   }
-  saveSessions();
+  
+  if (sEx) {
+    if (formattedTag) {
+      sEx.superset = formattedTag;
+    } else {
+      delete sEx.superset;
+    }
+    saveSessions();
+  }
   
   renderWorkout();
 }
@@ -3791,7 +3805,8 @@ function showEditWorkoutView(dateStr) {
     return {
       id: ex.id || uid(),
       name,
-      info
+      info,
+      superset: ex.superset || ''
     };
   });
 
@@ -3828,7 +3843,7 @@ function showEditWorkoutView(dateStr) {
   // Bind actions
   $('btnEditPlanAddEx')?.addEventListener('click', () => {
     syncEditingExercisesFromDOM();
-    currentEditingExercises.push({ id: uid(), name: '', info: '' });
+    currentEditingExercises.push({ id: uid(), name: '', info: '', superset: '' });
     renderEditWorkoutExercises();
   });
 
@@ -3948,7 +3963,8 @@ function saveEditedWorkout() {
   item.routine.exercises = currentEditingExercises.map(ex => ({
     id: ex.id,
     name: ex.name.trim(),
-    info: ex.info.trim()
+    info: ex.info.trim(),
+    superset: ex.superset || ''
   }));
 
   savePlan();
