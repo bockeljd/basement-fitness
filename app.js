@@ -3936,6 +3936,7 @@ function showDayPopover(dateStr) {
   titleEl.textContent = dateTitle;
 
   const isWorkout = item.kind === 'workout' && item.routine;
+  const loggedWorkout = state.sessions.find(s => s.endedAt && s.routineId !== 'active-recovery' && ymd(new Date(s.endedAt)) === dateStr);
   const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === dateStr);
 
   let html = '';
@@ -3957,27 +3958,52 @@ function showDayPopover(dateStr) {
       return `<li style="margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap;">${sBadge}<strong>${escapeHtml(baseName)}</strong>&nbsp;${reps ? `<span style="color: var(--accent); font-weight: 700;">(${escapeHtml(reps)})</span>` : ''}&nbsp;-&nbsp;<span class="muted">${escapeHtml(ex.info || '')}</span></li>`;
     }).join('');
 
-    html = `
-      <div style="padding: 10px 0;">
-        <h4 style="font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 4px;">${escapeHtml(modalTitle)}</h4>
-        <p class="muted" style="font-size: 12px; margin-bottom: 12px;">${escapeHtml(item.routine.name)}</p>
-        
+    let workoutStateHtml = '';
+    let buttonsHtml = '';
+
+    if (loggedWorkout) {
+      workoutStateHtml = `
+        <div class="exercise-overload-card" style="margin-bottom: 12px; padding: 10px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; font-size: 13px;">
+          <div style="font-weight: 700; color: var(--good); display: flex; align-items: center; gap: 6px;">
+            <span>✅ Workout Completed</span>
+          </div>
+          <p class="muted" style="font-size: 11px; margin-top: 4px; margin-bottom: 0;">Completed session: ${escapeHtml(Object.keys(loggedWorkout.entries || {}).length)} exercises logged.</p>
+        </div>
+      `;
+      buttonsHtml = `
+        <button class="btn" data-plan-action="edit-logged-session" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">✏️ Edit Log</button>
+        <button class="btn danger" data-plan-action="toggle" data-plan-date="${dateStr}" type="button">❌ Make Rest</button>
+      `;
+    } else {
+      workoutStateHtml = `
         <div class="panel" style="margin-bottom: 16px;">
           <div class="panelTitle" style="font-size: 11px; text-transform: uppercase; margin-bottom: 6px;">Exercise Sequence</div>
           <ol style="margin: 0; padding-left: 18px; line-height: 1.4;">
             ${exercisesHtml}
           </ol>
         </div>
+      `;
+      buttonsHtml = `
+        ${dateStr < ymd(new Date()) 
+          ? `<button class="btn" data-plan-action="log-past" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px; background: var(--accent-gradient);">Log Past Workout</button>`
+          : `<button class="btn" data-plan-action="start" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">Start Session</button>`
+        }
+        <button class="btn secondary" data-plan-action="edit-workout" data-plan-date="${dateStr}" type="button">✏️ Edit Workout</button>
+        <button class="btn secondary" data-plan-action="swap" data-plan-date="${dateStr}" type="button">🔁 Swap Focus</button>
+        <button class="btn secondary" data-plan-action="shift" data-plan-date="${dateStr}" type="button">➡️ Shift Day</button>
+        <button class="btn danger" data-plan-action="toggle" data-plan-date="${dateStr}" type="button">❌ Make Rest</button>
+      `;
+    }
+
+    html = `
+      <div style="padding: 10px 0;">
+        <h4 style="font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 4px;">${escapeHtml(modalTitle)}</h4>
+        <p class="muted" style="font-size: 12px; margin-bottom: 12px;">${escapeHtml(item.routine.name)}</p>
+        
+        ${workoutStateHtml}
         
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;">
-          ${dateStr < ymd(new Date()) 
-            ? `<button class="btn" data-plan-action="log-past" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px; background: var(--accent-gradient);">Log Past Workout</button>`
-            : `<button class="btn" data-plan-action="start" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">Start Session</button>`
-          }
-          <button class="btn secondary" data-plan-action="edit-workout" data-plan-date="${dateStr}" type="button">✏️ Edit Workout</button>
-          <button class="btn secondary" data-plan-action="swap" data-plan-date="${dateStr}" type="button">🔁 Swap Focus</button>
-          <button class="btn secondary" data-plan-action="shift" data-plan-date="${dateStr}" type="button">➡️ Shift Day</button>
-          <button class="btn danger" data-plan-action="toggle" data-plan-date="${dateStr}" type="button">❌ Make Rest</button>
+          ${buttonsHtml}
         </div>
       </div>
     `;
@@ -4247,6 +4273,12 @@ function handleCalendarAction(act, dateStr) {
     startPlannedWorkout(dateStr);
   } else if (act === 'log-past') {
     logPastWorkout(dateStr);
+  } else if (act === 'edit-logged-session') {
+    closeDayPopover();
+    const s = state.sessions.find(x => x.endedAt && x.routineId !== 'active-recovery' && ymd(new Date(x.endedAt)) === dateStr);
+    if (s) {
+      editSessionContent(s.id);
+    }
   } else if (act === 'edit-workout') {
     showEditWorkoutView(dateStr);
   } else if (act === 'swap') {
