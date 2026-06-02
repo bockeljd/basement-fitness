@@ -4400,6 +4400,7 @@ function renderPlan() {
     const isToday = d.date === today;
     const isYesterday = d.date === yesterday;
     item.className = `planItem${isToday ? ' today' : ''}`;
+    item.setAttribute('data-plan-date', d.date);
 
     const isWorkout = d.kind === 'workout' && d.routine;
     const label = isWorkout ? (d.routine?.name || 'Workout') : 'Recovery / Optional Walk';
@@ -4486,10 +4487,20 @@ function wireDashboard() {
 
   $('planList')?.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
-    if (!btn) return;
-    const act = btn.getAttribute('data-plan-action');
-    const dateStr = btn.getAttribute('data-plan-date');
-    handleCalendarAction(act, dateStr);
+    if (btn) {
+      const act = btn.getAttribute('data-plan-action');
+      const dateStr = btn.getAttribute('data-plan-date');
+      handleCalendarAction(act, dateStr);
+      return;
+    }
+
+    const item = e.target.closest('.planItem');
+    if (item) {
+      const dateStr = item.getAttribute('data-plan-date');
+      if (dateStr) {
+        showDayPopover(dateStr);
+      }
+    }
   });
 
   $('dayDetailsContent')?.addEventListener('click', (e) => {
