@@ -2169,7 +2169,15 @@ function endWorkout() {
   }
 
   if (confirm('Are you ready to complete and log this workout session?')) {
-    s.endedAt = new Date().toISOString();
+    const todayStr = ymd(new Date());
+    const startStr = ymd(new Date(s.startedAt));
+    
+    if (startStr < todayStr) {
+      s.endedAt = new Date(new Date(s.startedAt).getTime() + 30 * 60 * 1000).toISOString();
+    } else {
+      s.endedAt = new Date().toISOString();
+    }
+
     state.activeSessionId = null;
     saveSessions();
     saveActive();
@@ -3372,6 +3380,35 @@ function ensurePlanGenerated() {
   // Clean up any past days (older than yesterday) and remove any previously corrupted invalid days
   if (state.plan && Array.isArray(state.plan.days)) {
     state.plan.days = state.plan.days.filter(d => d.date >= yesterday && d.date !== 'NaN-NaN-NaN');
+    
+    // Ensure yesterday is present in the plan days list
+    const firstDay = state.plan.days[0];
+    if (firstDay && firstDay.date > yesterday) {
+      const daysPerWeek = Math.max(1, Math.min(7, Number(state.primaryGoal.daysPerWeek || 3)));
+      const pattern = WEEKLY_PATTERNS[daysPerWeek] || WEEKLY_PATTERNS[3];
+      
+      const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const dayOfWeek = yesterdayDate.getDay();
+      const isWorkoutDay = pattern[dayOfWeek];
+      
+      let newDay;
+      if (isWorkoutDay) {
+        const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, 0);
+        newDay = {
+          date: yesterday,
+          kind: 'workout',
+          routine
+        };
+      } else {
+        newDay = {
+          date: yesterday,
+          kind: 'rest',
+          routine: null
+        };
+      }
+      state.plan.days.unshift(newDay);
+      savePlan();
+    }
   } else {
     state.plan = { 
       generatedAt: new Date().toISOString(), 
@@ -3569,75 +3606,33 @@ function logPastWorkout(dateStr) {
 
   const parts = dateStr.split('-');
   const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
-  const endedAt = dt.toISOString();
-  const startedAt = new Date(dt.getTime() - 30 * 60 * 1000).toISOString();
+  const startedAt = dt.toISOString();
 
-  const entries = {};
-  const exercises = (r.exercises || []).map(ex => {
-    const id = ex.id || uid();
-    let setsCount = 3;
-    let repsCount = 10;
-    let weight = 0;
-
-    const textToSearch = ((ex.info || '') + ' ' + (ex.name || '')).toLowerCase();
-    const setsMatch = textToSearch.match(/(\d+)\s*(?:sets|x)/i) || textToSearch.match(/(?:sets|x)\s*(\d+)/i);
-    if (setsMatch) {
-      setsCount = parseInt(setsMatch[1], 10);
-    }
-    const repsMatch = textToSearch.match(/(\d+)\s*(?:reps|rep)/i) || textToSearch.match(/(?:reps|rep)\s*(\d+)/i) || textToSearch.match(/x\s*(\d+)/i);
-    if (repsMatch) {
-      repsCount = parseInt(repsMatch[1], 10);
-    }
-    
-    entries[id] = Array.from({ length: setsCount }, () => ({
-      w: weight,
-      r: repsCount,
-      ts: endedAt
-    }));
-
-    return {
-      id,
-      name: ex.name,
-      info: ex.info || '',
-      superset: ex.superset || ''
-    };
-  });
-
+  // Create an uncompleted active session in the past
   const session = {
     id: uid(),
     routineId: r.id || 'custom-past-workout',
     startedAt,
-    endedAt,
-    notes: 'Logged retroactively.',
-    entries,
-    exercises
+    endedAt: null, // Start as uncompleted
+    notes: '',
+    entries: {}, // No prefilled sets
+    exercises: (r.exercises || []).map(ex => ({
+      id: ex.id || uid(),
+      name: ex.name,
+      info: ex.info || '',
+      superset: ex.superset || ''
+    }))
   };
 
   state.sessions.unshift(session);
+  state.activeSessionId = session.id;
+  
   saveSessions();
-
-  if (typeof confetti === 'function') {
-    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-  }
+  saveActive();
 
   closeDayPopover();
-  renderDashboard();
-  if (state.calendarView === 'month') {
-    renderMonthCalendar();
-  } else {
-    renderPlan();
-  }
-
-  switchTab('dashboard');
-  
-  // Open history log modal so user can view/edit details
-  const modal = $('modalHistory');
-  if (modal) {
-    modal.classList.add('active');
-    renderHistoryLogs();
-  }
-
-  alert(`Past workout logged successfully for ${dateStr}! Use the "Edit Log" or "Edit Date" options in the Complete Logs view if you need to adjust sets, reps, weights, or notes.`);
+  switchTab('workout');
+  renderWorkout();
 }
 
 function promptAndLogPastWorkout() {
@@ -3711,69 +3706,33 @@ function promptAndLogPastWorkout() {
   }
 
   const dt = new Date(y, m, d, 12, 0, 0);
-  const endedAt = dt.toISOString();
-  const startedAt = new Date(dt.getTime() - 30 * 60 * 1000).toISOString();
+  const startedAt = dt.toISOString();
 
-  const entries = {};
-  const exercises = (r.exercises || []).map(ex => {
-    const id = ex.id || uid();
-    let setsCount = 3;
-    let repsCount = 10;
-    let weight = 0;
-
-    const textToSearch = ((ex.info || '') + ' ' + (ex.name || '')).toLowerCase();
-    const setsMatch = textToSearch.match(/(\d+)\s*(?:sets|x)/i) || textToSearch.match(/(?:sets|x)\s*(\d+)/i);
-    if (setsMatch) {
-      setsCount = parseInt(setsMatch[1], 10);
-    }
-    const repsMatch = textToSearch.match(/(\d+)\s*(?:reps|rep)/i) || textToSearch.match(/(?:reps|rep)\s*(\d+)/i) || textToSearch.match(/x\s*(\d+)/i);
-    if (repsMatch) {
-      repsCount = parseInt(repsMatch[1], 10);
-    }
-    
-    entries[id] = Array.from({ length: setsCount }, () => ({
-      w: weight,
-      r: repsCount,
-      ts: endedAt
-    }));
-
-    return {
-      id,
-      name: ex.name,
-      info: ex.info || '',
-      superset: ex.superset || ''
-    };
-  });
-
+  // Create an active (uncompleted) session in the past
   const session = {
     id: uid(),
     routineId: r.id,
     startedAt,
-    endedAt,
-    notes: 'Logged retroactively.',
-    entries,
-    exercises
+    endedAt: null, // Start as uncompleted
+    notes: '',
+    entries: {}, // No prefilled sets
+    exercises: (r.exercises || []).map(ex => ({
+      id: ex.id || uid(),
+      name: ex.name,
+      info: ex.info || '',
+      superset: ex.superset || ''
+    }))
   };
 
   state.sessions.unshift(session);
+  state.activeSessionId = session.id;
+  
   saveSessions();
-
-  if (typeof confetti === 'function') {
-    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-  }
+  saveActive();
 
   hideHistoryModal();
-  renderDashboard();
-  if (state.calendarView === 'month') {
-    renderMonthCalendar();
-  } else {
-    renderPlan();
-  }
-
-  switchTab('dashboard');
-  showHistoryModal();
-
-  alert(`Past workout logged successfully for ${dateChoice}! Use the "Edit Log" or "Edit Date" options next to the workout log if you need to adjust specific sets/reps.`);
+  switchTab('workout');
+  renderWorkout();
 }
 
 
