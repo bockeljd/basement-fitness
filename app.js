@@ -7,20 +7,6 @@
 const $ = (id) => document.getElementById(id);
 const uid = () => Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
 
-const store = {
-  get(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
-    }
-  },
-  set(key, val) {
-    localStorage.setItem(key, JSON.stringify(val));
-  }
-};
-
 const KEYS = {
   routines: 'bf:routines',
   sessions: 'bf:sessions',
@@ -33,6 +19,52 @@ const KEYS = {
   plan: 'bf:plan',
   calendarView: 'bf:calendarView',
   workoutLibrary: 'bf:workoutLibrary'
+};
+
+const store = {
+  getGlobal(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  setGlobal(key, val) {
+    localStorage.setItem(key, JSON.stringify(val));
+  },
+  resolveKey(key) {
+    const activeUser = localStorage.getItem('bf:activeUser') || '';
+    if (activeUser && Object.values(KEYS).includes(key)) {
+      const userSpecificKeys = [
+        KEYS.routines,
+        KEYS.sessions,
+        KEYS.active,
+        KEYS.profile,
+        KEYS.goals,
+        KEYS.primaryGoal,
+        KEYS.secondaryGoal,
+        KEYS.plan
+      ];
+      if (userSpecificKeys.includes(key)) {
+        return `bf:user:${activeUser}:${key.replace('bf:', '')}`;
+      }
+    }
+    return key;
+  },
+  get(key, fallback) {
+    try {
+      const resolved = this.resolveKey(key);
+      const raw = localStorage.getItem(resolved);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  set(key, val) {
+    const resolved = this.resolveKey(key);
+    localStorage.setItem(resolved, JSON.stringify(val));
+  }
 };
 
 // Weekly scheduling patterns (mapping daysPerWeek to Sunday-Saturday true/false arrays)
@@ -2506,17 +2538,80 @@ function editRoutine(routineId) {
   renderRoutines();
 }
 
+function renderProfileSwitcher() {
+  const container = $('profileSwitcherArea');
+  if (!container) return;
+
+  const users = store.getGlobal('bf:allUsers', []);
+  const activeUser = localStorage.getItem('bf:activeUser') || '';
+
+  let html = '';
+  html += `<button class="btn ${!activeUser ? 'primary-gradient' : 'secondary'}" data-profile-switch="" type="button" style="padding: 6px 12px; font-size: 12px; margin-right: 4px; margin-bottom: 4px;">Default Profile</button>`;
+
+  users.forEach(u => {
+    html += `<button class="btn ${activeUser === u ? 'primary-gradient' : 'secondary'}" data-profile-switch="${escapeHtml(u)}" type="button" style="padding: 6px 12px; font-size: 12px; margin-right: 4px; margin-bottom: 4px;">${escapeHtml(u)}</button>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function switchProfileTo(username) {
+  if (username) {
+    localStorage.setItem('bf:activeUser', username);
+    const users = store.getGlobal('bf:allUsers', []);
+    if (!users.includes(username)) {
+      users.push(username);
+      store.setGlobal('bf:allUsers', users);
+    }
+  } else {
+    localStorage.removeItem('bf:activeUser');
+  }
+
+  seedIfEmpty();
+  loadState();
+
+  if (username && !state.profile.username) {
+    state.profile.username = username;
+    saveProfile();
+  }
+
+  applyTheme();
+  setSubtitle('Workout tracker');
+  hydrateGoalsForm();
+  renderProfileSwitcher();
+  
+  renderWorkoutIdeas();
+  renderExercisesDirectory();
+  renderDashboard();
+  renderRoutines();
+  renderWorkout();
+  
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+  } else {
+    renderPlan();
+  }
+}
+
 function exportData() {
+  const username = state.profile?.username || '';
   const data = {
+    version: 2,
     exportedAt: new Date().toISOString(),
+    username: username,
+    profile: state.profile,
+    primaryGoal: state.primaryGoal,
+    secondaryGoal: state.secondaryGoal,
     routines: state.routines,
-    sessions: state.sessions
+    sessions: state.sessions,
+    plan: state.plan
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `basement-fitness-export-${new Date().toISOString().slice(0,10)}.json`;
+  const nameSuffix = username ? `-${username}` : '';
+  a.download = `basement-fitness-data${nameSuffix}-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2530,14 +2625,43 @@ function importData(file) {
         alert('Invalid export file.');
         return;
       }
+      
+      if (data.profile) state.profile = data.profile;
+      if (data.primaryGoal) state.primaryGoal = data.primaryGoal;
+      if (data.secondaryGoal) state.secondaryGoal = data.secondaryGoal;
+      if (data.plan) state.plan = data.plan;
+
       state.routines = data.routines;
       state.sessions = data.sessions;
       state.activeSessionId = null;
+
+      saveProfile();
+      savePrimaryGoal();
+      saveSecondaryGoal();
+      savePlan();
       saveRoutines();
       saveSessions();
       saveActive();
+
+      const importUser = data.username || data.profile?.username || '';
+      const activeUser = localStorage.getItem('bf:activeUser') || '';
+      if (importUser && importUser !== activeUser) {
+        if (confirm(`This backup file belongs to user "${importUser}". Would you like to switch to this profile now?`)) {
+          switchProfileTo(importUser);
+          return;
+        }
+      }
+
       renderRoutines();
       renderWorkout();
+      renderDashboard();
+      if (state.calendarView === 'month') {
+        renderMonthCalendar();
+      } else {
+        renderPlan();
+      }
+      hydrateGoalsForm();
+      renderProfileSwitcher();
       alert('Imported successfully.');
     } catch (e) {
       alert('Import failed.');
@@ -3305,12 +3429,16 @@ function saveGoalsFromForm() {
   saveSecondaryGoal();
 
   const username = String($('usernameInput')?.value || '').trim();
-  state.profile.username = username;
-  saveProfile();
-  setSubtitle('Workout tracker');
-
-  regeneratePlan();
-  renderDashboard();
+  const oldActiveUser = localStorage.getItem('bf:activeUser') || '';
+  if (username !== oldActiveUser) {
+    switchProfileTo(username);
+  } else {
+    state.profile.username = username;
+    saveProfile();
+    setSubtitle('Workout tracker');
+    regeneratePlan();
+    renderDashboard();
+  }
 
   // Show confirmation
   const btn = $('btnSaveGoals');
@@ -6002,6 +6130,13 @@ function wire() {
     }
   });
 
+  $('profileSwitcherArea')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-profile-switch]');
+    if (!btn) return;
+    const targetUser = btn.getAttribute('data-profile-switch');
+    switchProfileTo(targetUser);
+  });
+
   $('btnTimerStartStop')?.addEventListener('click', () => {
     state.timer.running ? stopTimer() : startTimer();
   });
@@ -7141,6 +7276,7 @@ function boot() {
   renderWorkout();
   
   hydrateGoalsForm();
+  renderProfileSwitcher();
   
   $('timer').textContent = fmtTimer(5);
   switchTimerMode('countdown'); // Ensure it sets up correctly on boot
