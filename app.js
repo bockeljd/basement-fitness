@@ -3993,7 +3993,7 @@ function escapeHtml(str) {
 
 // Workout Generator Code Wiring & Logic
 function wireGenerator() {
-  const container = $('panel-generator');
+  const container = $('panel-ideas');
   if (!container) return;
 
   // Toggle buttons in groups
