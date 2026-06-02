@@ -1,25 +1,34 @@
-async function kvRequest(command) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  
-  if (!url || !token) {
-    throw new Error('KV_NOT_CONFIGURED');
+async function supabaseRequest(path, method, bodyArgs) {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !anonKey || !serviceKey) {
+    throw new Error('SUPABASE_NOT_CONFIGURED');
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(command)
-  });
+  const endpoint = `${url}/rest/v1/${path}`;
+  const headers = {
+    'apikey': anonKey,
+    'Authorization': `Bearer ${serviceKey}`,
+    'Content-Type': 'application/json'
+  };
 
-  const body = await res.json();
-  if (body.error) {
-    throw new Error(body.error);
+  const options = { method, headers };
+  if (bodyArgs) {
+    options.body = JSON.stringify(bodyArgs);
   }
-  return body.result;
+
+  const res = await fetch(endpoint, options);
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Supabase error (${res.status}): ${errorText}`);
+  }
+
+  if (method === 'GET') {
+    return await res.json();
+  }
+  return null;
 }
 
 module.exports = async (req, res) => {
@@ -46,13 +55,13 @@ module.exports = async (req, res) => {
   const cleanUser = String(username).trim().toLowerCase();
 
   try {
-    let userRecord;
+    let userRecord = null;
     try {
-      const raw = await kvRequest(['GET', `user:${cleanUser}`]);
-      userRecord = raw ? JSON.parse(raw) : null;
+      const rows = await supabaseRequest(`basement_fitness_sync?username=eq.${cleanUser}`, 'GET');
+      userRecord = rows[0] || null;
     } catch (e) {
-      if (e.message === 'KV_NOT_CONFIGURED') {
-        return res.status(503).json({ error: 'Vercel KV Database not configured.' });
+      if (e.message === 'SUPABASE_NOT_CONFIGURED') {
+        return res.status(503).json({ error: 'Supabase Database not configured.' });
       }
       throw e;
     }
@@ -63,7 +72,7 @@ module.exports = async (req, res) => {
 
     const crypto = require('crypto');
     const hash = crypto.createHmac('sha256', userRecord.salt).update(password).digest('hex');
-    if (hash !== userRecord.hashedPassword) {
+    if (hash !== userRecord.password_hash) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -71,14 +80,15 @@ module.exports = async (req, res) => {
       if (!data) {
         return res.status(400).json({ error: 'Missing sync data' });
       }
-      await kvRequest(['SET', `data:${cleanUser}`, JSON.stringify(data)]);
+      await supabaseRequest(`basement_fitness_sync?username=eq.${cleanUser}`, 'PATCH', {
+        data,
+        updated_at: new Date().toISOString()
+      });
       return res.status(200).json({ success: true });
     }
 
     if (action === 'pull') {
-      const dataRaw = await kvRequest(['GET', `data:${cleanUser}`]);
-      const userData = dataRaw ? JSON.parse(dataRaw) : null;
-      return res.status(200).json({ success: true, data: userData });
+      return res.status(200).json({ success: true, data: userRecord.data });
     }
 
     return res.status(400).json({ error: 'Invalid action. Must be push or pull.' });

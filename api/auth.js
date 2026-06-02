@@ -1,27 +1,36 @@
 const crypto = require('crypto');
 
-async function kvRequest(command) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  
-  if (!url || !token) {
-    throw new Error('KV_NOT_CONFIGURED');
+async function supabaseRequest(path, method, bodyArgs) {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !anonKey || !serviceKey) {
+    throw new Error('SUPABASE_NOT_CONFIGURED');
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(command)
-  });
+  const endpoint = `${url}/rest/v1/${path}`;
+  const headers = {
+    'apikey': anonKey,
+    'Authorization': `Bearer ${serviceKey}`,
+    'Content-Type': 'application/json'
+  };
 
-  const body = await res.json();
-  if (body.error) {
-    throw new Error(body.error);
+  const options = { method, headers };
+  if (bodyArgs) {
+    options.body = JSON.stringify(bodyArgs);
   }
-  return body.result;
+
+  const res = await fetch(endpoint, options);
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Supabase error (${res.status}): ${errorText}`);
+  }
+
+  if (method === 'GET') {
+    return await res.json();
+  }
+  return null;
 }
 
 function hashPassword(password, salt) {
@@ -58,13 +67,13 @@ module.exports = async (req, res) => {
 
   try {
     if (action === 'register') {
-      let existingUser;
+      let existingUser = null;
       try {
-        const raw = await kvRequest(['GET', `user:${cleanUser}`]);
-        existingUser = raw ? JSON.parse(raw) : null;
+        const rows = await supabaseRequest(`basement_fitness_sync?username=eq.${cleanUser}`, 'GET');
+        existingUser = rows[0] || null;
       } catch (e) {
-        if (e.message === 'KV_NOT_CONFIGURED') {
-          return res.status(503).json({ error: 'Vercel KV Database not configured. Please link a KV database to this project in the Vercel Dashboard under the Storage tab.' });
+        if (e.message === 'SUPABASE_NOT_CONFIGURED') {
+          return res.status(503).json({ error: 'Supabase Database not configured. Please add SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY to your Vercel project environment settings.' });
         }
         throw e;
       }
@@ -76,41 +85,38 @@ module.exports = async (req, res) => {
       const salt = crypto.randomBytes(16).toString('hex');
       const hashedPassword = hashPassword(password, salt);
 
-      const newUser = {
-        username: cleanUser,
-        displayName: String(displayName || cleanUser).trim(),
-        salt,
-        hashedPassword,
-        createdAt: new Date().toISOString()
-      };
-
-      await kvRequest(['SET', `user:${cleanUser}`, JSON.stringify(newUser)]);
-
       const initialData = {
-        profile: { goal: 'general', durationMin: 30, equipment: ['bodyweight'], username: newUser.displayName },
+        profile: { goal: 'general', durationMin: 30, equipment: ['bodyweight'], username: String(displayName || cleanUser).trim() },
         primaryGoal: null,
         secondaryGoal: null,
         plan: { generatedAt: null, days: [] },
         routines: [],
         sessions: []
       };
-      await kvRequest(['SET', `data:${cleanUser}`, JSON.stringify(initialData)]);
+
+      await supabaseRequest('basement_fitness_sync', 'POST', {
+        username: cleanUser,
+        display_name: String(displayName || cleanUser).trim(),
+        salt,
+        password_hash: hashedPassword,
+        data: initialData
+      });
 
       return res.status(200).json({
         success: true,
-        user: { username: newUser.username, displayName: newUser.displayName },
+        user: { username: cleanUser, displayName: String(displayName || cleanUser).trim() },
         data: initialData
       });
     }
 
     if (action === 'login') {
-      let userRecord;
+      let userRecord = null;
       try {
-        const raw = await kvRequest(['GET', `user:${cleanUser}`]);
-        userRecord = raw ? JSON.parse(raw) : null;
+        const rows = await supabaseRequest(`basement_fitness_sync?username=eq.${cleanUser}`, 'GET');
+        userRecord = rows[0] || null;
       } catch (e) {
-        if (e.message === 'KV_NOT_CONFIGURED') {
-          return res.status(503).json({ error: 'Vercel KV Database not configured. Please link a KV database to this project in the Vercel Dashboard under the Storage tab.' });
+        if (e.message === 'SUPABASE_NOT_CONFIGURED') {
+          return res.status(503).json({ error: 'Supabase Database not configured. Please add SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY to your Vercel project environment settings.' });
         }
         throw e;
       }
@@ -120,17 +126,14 @@ module.exports = async (req, res) => {
       }
 
       const hash = hashPassword(password, userRecord.salt);
-      if (hash !== userRecord.hashedPassword) {
+      if (hash !== userRecord.password_hash) {
         return res.status(400).json({ error: 'Invalid username or password.' });
       }
 
-      const dataRaw = await kvRequest(['GET', `data:${cleanUser}`]);
-      const userData = dataRaw ? JSON.parse(dataRaw) : null;
-
       return res.status(200).json({
         success: true,
-        user: { username: userRecord.username, displayName: userRecord.displayName },
-        data: userData
+        user: { username: userRecord.username, displayName: userRecord.display_name },
+        data: userRecord.data
       });
     }
 
