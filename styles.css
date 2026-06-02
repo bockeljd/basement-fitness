@@ -1619,6 +1619,11 @@ select.input {
   border-color: rgba(16, 185, 129, 0.25);
 }
 
+.calendar-cell.completed-workout {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
 .calendar-cell-num {
   font-size: 10px;
   font-weight: 700;
@@ -1690,6 +1695,10 @@ select.input {
   
   .calendar-cell.completed-recovery .calendar-cell-name {
     color: var(--success);
+  }
+  
+  .calendar-cell.completed-workout .calendar-cell-name {
+    color: var(--good);
   }
   
   .calendar-cell-exercises {

@@ -3367,10 +3367,11 @@ function ensurePlanGenerated() {
   if (!state.primaryGoal) return false;
   
   const today = ymd(new Date());
+  const yesterday = ymd(new Date(Date.now() - 24 * 60 * 60 * 1000));
   
-  // Clean up any past days and remove any previously corrupted invalid days
+  // Clean up any past days (older than yesterday) and remove any previously corrupted invalid days
   if (state.plan && Array.isArray(state.plan.days)) {
-    state.plan.days = state.plan.days.filter(d => d.date >= today && d.date !== 'NaN-NaN-NaN');
+    state.plan.days = state.plan.days.filter(d => d.date >= yesterday && d.date !== 'NaN-NaN-NaN');
   } else {
     state.plan = { 
       generatedAt: new Date().toISOString(), 
@@ -3464,7 +3465,7 @@ function extendPlan() {
         nextDate = new Date();
       }
     } else {
-      nextDate = new Date();
+      nextDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
     }
     
     const dateStr = ymd(nextDate);
@@ -3503,7 +3504,7 @@ function regeneratePlan() {
 
   const planDays = [];
   let workoutCount = 0;
-  for (let i = 0; i < 30; i++) {
+  for (let i = -1; i < 30; i++) {
     const d = new Date(now.getTime() + i * 86400000);
     const dayOfWeek = d.getDay();
     const isWorkoutDay = pattern[dayOfWeek];
@@ -3836,11 +3837,17 @@ function renderMonthCalendar() {
     
     let emoji = '';
     let bodyHtml = '';
+    const loggedWorkout = state.sessions.find(s => s.endedAt && s.routineId !== 'active-recovery' && ymd(new Date(s.endedAt)) === day.date);
     const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === day.date);
     
     if (isWorkout) {
-      cellClass += ' workout';
-      emoji = '💪';
+      if (loggedWorkout) {
+        cellClass += ' completed-workout';
+        emoji = '✅';
+      } else {
+        cellClass += ' workout';
+        emoji = '💪';
+      }
       
       // Strip boilerplate prefixes so calendar cells show only the meaningful split label
       const rawName = day.routine.name || '';
@@ -4364,8 +4371,9 @@ function renderPlan() {
   }
 
   ensurePlanGenerated();
-  const days = (state.plan?.days || []).slice(0, 7);
+  const days = (state.plan?.days || []).slice(0, 8);
   const today = ymd(new Date());
+  const yesterday = ymd(new Date(Date.now() - 24 * 60 * 60 * 1000));
 
   const fmtDay = (ymdStr) => {
     try {
@@ -4399,6 +4407,7 @@ function renderPlan() {
   days.forEach(d => {
     const item = document.createElement('div');
     const isToday = d.date === today;
+    const isYesterday = d.date === yesterday;
     item.className = `planItem${isToday ? ' today' : ''}`;
 
     const isWorkout = d.kind === 'workout' && d.routine;
@@ -4414,19 +4423,29 @@ function renderPlan() {
       subtitle = 'Active recovery, stretching, or light walk';
     }
 
+    const loggedWorkout = state.sessions.find(s => s.endedAt && s.routineId !== 'active-recovery' && ymd(new Date(s.endedAt)) === d.date);
     const hasLoggedRecovery = state.sessions.some(s => s.endedAt && s.routineId === 'active-recovery' && ymd(new Date(s.endedAt)) === d.date);
     
     let badge = '';
     let actionButtons = '';
     
     if (isWorkout) {
-      badge = '<span class="planBadge">Workout</span>';
-      actionButtons = `
-        <button class="btn" data-plan-action="start" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" type="button">Start</button>
-        <button class="btn secondary" data-plan-action="swap" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Swap focus split" type="button">🔁 Swap</button>
-        <button class="btn secondary" data-plan-action="shift" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Shift day" type="button">➡️ Shift</button>
-        <button class="btn danger" data-plan-action="toggle" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Change to Rest" type="button">❌ Rest</button>
-      `;
+      if (loggedWorkout) {
+        badge = '<span class="planBadge" style="background: rgba(16, 185, 129, 0.1); color: var(--good); border-color: rgba(16, 185, 129, 0.2);">Completed</span>';
+        actionButtons = `<span class="small" style="color: var(--good); font-weight: 700; display: flex; align-items: center; gap: 4px;">✅ Completed</span>`;
+      } else {
+        badge = '<span class="planBadge">Workout</span>';
+        const isPast = d.date < today;
+        const primaryAction = isPast
+          ? `<button class="btn" data-plan-action="log-past" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px; background: var(--accent-gradient);" type="button">Log Past</button>`
+          : `<button class="btn" data-plan-action="start" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" type="button">Start</button>`;
+        actionButtons = `
+          ${primaryAction}
+          <button class="btn secondary" data-plan-action="swap" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Swap focus split" type="button">🔁 Swap</button>
+          <button class="btn secondary" data-plan-action="shift" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Shift day" type="button">➡️ Shift</button>
+          <button class="btn danger" data-plan-action="toggle" data-plan-date="${d.date}" style="padding: 4px 8px; font-size: 11px;" title="Change to Rest" type="button">❌ Rest</button>
+        `;
+      }
     } else {
       if (hasLoggedRecovery) {
         badge = '<span class="planBadge rest" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: rgba(16, 185, 129, 0.2);">Rest</span>';
@@ -4440,9 +4459,11 @@ function renderPlan() {
       }
     }
 
+    const dateLabel = isToday ? 'Today' : (isYesterday ? 'Yesterday' : fmtDay(d.date));
+
     item.innerHTML = `
       <div class="planMeta">
-        <div class="planDate">${isToday ? 'Today' : fmtDay(d.date)}</div>
+        <div class="planDate">${dateLabel}</div>
         <div class="planTitle">${escapeHtml(label)}</div>
         <div class="planExercises">${escapeHtml(subtitle)}</div>
       </div>
