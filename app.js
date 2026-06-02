@@ -1621,7 +1621,12 @@ function fmtTimer(sec) {
 }
 
 function setSubtitle(text) {
-  $('subtitle').textContent = text;
+  const username = state.profile?.username || '';
+  if (text === 'Workout tracker' && username) {
+    $('subtitle').textContent = `Workout tracker | ${username}`;
+  } else {
+    $('subtitle').textContent = text;
+  }
 }
 
 // SPA Routing: Switch Tabs
@@ -2353,7 +2358,7 @@ function swapExercise(exId) {
   });
 
   // Display modal
-  $('modalSwapExercise').style.display = 'flex';
+  $('modalSwapExercise').classList.add('active');
 }
 
 function confirmAndExecuteSwap(exId, newName, newInfo) {
@@ -2401,7 +2406,7 @@ function confirmAndExecuteSwap(exId, newName, newInfo) {
   saveSessions();
 
   // Hide modal & render updates
-  $('modalSwapExercise').style.display = 'none';
+  $('modalSwapExercise').classList.remove('active');
   renderWorkout();
 }
 
@@ -3298,6 +3303,12 @@ function saveGoalsFromForm() {
 
   savePrimaryGoal();
   saveSecondaryGoal();
+
+  const username = String($('usernameInput')?.value || '').trim();
+  state.profile.username = username;
+  saveProfile();
+  setSubtitle('Workout tracker');
+
   regeneratePlan();
   renderDashboard();
 
@@ -3312,6 +3323,9 @@ function saveGoalsFromForm() {
 }
 
 function hydrateGoalsForm() {
+  const usernameInput = $('usernameInput');
+  if (usernameInput) usernameInput.value = state.profile?.username || '';
+
   const pt = $('primaryType');
   const pm = $('primaryMinutes');
   const pd = $('primaryDays');
@@ -5980,11 +5994,11 @@ function wire() {
   $('btnTheme')?.addEventListener('click', toggleTheme);
 
   $('btnSwapExerciseClose')?.addEventListener('click', () => {
-    $('modalSwapExercise').style.display = 'none';
+    $('modalSwapExercise').classList.remove('active');
   });
   $('modalSwapExercise')?.addEventListener('click', (e) => {
     if (e.target === $('modalSwapExercise')) {
-      $('modalSwapExercise').style.display = 'none';
+      $('modalSwapExercise').classList.remove('active');
     }
   });
 
@@ -7135,6 +7149,7 @@ function boot() {
     switchTab('workout');
   } else {
     switchTab('dashboard');
+    setSubtitle('Workout tracker');
   }
   
   syncWorkoutLibrary();
