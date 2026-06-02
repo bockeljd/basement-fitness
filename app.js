@@ -1856,6 +1856,23 @@ function pickExerciseFromPool(pool, recentNames) {
 
 const expandedGuides = new Set();
 
+function isTimeBasedExercise(name, type) {
+  const n = String(name || '').toLowerCase();
+  const t = String(type || '').toLowerCase();
+  if (t === 'stretching' || t === 'cardio') return true;
+  return n.includes('plank') || n.includes('hold') || n.includes('hang') || n.includes('stretch') || n.includes('walk') || n.includes('run') || n.includes('bike') || n.includes('rower') || n.includes('treadmill') || n.includes('wall sit') || n.includes('balance') || n.includes('pose');
+}
+
+function isBodyweightExercise(name, type) {
+  const n = String(name || '').toLowerCase();
+  const t = String(type || '').toLowerCase();
+  if (t === 'bodyweight' || t === 'stretching' || t === 'cardio') return true;
+  if (n.includes('barbell') || n.includes('dumbbell') || n.includes('db') || n.includes('bb') || n.includes('kettlebell') || n.includes('kb') || n.includes('machine') || n.includes('cable')) {
+    return false;
+  }
+  return n.includes('pushup') || n.includes('push-up') || n.includes('pullup') || n.includes('pull-up') || n.includes('chinup') || n.includes('chin-up') || n.includes('dip') || n.includes('crunch') || n.includes('plank') || n.includes('squat') || n.includes('lunge') || n.includes('burpee') || n.includes('leg raise') || n.includes('sit-up') || n.includes('situp') || n.includes('jumping jack');
+}
+
 function findLibraryExercise(rawName) {
   if (!rawName) return null;
   let name = rawName.split('(')[0].trim().toLowerCase();
@@ -1903,6 +1920,11 @@ function createExerciseDom(ex, s, subIndex = null, supersetTag = '') {
   const guideStyle = isExpanded ? 'max-height: none; opacity: 1; margin-top: 8px; border-top: 1px dashed var(--border);' : '';
   const iconStyle = isExpanded ? 'transform: rotate(180deg);' : '';
 
+  const matched = findLibraryExercise(ex.name);
+  const type = matched?.type || '';
+  const isTime = isTimeBasedExercise(ex.name, type);
+  const isBodyweight = isBodyweightExercise(ex.name, type);
+
   const prefix = subIndex ? `<span class="superset-badge" style="margin-right: 6px;">${supersetTag}${subIndex}</span>` : '';
 
   const exEl = document.createElement('div');
@@ -1933,15 +1955,14 @@ function createExerciseDom(ex, s, subIndex = null, supersetTag = '') {
     </div>
 
     <div class="sets" id="sets-${ex.id}"></div>
-    <div class="row wrap" style="margin-top:10px">
-      <input class="input" style="width: 100px;" inputmode="decimal" placeholder="Weight" data-field="w" data-ex="${ex.id}" />
-      <input class="input" style="width: 80px;" inputmode="numeric" placeholder="Reps" data-field="r" data-ex="${ex.id}" />
+    <div class="row wrap" style="margin-top:10px; gap: 8px;">
+      <input class="input" style="width: 120px;" inputmode="decimal" placeholder="${isBodyweight ? 'BW / Weight' : 'Weight (lbs)'}" data-field="w" data-ex="${ex.id}" />
+      <input class="input" style="width: 90px;" inputmode="numeric" placeholder="${isTime ? 'Seconds' : 'Reps'}" data-field="r" data-ex="${ex.id}" />
       <button class="btn" data-action="logSet" data-ex="${ex.id}" type="button">Log set</button>
     </div>
   `;
 
   // populate form guide drawer
-  const matched = findLibraryExercise(ex.name);
   const guideEl = exEl.querySelector(`#guide-${CSS.escape(ex.id)}`);
   const prevLog = getPreviousLogForExercise(ex.name);
   let overloadHtml = '';
@@ -1949,15 +1970,16 @@ function createExerciseDom(ex, s, subIndex = null, supersetTag = '') {
     const overloadWeight = prevLog.maxWeight > 0 ? `${prevLog.maxWeight + 5} lb` : null;
     const overloadRepsMin = prevLog.maxReps + 1;
     const overloadRepsMax = prevLog.maxReps + 2;
+    const unitText = isTime ? 'sec' : 'reps';
     const targetText = overloadWeight 
-      ? `🏋️ Overload Target: Try ${overloadWeight} or ${overloadRepsMin}-${overloadRepsMax} reps`
-      : `💪 Overload Target: Try ${overloadRepsMin}-${overloadRepsMax} reps`;
+      ? `🏋️ Overload Target: Try ${overloadWeight} or ${overloadRepsMin}-${overloadRepsMax} ${unitText}`
+      : `💪 Overload Target: Try ${overloadRepsMin}-${overloadRepsMax} ${unitText}`;
     
     overloadHtml = `
       <div class="exercise-overload-card" style="margin-bottom: 8px; padding: 8px 10px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 6px; font-size: 12px;">
         <div style="font-weight: 700; color: var(--accent); margin-bottom: 2px;">⚡ Previous Session (${escapeHtml(prevLog.dateStr)})</div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text);">
-          <span>Best Set: ${prevLog.maxWeight > 0 ? `${prevLog.maxWeight} lb x ` : ''}${prevLog.maxReps} reps</span>
+          <span>Best Set: ${prevLog.maxWeight > 0 ? `${prevLog.maxWeight} lb x ` : ''}${prevLog.maxReps} ${unitText}</span>
           <span>Logged Sets: ${prevLog.setsCount}</span>
         </div>
         <div style="font-weight: 600; color: var(--text-dark);">${targetText}</div>
@@ -2019,10 +2041,12 @@ function createExerciseDom(ex, s, subIndex = null, supersetTag = '') {
   const setsEl = exEl.querySelector(`#sets-${CSS.escape(ex.id)}`);
   setsEl.innerHTML = sets.map((st, idx) => {
     const ts = st.ts ? new Date(st.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    const weightText = (!st.w || st.w === '0' || st.w === 0 || String(st.w).toLowerCase() === 'bw') ? 'BW' : `${st.w} lb`;
+    const labelText = isTime ? 'sec' : 'reps';
     return `
       <div class="setRow">
-        <div class="small" style="font-weight:700">Set #${idx+1} · ${escapeHtml(String(st.w ?? ''))} lb</div>
-        <div class="small">${escapeHtml(String(st.r ?? ''))} reps · ${escapeHtml(ts)}</div>
+        <div class="small" style="font-weight:700">Set #${idx+1} · ${escapeHtml(weightText)}</div>
+        <div class="small">${escapeHtml(String(st.r ?? ''))} ${labelText} · ${escapeHtml(ts)}</div>
         <button class="btn danger" style="padding: 4px 8px; font-size: 11px;" data-action="deleteSet" data-ex="${ex.id}" data-idx="${idx}" type="button">Del</button>
       </div>
     `;
@@ -2489,11 +2513,27 @@ function logSet(exId) {
   const container = $('exerciseList');
   const wInput = container.querySelector(`input[data-field="w"][data-ex="${CSS.escape(exId)}"]`);
   const rInput = container.querySelector(`input[data-field="r"][data-ex="${CSS.escape(exId)}"]`);
-  const w = wInput?.value?.trim();
+  let w = wInput?.value?.trim() || '';
   const r = rInput?.value?.trim();
-  if (!w || !r) {
-    alert('Enter weight and reps.');
-    return;
+
+  // Find exercise details to determine bodyweight/time constraints
+  const ex = s.exercises?.find(e => e.id === exId);
+  const matched = ex ? findLibraryExercise(ex.name) : null;
+  const type = matched?.type || '';
+  const isTime = ex ? isTimeBasedExercise(ex.name, type) : false;
+  const isBodyweight = ex ? isBodyweightExercise(ex.name, type) : false;
+
+  if (isBodyweight) {
+    if (!r) {
+      alert(isTime ? 'Enter seconds.' : 'Enter reps.');
+      return;
+    }
+    if (!w) w = '0';
+  } else {
+    if (!w || !r) {
+      alert('Enter weight and reps.');
+      return;
+    }
   }
 
   s.entries[exId] = s.entries[exId] || [];
@@ -2501,7 +2541,7 @@ function logSet(exId) {
   saveSessions();
 
   // quick UX
-  if (wInput) wInput.value = w;
+  if (wInput) wInput.value = (w === '0' || w === 0) ? '' : w;
   if (rInput) rInput.value = '';
 
   // start a default rest timer (90 seconds)
@@ -6746,7 +6786,14 @@ function renderHistoryLogs() {
             }
           }
           
-          const setsSummary = sets.map((st, idx) => `#${idx + 1}: ${st.w} lb x ${st.r}`).join(' · ');
+          const matched = findLibraryExercise(exName);
+          const type = matched?.type || '';
+          const isTime = isTimeBasedExercise(exName, type);
+          const setsSummary = sets.map((st, idx) => {
+            const weightText = (!st.w || st.w === '0' || st.w === 0 || String(st.w).toLowerCase() === 'bw') ? 'BW' : `${st.w} lb`;
+            const unitText = isTime ? 's' : '';
+            return `#${idx + 1}: ${weightText} x ${st.r}${unitText}`;
+          }).join(' · ');
           exercisesHtml += `
             <div class="small" style="line-height: 1.4;">
               <strong>${escapeHtml(exName)}</strong>: <span class="muted">${escapeHtml(setsSummary)}</span>
