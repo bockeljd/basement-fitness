@@ -2022,6 +2022,17 @@ function renderWorkout() {
 
   $('workoutNotes').value = s.notes || '';
 
+  const endBtn = $('btnEndWorkout');
+  if (endBtn) {
+    if (s.endedAt) {
+      endBtn.textContent = 'Save & Close';
+      endBtn.classList.remove('danger');
+    } else {
+      endBtn.textContent = 'End Workout';
+      endBtn.classList.add('danger');
+    }
+  }
+
   const list = $('exerciseList');
   list.innerHTML = '';
 
@@ -2145,6 +2156,18 @@ function endWorkout() {
   const s = activeSession();
   if (!s) return;
   
+  if (s.endedAt) {
+    state.activeSessionId = null;
+    saveSessions();
+    saveActive();
+    stopTimer();
+    
+    switchTab('dashboard');
+    renderWorkout();
+    renderDashboard();
+    return;
+  }
+
   if (confirm('Are you ready to complete and log this workout session?')) {
     s.endedAt = new Date().toISOString();
     state.activeSessionId = null;
@@ -3525,6 +3548,234 @@ function startPlannedWorkout(dateStr) {
   startRoutine(r.id);
 }
 
+function logPastWorkout(dateStr) {
+  if (state.activeSessionId) {
+    const active = activeSession();
+    if (active && !active.endedAt) {
+      alert('You have an active live workout session in progress. Please complete or cancel it first.');
+      return;
+    }
+  }
+
+  const item = (state.plan?.days || []).find(d => d.date === dateStr);
+  
+  ensurePlanGenerated();
+  
+  let r = item ? item.routine : null;
+  if (!r) {
+    r = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, 0);
+  }
+
+  const parts = dateStr.split('-');
+  const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+  const endedAt = dt.toISOString();
+  const startedAt = new Date(dt.getTime() - 30 * 60 * 1000).toISOString();
+
+  const entries = {};
+  const exercises = (r.exercises || []).map(ex => {
+    const id = ex.id || uid();
+    let setsCount = 3;
+    let repsCount = 10;
+    let weight = 0;
+
+    const textToSearch = ((ex.info || '') + ' ' + (ex.name || '')).toLowerCase();
+    const setsMatch = textToSearch.match(/(\d+)\s*(?:sets|x)/i) || textToSearch.match(/(?:sets|x)\s*(\d+)/i);
+    if (setsMatch) {
+      setsCount = parseInt(setsMatch[1], 10);
+    }
+    const repsMatch = textToSearch.match(/(\d+)\s*(?:reps|rep)/i) || textToSearch.match(/(?:reps|rep)\s*(\d+)/i) || textToSearch.match(/x\s*(\d+)/i);
+    if (repsMatch) {
+      repsCount = parseInt(repsMatch[1], 10);
+    }
+    
+    entries[id] = Array.from({ length: setsCount }, () => ({
+      w: weight,
+      r: repsCount,
+      ts: endedAt
+    }));
+
+    return {
+      id,
+      name: ex.name,
+      info: ex.info || '',
+      superset: ex.superset || ''
+    };
+  });
+
+  const session = {
+    id: uid(),
+    routineId: r.id || 'custom-past-workout',
+    startedAt,
+    endedAt,
+    notes: 'Logged retroactively.',
+    entries,
+    exercises
+  };
+
+  state.sessions.unshift(session);
+  saveSessions();
+
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+  }
+
+  closeDayPopover();
+  renderDashboard();
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+  } else {
+    renderPlan();
+  }
+
+  switchTab('dashboard');
+  
+  // Open history log modal so user can view/edit details
+  const modal = $('modalHistory');
+  if (modal) {
+    modal.classList.add('active');
+    renderHistoryLogs();
+  }
+
+  alert(`Past workout logged successfully for ${dateStr}! Use the "Edit Log" or "Edit Date" options in the Complete Logs view if you need to adjust sets, reps, weights, or notes.`);
+}
+
+function promptAndLogPastWorkout() {
+  if (state.activeSessionId) {
+    const active = activeSession();
+    if (active && !active.endedAt) {
+      alert('You have an active live workout session in progress. Please complete or cancel it first.');
+      return;
+    }
+  }
+
+  const availableRoutines = [];
+  
+  (state.routines || []).forEach(r => {
+    availableRoutines.push({ id: r.id, name: `${r.name} (Custom)` });
+  });
+
+  (state.workoutLibrary || []).forEach(r => {
+    if (!availableRoutines.some(ar => ar.id === r.id)) {
+      availableRoutines.push({ id: r.id, name: `${r.name} (Library)` });
+    }
+  });
+
+  if (availableRoutines.length === 0) {
+    alert('No workout routines available. Please create a routine or sync templates first.');
+    return;
+  }
+
+  let routinePromptText = 'Select a routine to log:\n';
+  availableRoutines.forEach((r, idx) => {
+    routinePromptText += `${idx + 1}. ${r.name}\n`;
+  });
+  routinePromptText += '\nEnter the routine number (e.g. 1):';
+
+  const routineChoice = prompt(routinePromptText, '1');
+  if (!routineChoice) return;
+
+  const routineIdx = parseInt(routineChoice, 10) - 1;
+  if (isNaN(routineIdx) || routineIdx < 0 || routineIdx >= availableRoutines.length) {
+    alert('Invalid choice.');
+    return;
+  }
+
+  const selectedRoutineId = availableRoutines[routineIdx].id;
+
+  const yesterdayYmd = ymd(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const dateChoice = prompt('Enter the date for this workout (YYYY-MM-DD):', yesterdayYmd);
+  if (!dateChoice) return;
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateChoice)) {
+    alert('Invalid date format. Please use YYYY-MM-DD.');
+    return;
+  }
+
+  const parts = dateChoice.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]) - 1;
+  const d = Number(parts[2]);
+  const testDate = new Date(y, m, d);
+  if (isNaN(testDate.getTime())) {
+    alert('Invalid date value.');
+    return;
+  }
+
+  let r = state.routines.find(rt => rt.id === selectedRoutineId) || 
+          (state.workoutLibrary || []).find(rt => rt.id === selectedRoutineId);
+  if (!r) {
+    alert('Selected routine not found.');
+    return;
+  }
+
+  const dt = new Date(y, m, d, 12, 0, 0);
+  const endedAt = dt.toISOString();
+  const startedAt = new Date(dt.getTime() - 30 * 60 * 1000).toISOString();
+
+  const entries = {};
+  const exercises = (r.exercises || []).map(ex => {
+    const id = ex.id || uid();
+    let setsCount = 3;
+    let repsCount = 10;
+    let weight = 0;
+
+    const textToSearch = ((ex.info || '') + ' ' + (ex.name || '')).toLowerCase();
+    const setsMatch = textToSearch.match(/(\d+)\s*(?:sets|x)/i) || textToSearch.match(/(?:sets|x)\s*(\d+)/i);
+    if (setsMatch) {
+      setsCount = parseInt(setsMatch[1], 10);
+    }
+    const repsMatch = textToSearch.match(/(\d+)\s*(?:reps|rep)/i) || textToSearch.match(/(?:reps|rep)\s*(\d+)/i) || textToSearch.match(/x\s*(\d+)/i);
+    if (repsMatch) {
+      repsCount = parseInt(repsMatch[1], 10);
+    }
+    
+    entries[id] = Array.from({ length: setsCount }, () => ({
+      w: weight,
+      r: repsCount,
+      ts: endedAt
+    }));
+
+    return {
+      id,
+      name: ex.name,
+      info: ex.info || '',
+      superset: ex.superset || ''
+    };
+  });
+
+  const session = {
+    id: uid(),
+    routineId: r.id,
+    startedAt,
+    endedAt,
+    notes: 'Logged retroactively.',
+    entries,
+    exercises
+  };
+
+  state.sessions.unshift(session);
+  saveSessions();
+
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+  }
+
+  hideHistoryModal();
+  renderDashboard();
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+  } else {
+    renderPlan();
+  }
+
+  switchTab('dashboard');
+  showHistoryModal();
+
+  alert(`Past workout logged successfully for ${dateChoice}! Use the "Edit Log" or "Edit Date" options next to the workout log if you need to adjust specific sets/reps.`);
+}
+
+
 function generateTodayFromGoals() {
   if (!ensurePlanGenerated()) {
     alert('Set a primary goal first.');
@@ -3712,7 +3963,10 @@ function showDayPopover(dateStr) {
         </div>
         
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;">
-          <button class="btn" data-plan-action="start" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">Start Session</button>
+          ${dateStr < ymd(new Date()) 
+            ? `<button class="btn" data-plan-action="log-past" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px; background: var(--accent-gradient);">Log Past Workout</button>`
+            : `<button class="btn" data-plan-action="start" data-plan-date="${dateStr}" type="button" style="flex: 1; min-width: 100px;">Start Session</button>`
+          }
           <button class="btn secondary" data-plan-action="edit-workout" data-plan-date="${dateStr}" type="button">✏️ Edit Workout</button>
           <button class="btn secondary" data-plan-action="swap" data-plan-date="${dateStr}" type="button">🔁 Swap Focus</button>
           <button class="btn secondary" data-plan-action="shift" data-plan-date="${dateStr}" type="button">➡️ Shift Day</button>
@@ -3984,6 +4238,8 @@ function handleCalendarAction(act, dateStr) {
   if (act === 'start') {
     closeDayPopover();
     startPlannedWorkout(dateStr);
+  } else if (act === 'log-past') {
+    logPastWorkout(dateStr);
   } else if (act === 'edit-workout') {
     showEditWorkoutView(dateStr);
   } else if (act === 'swap') {
@@ -5797,6 +6053,7 @@ function wire() {
   // History modal show/hide wiring
   $('btnShowAllLogs')?.addEventListener('click', showHistoryModal);
   $('btnHistoryModalClose')?.addEventListener('click', hideHistoryModal);
+  $('btnLogPastWorkout')?.addEventListener('click', promptAndLogPastWorkout);
   $('modalHistory')?.addEventListener('click', (e) => {
     if (e.target === $('modalHistory')) hideHistoryModal();
   });
@@ -6341,12 +6598,16 @@ function renderHistoryLogs() {
     card.style.alignItems = 'stretch';
     card.style.gap = '8px';
     card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
         <div>
           <div style="font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 15px;">${escapeHtml(routineName)}</div>
           <div class="small" style="color: var(--muted); margin-top: 2px;">${dateStr} · ⏱️ ${minutes} min</div>
         </div>
-        <button class="btn danger" style="padding: 6px 10px; font-size: 12px;" data-delete-session-id="${s.id}" type="button">Delete</button>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="btn secondary" style="padding: 6px 10px; font-size: 12px;" data-edit-session-id="${s.id}" type="button">Edit Log</button>
+          <button class="btn secondary" style="padding: 6px 10px; font-size: 12px;" data-edit-session-date-id="${s.id}" type="button">Edit Date</button>
+          <button class="btn danger" style="padding: 6px 10px; font-size: 12px;" data-delete-session-id="${s.id}" type="button">Delete</button>
+        </div>
       </div>
       ${exercisesHtml}
       ${notesHtml}
@@ -6360,6 +6621,99 @@ function renderHistoryLogs() {
       if (sessionId) deleteSession(sessionId);
     });
   });
+
+  container.querySelectorAll('[data-edit-session-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const sessionId = btn.getAttribute('data-edit-session-id');
+      if (sessionId) editSessionContent(sessionId);
+    });
+  });
+
+  container.querySelectorAll('[data-edit-session-date-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const sessionId = btn.getAttribute('data-edit-session-date-id');
+      if (sessionId) editSessionDate(sessionId);
+    });
+  });
+}
+
+function editSessionContent(sessionId) {
+  if (state.activeSessionId) {
+    const active = activeSession();
+    if (active && !active.endedAt) {
+      alert('You have an active live workout session in progress. Please complete or cancel it first.');
+      return;
+    }
+  }
+
+  state.activeSessionId = sessionId;
+  saveActive();
+
+  const modal = $('modalHistory');
+  if (modal) modal.classList.remove('active');
+
+  switchTab('workout');
+  renderWorkout();
+}
+
+function editSessionDate(sessionId) {
+  const s = state.sessions.find(x => x.id === sessionId);
+  if (!s) return;
+
+  const originalDateStr = s.endedAt ? ymd(new Date(s.endedAt)) : ymd(new Date());
+  const newDateStr = prompt('Enter the new date for this session (YYYY-MM-DD):', originalDateStr);
+  if (!newDateStr) return;
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(newDateStr)) {
+    alert('Invalid date format. Please use YYYY-MM-DD.');
+    return;
+  }
+
+  const parts = newDateStr.split('-');
+  const y = Number(parts[0]);
+  const m = Number(parts[1]) - 1;
+  const d = Number(parts[2]);
+
+  const testDate = new Date(y, m, d);
+  if (isNaN(testDate.getTime())) {
+    alert('Invalid date value.');
+    return;
+  }
+
+  const started = new Date(s.startedAt || s.endedAt || Date.now());
+  const ended = new Date(s.endedAt || Date.now());
+  
+  const durationMs = ended.getTime() - started.getTime();
+
+  ended.setFullYear(y, m, d);
+  started.setTime(ended.getTime() - (durationMs > 0 ? durationMs : 30 * 60 * 1000));
+
+  s.endedAt = ended.toISOString();
+  s.startedAt = started.toISOString();
+
+  if (s.entries) {
+    Object.keys(s.entries).forEach(exId => {
+      s.entries[exId].forEach(st => {
+        if (st.ts) {
+          const stDate = new Date(st.ts);
+          stDate.setFullYear(y, m, d);
+          st.ts = stDate.toISOString();
+        }
+      });
+    });
+  }
+
+  saveSessions();
+  renderHistoryLogs();
+  renderDashboard();
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+  } else {
+    renderPlan();
+  }
+
+  alert(`Workout session date updated to ${newDateStr} successfully.`);
 }
 
 function deleteSession(sessionId) {
