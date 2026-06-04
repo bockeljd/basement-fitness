@@ -1,4 +1,4 @@
-const CACHE_NAME = 'basement-fitness-v26';
+const CACHE_NAME = 'basement-fitness-v46';
 const ASSETS = [
   './',
   'index.html',
@@ -41,6 +41,13 @@ self.addEventListener('fetch', (e) => {
   // Do not try to intercept browser extension requests
   if (e.request.url.startsWith('chrome-extension://')) return;
 
+  const url = new URL(e.request.url);
+  // Avoid intercepting directory navigation without trailing slash to prevent Safari WebKitInternal redirect errors.
+  // Letting the browser handle it natively allows the server's redirect to /workout/ to succeed.
+  if (e.request.mode === 'navigate' && url.pathname.endsWith('/workout')) {
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -54,6 +61,19 @@ self.addEventListener('fetch', (e) => {
       }
 
       return fetch(e.request).then((networkResponse) => {
+        // Handle redirect responses to prevent Safari WebKitInternal:0 redirect errors
+        if (e.request.mode === 'navigate' && (networkResponse.redirected || (networkResponse.status >= 300 && networkResponse.status < 400))) {
+          const redirectUrl = networkResponse.url || networkResponse.headers.get('Location');
+          if (redirectUrl) {
+            return new Response(
+              `<html><head><meta http-equiv="refresh" content="0; url=${redirectUrl}"></head><body>Redirecting to ${redirectUrl}...</body></html>`,
+              {
+                headers: { 'Content-Type': 'text/html' }
+              }
+            );
+          }
+        }
+
         if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
         }
@@ -67,7 +87,7 @@ self.addEventListener('fetch', (e) => {
         return networkResponse;
       }).catch(() => {
         if (e.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return caches.match('index.html');
         }
       });
     })

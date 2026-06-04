@@ -1828,3 +1828,97 @@ select.input {
   display: inline-block;
   box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
 }
+
+/* Workout Ideas & Routines Side-by-Side Grid */
+.ideas-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .ideas-layout {
+    grid-template-columns: 1fr 1.3fr;
+  }
+}
+
+.ideas-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Onboarding Banner */
+.onboarding-banner {
+  background: var(--accent-light);
+  border: 1.5px solid var(--accent);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1), var(--shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 640px) {
+  .onboarding-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  text-align: left;
+}
+
+.banner-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.banner-content h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  margin: 0 0 4px 0;
+  color: var(--text);
+}
+
+.banner-content p {
+  font-size: 13px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn-text {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-text:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}

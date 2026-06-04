@@ -1563,6 +1563,136 @@ const EXERCISES_BY_GROUP = {
         "Look straight ahead or up slightly."
       ],
       proTip: "Keep your shoulders down and away from your ears; do not lock out your elbows if it pinches your lower back."
+    },
+    {
+      name: "Standing Calf Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Calves",
+      info: "Relieves tightness in the calf muscles (gastrocnemius and soleus).",
+      steps: [
+        "Stand facing a wall at arm's length.",
+        "Place your hands flat on the wall and step one foot back, keeping the heel flat on the floor.",
+        "Bend your front knee and lean in until you feel a comfortable stretch in your back calf."
+      ],
+      proTip: "Keep your back leg completely straight and pointing forward to isolate the deep calf."
+    },
+    {
+      name: "Downward Dog Pedal",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Calves & Hamstrings",
+      info: "Active stretch targeting ankles, calves, and hamstrings.",
+      steps: [
+        "Start in a high plank, then lift your hips high and back into Downward Dog.",
+        "Slowly pedal your feet by pressing one heel flat into the floor while bending the opposite knee.",
+        "Alternate sides slowly, holding each stretch for 2-3 seconds."
+      ],
+      proTip: "Spread your fingers wide and press through your palms to shift weight back into your legs."
+    },
+    {
+      name: "Kneeling Hip Flexor Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Hips & Quads",
+      info: "Opens up hip flexors and rectus femoris after sitting or lower body work.",
+      steps: [
+        "Kneel on one knee, placing the opposite foot flat in front with both knees at 90-degree angles.",
+        "Keep your spine tall and tilt your pelvis backward (tuck your tailbone).",
+        "Squeeze your glute on the kneeling side and gently shift your weight forward."
+      ],
+      proTip: "Avoid arching your lower back to get further forward; pelvic tilt is key for stretching hip flexors."
+    },
+    {
+      name: "Cossack Squat Stretch",
+      type: "Stretching",
+      difficulty: "Intermediate",
+      target: "Inner Thighs & Hamstrings",
+      info: "Deep side-to-side stretch targeting the groin, hamstrings, and hip capsule.",
+      steps: [
+        "Stand with a very wide stance, toes pointed slightly out.",
+        "Shift your weight to one side, bending that knee and dropping your hips low while keeping the other leg completely straight.",
+        "Pivot the straight leg's heel into the floor, pointing the toes straight up to the ceiling."
+      ],
+      proTip: "Keep your torso as upright as possible and place hands on the floor if you need assistance with balance."
+    },
+    {
+      name: "Standing Quad Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Quads",
+      info: "Isolates the quadriceps on the front of the thigh.",
+      steps: [
+        "Stand tall on one leg (hold a wall or sturdy chair for balance).",
+        "Bend your other knee and reach back to grab your foot or ankle with your hand.",
+        "Gently pull your heel toward your glutes, keeping your knees aligned next to each other."
+      ],
+      proTip: "Squeeze your glutes and push your hips forward slightly to increase the quad stretch."
+    },
+    {
+      name: "Doorway Chest Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Chest & Shoulders",
+      info: "Opens the pectoral muscles and front shoulders to reverse poor posture.",
+      steps: [
+        "Stand inside a doorway and place your forearms flat against the door frame with elbows bent at 90 degrees.",
+        "Slowly step one foot forward through the doorway.",
+        "Lean your weight forward gently until you feel a comfortable stretch across your chest."
+      ],
+      proTip: "Perform this with elbows placed at different heights on the frame to stretch different parts of the chest."
+    },
+    {
+      name: "Cross-Body Shoulder Stretch",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Shoulders",
+      info: "Stretches the posterior deltoid and rotator cuff muscles.",
+      steps: [
+        "Extend one arm straight across your chest.",
+        "Bring your other arm underneath to hook it, pulling the arm close to your torso.",
+        "Hold, breathing deeply, then switch sides."
+      ],
+      proTip: "Keep the shoulder of the stretched arm down; do not let it shrug up toward your ear."
+    },
+    {
+      name: "Leg Swings",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Hips & Hamstrings",
+      info: "Dynamic warm-up movement to lubricate the hip joints and prepare hamstrings.",
+      steps: [
+        "Stand sideways next to a wall, placing one hand on it for support.",
+        "Swing your outside leg forward and backward in a smooth, swinging motion.",
+        "Keep your torso upright and core engaged to prevent excessive back arching."
+      ],
+      proTip: "Start with a small range of motion and gradually swing higher as your hips warm up."
+    },
+    {
+      name: "Calf Raises (Dynamic)",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Calves",
+      info: "Dynamic calf raises to activate calf muscles and prepare ankle joints.",
+      steps: [
+        "Stand with feet hip-width apart, arms at your sides.",
+        "Slowly lift your heels up, pressing up through the balls of your feet.",
+        "Pause for a brief second at the top, then slowly lower your heels back to the floor."
+      ],
+      proTip: "Do not bounce; control the descent to fully engage the calf muscles."
+    },
+    {
+      name: "Arm Circles",
+      type: "Stretching",
+      difficulty: "Beginner",
+      target: "Shoulders",
+      info: "Rotator cuff activation and shoulder joint lubrication.",
+      steps: [
+        "Stand tall with arms extended straight out to your sides, parallel to the floor.",
+        "Begin making small forward circular motions with your hands, gradually making them larger.",
+        "Switch to backwards circles and repeat."
+      ],
+      proTip: "Keep your neck relaxed and make circles slowly, feeling your shoulder blades move."
     }
   ]
 };
@@ -2616,6 +2746,29 @@ function switchProfileTo(username) {
     localStorage.removeItem('bf:activeUser');
   }
 
+  // Restore family cloud sync credentials if username matches family participant
+  const storedPart = sessionStorage.getItem('ff_participant') || localStorage.getItem('ff_participant');
+  if (storedPart) {
+    try {
+      const part = JSON.parse(storedPart);
+      if (part && part.display_name === username) {
+        localStorage.setItem('bf:cloudUser', part.id);
+        localStorage.setItem('bf:cloudDisplayName', part.display_name);
+        localStorage.setItem('bf:cloudPass', 'family-session-bypass');
+      } else {
+        localStorage.removeItem('bf:cloudUser');
+        localStorage.removeItem('bf:cloudPass');
+        localStorage.removeItem('bf:cloudDisplayName');
+        localStorage.removeItem('bf:cloudLastSynced');
+      }
+    } catch (e) {}
+  } else {
+    localStorage.removeItem('bf:cloudUser');
+    localStorage.removeItem('bf:cloudPass');
+    localStorage.removeItem('bf:cloudDisplayName');
+    localStorage.removeItem('bf:cloudLastSynced');
+  }
+
   seedIfEmpty();
   loadState();
 
@@ -2628,6 +2781,7 @@ function switchProfileTo(username) {
   setSubtitle('Workout tracker');
   hydrateGoalsForm();
   renderProfileSwitcher();
+  updateCloudSyncStatusUI();
   
   renderWorkoutIdeas();
   renderExercisesDirectory();
@@ -2675,6 +2829,20 @@ function importData(file) {
         return;
       }
       
+      const importUser = data.username || data.profile?.username || '';
+      const activeUser = localStorage.getItem('bf:activeUser') || '';
+      
+      if (importUser && importUser !== activeUser) {
+        if (confirm(`This backup file belongs to user "${importUser}". Would you like to switch to this profile and import it?`)) {
+          localStorage.setItem('bf:activeUser', importUser);
+          const users = store.getGlobal('bf:allUsers', []);
+          if (!users.includes(importUser)) {
+            users.push(importUser);
+            store.setGlobal('bf:allUsers', users);
+          }
+        }
+      }
+
       if (data.profile) state.profile = data.profile;
       if (data.primaryGoal) state.primaryGoal = data.primaryGoal;
       if (data.secondaryGoal) state.secondaryGoal = data.secondaryGoal;
@@ -2692,14 +2860,8 @@ function importData(file) {
       saveSessions();
       saveActive();
 
-      const importUser = data.username || data.profile?.username || '';
-      const activeUser = localStorage.getItem('bf:activeUser') || '';
-      if (importUser && importUser !== activeUser) {
-        if (confirm(`This backup file belongs to user "${importUser}". Would you like to switch to this profile now?`)) {
-          switchProfileTo(importUser);
-          return;
-        }
-      }
+      setSubtitle('Workout tracker');
+      applyTheme();
 
       renderRoutines();
       renderWorkout();
@@ -2727,11 +2889,15 @@ function updateCloudSyncStatusUI() {
   const loginBtn = $('btnCloudSyncLogin');
   const forceBtn = $('btnCloudSyncForce');
   const logoutBtn = $('btnCloudSyncLogout');
+  const syncPanel = $('settingsCloudSyncPanel');
+
+  if (syncPanel) syncPanel.style.display = 'block';
 
   if (!badge) return;
 
   const user = localStorage.getItem('bf:cloudUser');
   const lastSynced = localStorage.getItem('bf:cloudLastSynced') || 'Never';
+  const pass = localStorage.getItem('bf:cloudPass');
 
   if (user) {
     badge.textContent = 'Active';
@@ -2744,7 +2910,7 @@ function updateCloudSyncStatusUI() {
 
     if (loginBtn) loginBtn.style.display = 'none';
     if (forceBtn) forceBtn.style.display = 'inline-flex';
-    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = (pass === 'family-session-bypass') ? 'none' : 'inline-flex';
   } else {
     badge.textContent = 'Disconnected';
     badge.style.background = 'var(--border)';
@@ -2752,9 +2918,21 @@ function updateCloudSyncStatusUI() {
     
     if (statusArea) statusArea.style.display = 'none';
 
-    if (loginBtn) loginBtn.style.display = 'inline-flex';
+    const isChallengeSession = !!(sessionStorage.getItem('ff_participant') || localStorage.getItem('ff_participant'));
+    if (loginBtn) loginBtn.style.display = isChallengeSession ? 'none' : 'inline-flex';
     if (forceBtn) forceBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'none';
+  }
+
+  const banner = $('onboardingSyncBanner');
+  if (banner) {
+    const isChallengeSession = !!(sessionStorage.getItem('ff_participant') || localStorage.getItem('ff_participant'));
+    const dismissed = localStorage.getItem('bf:cloudOnboardingDismissed') === 'true';
+    if (!user && !isChallengeSession && !dismissed) {
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
   }
 }
 
@@ -2892,11 +3070,26 @@ function showCloudSyncModal() {
   $('cloudPasswordInput').value = '';
   $('cloudDisplayNameInput').value = '';
   $('cloudSyncAlert').style.display = 'none';
+
+  const storedPart = sessionStorage.getItem('ff_participant') || localStorage.getItem('ff_participant');
+  if (storedPart) {
+    try {
+      const part = JSON.parse(storedPart);
+      if (part && part.display_name) {
+        const suggestedUser = part.display_name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        $('cloudUsernameInput').value = suggestedUser;
+        $('cloudDisplayNameInput').value = part.display_name;
+      }
+    } catch (e) {
+      console.warn('Failed to parse ff_participant for auto-fill:', e);
+    }
+  }
   setCloudAuthMode('login');
 }
 
 function closeCloudSyncModal() {
   $('modalCloudSync').classList.remove('active');
+  localStorage.setItem('bf:cloudPromptDismissed', 'true');
 }
 
 function setCloudAuthMode(mode) {
@@ -2960,6 +3153,7 @@ async function handleCloudAuthSubmit(e) {
     localStorage.setItem('bf:cloudUser', body.user.username);
     localStorage.setItem('bf:cloudPass', password);
     localStorage.setItem('bf:cloudDisplayName', body.user.displayName);
+    localStorage.removeItem('bf:cloudPromptDismissed');
     
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     localStorage.setItem('bf:cloudLastSynced', timeStr);
@@ -3016,9 +3210,14 @@ async function handleCloudAuthSubmit(e) {
 
 function resetAll() {
   if (!confirm('Reset all local data (routines, history, goals, profile, plan settings)?')) return;
-  Object.values(KEYS).forEach(key => {
-    localStorage.removeItem(key);
-  });
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('bf:')) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(key => localStorage.removeItem(key));
   window.location.reload();
 }
 
@@ -3681,6 +3880,26 @@ function updateGoalFieldVisibility() {
   }
 }
 
+function autoSelectSplit(goalType, daysPerWeek) {
+  const days = Number(daysPerWeek) || 3;
+  // Goal-specific overrides first
+  if (goalType === 'run_5k' || goalType === '5k') return 'alternating';
+  if (goalType === 'bar_hang' || goalType === 'barhang') return 'upper_lower';
+  if (goalType === 'pushups') return 'upper_lower';
+  if (goalType === 'lose_weight') return days >= 5 ? 'ppl' : days === 4 ? 'upper_lower' : 'alternating';
+  // Muscle/strength goals benefit from more targeted splits at higher frequency
+  if (goalType === 'build_muscle' || goalType === 'strength') {
+    if (days >= 5) return 'ppl';
+    if (days === 4) return 'upper_lower';
+    return 'alternating';
+  }
+  // Default: pick by days per week
+  if (days <= 2) return 'full_body';
+  if (days === 3) return 'alternating';
+  if (days === 4) return 'upper_lower';
+  return 'ppl'; // 5+
+}
+
 function saveGoalsFromForm() {
   const t = String($('primaryType')?.value || '').trim();
   if (!t) {
@@ -3689,7 +3908,7 @@ function saveGoalsFromForm() {
   }
   const durationMin = Number($('primaryMinutes')?.value || state.profile.durationMin || 30);
   const daysPerWeek = Number($('primaryDays')?.value || 3);
-  const splitType = String($('primarySplit')?.value || 'alternating').trim();
+  const splitType = autoSelectSplit(t, daysPerWeek || 3);
   const difficulty = String($('primaryDifficulty')?.value || 'intermediate').trim();
 
   // Collect equipment from the goal form checkboxes
@@ -3766,8 +3985,12 @@ function saveGoalsFromForm() {
 
   state.primaryGoal = goal;
 
-  const st = String($('secondaryType')?.value || '').trim();
-  state.secondaryGoal = st ? { type: st, createdAt: new Date().toISOString() } : null;
+  const stEl = $('secondaryType');
+  const stActive = stEl ? stEl.querySelector('.pill-btn.active') : null;
+  const st = stActive ? String(stActive.getAttribute('data-value') || '').trim() : '';
+  // Treat old lifestyle types (steps/protein/mobility/zone2) as no finisher
+  const validFinisher = st === 'finisher' ? st : '';
+  state.secondaryGoal = validFinisher ? { type: validFinisher, createdAt: new Date().toISOString() } : null;
 
   savePrimaryGoal();
   saveSecondaryGoal();
@@ -3801,7 +4024,7 @@ function hydrateGoalsForm() {
   const pt = $('primaryType');
   const pm = $('primaryMinutes');
   const pd = $('primaryDays');
-  const st = $('secondaryType');
+  const stEl = $('secondaryType');
   const base = $('primaryBaseline');
   const prog = $('primaryProgress');
   const diff = $('primaryDifficulty');
@@ -3809,11 +4032,18 @@ function hydrateGoalsForm() {
   if (pt) pt.value = state.primaryGoal?.type || '';
   if (pm) pm.value = String(state.primaryGoal?.durationMin || state.profile.durationMin || 30);
   if (pd) pd.value = String(state.primaryGoal?.daysPerWeek || 3);
-  if (st) st.value = state.secondaryGoal?.type || '';
+  // Hydrate finisher pill toggle
+  if (stEl) {
+    const currentType = state.secondaryGoal?.type || '';
+    const isFinisher = currentType === 'finisher';
+    stEl.querySelectorAll('.pill-btn').forEach(btn => {
+      const val = btn.getAttribute('data-value') || '';
+      btn.classList.toggle('active', isFinisher ? val === 'finisher' : val === '');
+    });
+  }
   if (diff) diff.value = state.primaryGoal?.difficulty || state.profile?.difficulty || 'intermediate';
 
-  const ps = $('primarySplit');
-  if (ps) ps.value = state.primaryGoal?.splitType || 'alternating';
+  // splitType is auto-determined — no UI element to hydrate
 
   // Hydrate equipment checkboxes from the goal's equipment, falling back to profile
   const goalEq = new Set(state.primaryGoal?.equipment || state.profile?.equipment || ['bodyweight']);
@@ -3908,25 +4138,24 @@ function ensurePlanGenerated() {
   }
 
   // Detect stale plan data based on goal settings metadata or legacy naming
-  const planGoalType = state.plan?.goalType;
-  const planDaysPerWeek = state.plan?.daysPerWeek;
-  const planSplitType = state.plan?.splitType;
-  const planDifficulty = state.plan?.difficulty;
-  const planEquipmentStr = state.plan?.equipment ? JSON.stringify(state.plan.equipment) : '';
-  const currentEquipmentStr = state.primaryGoal?.equipment ? JSON.stringify(state.primaryGoal.equipment) : '';
+  const planGoalType = state.plan?.goalType || '';
+  const planDaysPerWeek = state.plan?.daysPerWeek || 3;
+  const planSplitType = state.plan?.splitType || 'alternating';
+  const planDifficulty = state.plan?.difficulty || 'intermediate';
+  
+  const planEquipment = state.plan?.equipment || [];
+  const currentEquipment = state.primaryGoal?.equipment || [];
+  const planEquipmentStr = JSON.stringify([...planEquipment].sort());
+  const currentEquipmentStr = JSON.stringify([...currentEquipment].sort());
 
   const isPlanStale = !planGoalType || 
-    planGoalType !== state.primaryGoal?.type ||
-    planDaysPerWeek !== state.primaryGoal?.daysPerWeek ||
-    planSplitType !== state.primaryGoal?.splitType ||
-    planDifficulty !== state.primaryGoal?.difficulty ||
+    planGoalType !== (state.primaryGoal?.type || '') ||
+    Number(planDaysPerWeek) !== Number(state.primaryGoal?.daysPerWeek || 3) ||
+    planSplitType !== (state.primaryGoal?.splitType || 'alternating') ||
+    planDifficulty !== (state.primaryGoal?.difficulty || 'intermediate') ||
     planEquipmentStr !== currentEquipmentStr;
 
-  const hasStaleNames = state.plan.days.some(d =>
-    d.kind === 'workout' && d.routine?.name && /^Goal Session:/i.test(d.routine.name)
-  );
-
-  if (isPlanStale || hasStaleNames) {
+  if (isPlanStale) {
     state.plan = { 
       generatedAt: new Date().toISOString(), 
       days: [],
@@ -4400,7 +4629,8 @@ function showDayPopover(dateStr) {
       const baseName = parts[0].trim();
       const reps = parts[1] ? parts[1].replace(')', '').trim() : '';
       const sBadge = ex.superset ? `<span class="superset-badge" style="padding: 1px 5px; font-size: 9px; margin-right: 6px; box-shadow: none; line-height: 1;">${ex.superset}</span>` : '';
-      return `<li style="margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap;">${sBadge}<strong>${escapeHtml(baseName)}</strong>&nbsp;${reps ? `<span style="color: var(--accent); font-weight: 700;">(${escapeHtml(reps)})</span>` : ''}&nbsp;-&nbsp;<span class="muted">${escapeHtml(ex.info || '')}</span></li>`;
+      const finBadge = ex.isFinisher ? `<span style="background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 4px; margin-right: 6px; letter-spacing: 0.5px;">🔥 FINISHER</span>` : '';
+      return `<li style="margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap;">${sBadge}${finBadge}<strong>${escapeHtml(baseName)}</strong>&nbsp;${reps ? `<span style="color: var(--accent); font-weight: 700;">(${escapeHtml(reps)})</span>` : ''}&nbsp;-&nbsp;<span class="muted">${escapeHtml(ex.info || '')}</span></li>`;
     }).join('');
 
     let workoutStateHtml = '';
@@ -4692,6 +4922,7 @@ function saveEditedWorkout() {
   }
 
   item.routine.name = nameVal;
+  item.routine.isCustomized = true;
   item.routine.exercises = currentEditingExercises.map(ex => ({
     id: ex.id,
     name: ex.name.trim(),
@@ -4708,6 +4939,33 @@ function saveEditedWorkout() {
   }
 
   showDayPopover(dateStr);
+}
+
+function reindexPlanRoutines(startIndex = 0) {
+  if (!state.plan || !Array.isArray(state.plan.days)) return;
+  
+  let runningWorkoutCount = 0;
+  for (let i = 0; i < startIndex; i++) {
+    if (state.plan.days[i].kind === 'workout') {
+      runningWorkoutCount++;
+    }
+  }
+  
+  for (let i = startIndex; i < state.plan.days.length; i++) {
+    const day = state.plan.days[i];
+    if (day.kind === 'workout') {
+      const isCustomized = day.routine?.isCustomized;
+      const loggedWorkout = state.sessions.find(s => s.endedAt && s.routineId !== 'active-recovery' && ymd(new Date(s.endedAt)) === day.date);
+      
+      if (!isCustomized && !loggedWorkout) {
+        day.routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, runningWorkoutCount);
+      }
+      runningWorkoutCount++;
+    } else {
+      day.routine = null;
+    }
+  }
+  savePlan();
 }
 
 function handleCalendarAction(act, dateStr) {
@@ -4739,6 +4997,7 @@ function handleCalendarAction(act, dateStr) {
         parts[parts.length - 1] = String(nextDayIndex);
         newRoutine.id = parts.join(':');
         item.routine = newRoutine;
+        reindexPlanRoutines(idx + 1);
         savePlan();
         if (state.calendarView === 'month') {
           renderMonthCalendar();
@@ -4763,6 +5022,7 @@ function handleCalendarAction(act, dateStr) {
       next.kind = tempKind;
       next.routine = tempRoutine;
       
+      reindexPlanRoutines(idx);
       savePlan();
       if (state.calendarView === 'month') {
         renderMonthCalendar();
@@ -4783,12 +5043,14 @@ function handleCalendarAction(act, dateStr) {
         const priorWorkouts = state.plan.days.slice(0, idx).filter(d => d.kind === 'workout').length;
         day.routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, priorWorkouts);
       }
+      reindexPlanRoutines(idx + 1);
       savePlan();
       if (state.calendarView === 'month') {
         renderMonthCalendar();
         showDayPopover(dateStr);
       } else {
         renderPlan();
+        showDayPopover(dateStr);
       }
     }
   } else if (act === 'log-recovery') {
@@ -4960,6 +5222,20 @@ function wireDashboard() {
   $('btnGenerateToday')?.addEventListener('click', generateTodayFromGoals);
   $('btnRegenPlan')?.addEventListener('click', regeneratePlan);
 
+  // Wire finisher pill toggle in settings (delegated and direct for reliability)
+  $('secondaryType')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pill-btn');
+    if (!btn) return;
+    document.querySelectorAll('#secondaryType .pill-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+  document.querySelectorAll('#secondaryType .pill-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('#secondaryType .pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
   $('btnToggleCalendarView')?.addEventListener('click', () => {
     state.calendarView = state.calendarView === 'month' ? 'list' : 'month';
     saveCalendarView();
@@ -5112,6 +5388,23 @@ function matchEquipment(exType, exName, eqSet) {
   const tLower = exType.toLowerCase();
   const nLower = exName.toLowerCase();
   
+  // Specific checks for bodyweight exercises that require a pull-up bar or dip station/bars
+  const isPullUpBarExercise = (
+    nLower.includes('pull-up') || 
+    nLower.includes('chin-up') || 
+    nLower.includes('pullup') || 
+    nLower.includes('chinup') || 
+    nLower.includes('hanging knee') || 
+    nLower.includes('hanging leg') ||
+    nLower.includes('hanging raise') ||
+    nLower.includes('l-sit hang') ||
+    nLower.includes('parallel bar dip') || 
+    nLower.includes('chest dip')
+  );
+  if (isPullUpBarExercise) {
+    if (!eqSet.has('pullupbar')) return false;
+  }
+  
   if (tLower === 'bodyweight' || tLower === 'stretching' || tLower.includes('bodyweight')) return true;
   
   let matches = false;
@@ -5233,7 +5526,15 @@ function swapExerciseAtIndex(idx) {
   const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
   let pool;
   if (group === 'Warm-up') {
-    const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
+    const warmupNames = [
+      "World's Greatest Stretch",
+      "Cat-Cow Stretch",
+      "Jumping Jacks",
+      "High Knees",
+      "Leg Swings",
+      "Calf Raises (Dynamic)",
+      "Arm Circles"
+    ];
     const allExercises = [
       ...(EXERCISES_BY_GROUP["Cardio"] || []),
       ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
@@ -5494,7 +5795,15 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
 
     // Inject two warm-up exercises if the focus is not purely Stretching
     if (selected.length > 0 && !(selectedFoci.length === 1 && selectedFoci[0] === 'Stretching & Mobility')) {
-      const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
+      const warmupNames = [
+        "World's Greatest Stretch",
+        "Cat-Cow Stretch",
+        "Jumping Jacks",
+        "High Knees",
+        "Leg Swings",
+        "Calf Raises (Dynamic)",
+        "Arm Circles"
+      ];
       const allExercises = [
         ...(EXERCISES_BY_GROUP["Cardio"] || []),
         ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
@@ -5502,13 +5811,54 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
       
       if (warmupPool.length > 0) {
-        // 1. Dynamic Heart-rate Warm-up (Jumping Jacks or High Knees)
+        // 1. Dynamic Heart-rate / activation Warm-up
         const currentNames1 = selected.map(ex => ex.name);
-        const cardioCandidates = warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name) && !currentNames1.includes(ex.name));
-        const finalCardioPool = cardioCandidates.length > 0 ? cardioCandidates : warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name));
+        const dynamicCandidates = warmupPool.filter(ex => [
+          "Jumping Jacks", "High Knees", "Leg Swings", "Calf Raises (Dynamic)", "Arm Circles"
+        ].includes(ex.name) && !currentNames1.includes(ex.name));
+        const finalDynamicPool = dynamicCandidates.length > 0 ? dynamicCandidates : warmupPool.filter(ex => [
+          "Jumping Jacks", "High Knees", "Leg Swings", "Calf Raises (Dynamic)", "Arm Circles"
+        ].includes(ex.name));
         
-        if (finalCardioPool.length > 0) {
-          const pickCardio = finalCardioPool[Math.floor(Math.random() * finalCardioPool.length)];
+        if (finalDynamicPool.length > 0) {
+          const trainedMuscles = getTrainedMuscles(selected);
+          const isUpper = selectedFoci.some(f => ["Chest", "Back", "Shoulders", "Biceps", "Triceps"].includes(f));
+          const isLower = selectedFoci.some(f => ["Legs"].includes(f));
+          let bestDynamic = [];
+          
+          finalDynamicPool.forEach(ex => {
+            let score = 0;
+            if (isUpper && !isLower) {
+              if (ex.name === "Arm Circles") score += 10;
+              else if (ex.name === "Jumping Jacks") score += 2;
+              else score -= 5;
+            } else if (isLower && !isUpper) {
+              if (ex.name === "Leg Swings") score += 10;
+              else if (ex.name === "Calf Raises (Dynamic)") score += 8;
+              else if (ex.name === "High Knees") score += 5;
+              else if (ex.name === "Jumping Jacks") score += 4;
+              else score -= 5;
+            } else {
+              if (ex.name === "Calf Raises (Dynamic)") {
+                if (trainedMuscles.has('calves')) score += 5;
+                if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings')) score += 1;
+              } else if (ex.name === "Leg Swings") {
+                if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings')) score += 5;
+                if (trainedMuscles.has('calves')) score += 2;
+              } else if (ex.name === "Arm Circles") {
+                if (trainedMuscles.has('shoulders') || trainedMuscles.has('chest') || trainedMuscles.has('back')) score += 5;
+              } else if (ex.name === "High Knees") {
+                if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings') || trainedMuscles.has('calves')) score += 2;
+              } else if (ex.name === "Jumping Jacks") {
+                if (trainedMuscles.has('calves') || trainedMuscles.has('quads')) score += 2;
+              }
+            }
+            bestDynamic.push({ ex, score });
+          });
+          
+          bestDynamic.sort((a, b) => b.score - a.score);
+          const pickCardio = bestDynamic[0].ex;
+          
           selected.push({
             ...pickCardio,
             sourceGroup: 'Warm-up',
@@ -5522,21 +5872,26 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
         const finalMobilityPool = mobilityCandidates.length > 0 ? mobilityCandidates : warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name));
         
         if (finalMobilityPool.length > 0) {
+          const trainedMuscles = getTrainedMuscles(selected);
           let bestMobility = [];
-          const fociLower = selectedFoci.map(f => f.toLowerCase());
           
           finalMobilityPool.forEach(ex => {
-            const targetL = (ex.target || '').toLowerCase();
-            const infoL = (ex.info || '').toLowerCase();
             let score = 0;
-            fociLower.forEach(focus => {
-              if (focus === 'back' || focus === 'core') {
-                if (ex.name === "Cat-Cow Stretch") score += 2;
+            if (isUpper && !isLower) {
+              if (ex.name === "Cat-Cow Stretch") score += 10;
+              else if (ex.name === "World's Greatest Stretch") score += 5;
+            } else if (isLower && !isUpper) {
+              if (ex.name === "World's Greatest Stretch") score += 10;
+              else if (ex.name === "Cat-Cow Stretch") score += 2;
+            } else {
+              if (ex.name === "Cat-Cow Stretch") {
+                if (trainedMuscles.has('back') || trainedMuscles.has('core')) score += 5;
+                if (trainedMuscles.has('shoulders')) score += 1;
+              } else if (ex.name === "World's Greatest Stretch") {
+                if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings') || trainedMuscles.has('calves')) score += 4;
+                if (trainedMuscles.has('chest') || trainedMuscles.has('shoulders') || trainedMuscles.has('back')) score += 4;
               }
-              if (focus === 'legs' || focus === 'shoulders' || focus === 'chest') {
-                if (ex.name === "World's Greatest Stretch") score += 2;
-              }
-            });
+            }
             bestMobility.push({ ex, score });
           });
           
@@ -5557,13 +5912,11 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
       const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
       
       if (matchStretches.length > 0) {
-        // Find targeted muscle foci (excluding Cardio and Stretching)
-        const activeFoci = selectedFoci.filter(f => f !== 'Cardio' && f !== 'Stretching & Mobility');
-        // Limit to top 2 muscle groups to keep workout length reasonable
-        const fociToStretch = activeFoci.slice(0, 2);
+        const trainedMuscles = getTrainedMuscles(selected);
+        const musclesToStretch = [...trainedMuscles];
         
-        if (fociToStretch.length === 0) {
-          // Fallback if they only selected Cardio: just add one random stretch
+        if (musclesToStretch.length === 0) {
+          // Fallback: add 1-2 general stretches
           const currentNames = selected.map(ex => ex.name);
           const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
           const finalPool = candidates.length > 0 ? candidates : matchStretches;
@@ -5574,12 +5927,16 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
             reason: "Cool-down: General stretching and recovery"
           });
         } else {
-          fociToStretch.forEach(focus => {
-            // Find best stretch for this specific focus group
+          // Prioritize calves if calves are trained
+          if (musclesToStretch.includes('calves')) {
+            const idx = musclesToStretch.indexOf('calves');
+            musclesToStretch.splice(idx, 1);
+            musclesToStretch.unshift('calves');
+          }
+          
+          const targetMuscles = musclesToStretch.slice(0, 2);
+          targetMuscles.forEach(muscle => {
             let bestMatches = [];
-            const focusLower = focus.toLowerCase();
-            
-            // Exclude exercises already in the routine to prevent duplicates
             const currentNames = selected.map(ex => ex.name);
             const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
             const poolForFocus = candidates.length > 0 ? candidates : matchStretches;
@@ -5587,25 +5944,29 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
             poolForFocus.forEach(ex => {
               const targetL = (ex.target || '').toLowerCase();
               const infoL = (ex.info || '').toLowerCase();
+              const nameL = (ex.name || '').toLowerCase();
               let score = 0;
               
-              if (focusLower === 'back') {
-                if (targetL.includes('back') || targetL.includes('spine') || infoL.includes('back') || infoL.includes('spine')) score += 2;
+              if (muscle === 'calves' && (targetL.includes('calf') || targetL.includes('calves') || nameL.includes('calf') || targetL.includes('ankle') || targetL.includes('pedal'))) {
+                score += 10;
               }
-              if (focusLower === 'chest') {
-                if (targetL.includes('chest') || infoL.includes('chest') || targetL.includes('abs') || infoL.includes('abdominal')) score += 2;
+              if (muscle === 'quads' && (targetL.includes('quad') || targetL.includes('thigh') || nameL.includes('quad') || targetL.includes('hip flexor'))) {
+                score += 8;
               }
-              if (focusLower === 'shoulders') {
-                if (targetL.includes('shoulders') || infoL.includes('shoulders')) score += 2;
+              if (muscle === 'hamstrings' && (targetL.includes('hamstring') || targetL.includes('glute') || nameL.includes('hamstring') || targetL.includes('thigh') || targetL.includes('groin'))) {
+                score += 8;
               }
-              if (focusLower === 'legs') {
-                if (targetL.includes('hips') || targetL.includes('hamstring') || targetL.includes('calves') || infoL.includes('hips') || infoL.includes('hamstring')) score += 2;
+              if (muscle === 'chest' && (targetL.includes('chest') || nameL.includes('chest') || targetL.includes('pectoral') || targetL.includes('doorway'))) {
+                score += 8;
               }
-              if (focusLower === 'core') {
-                if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
+              if (muscle === 'shoulders' && (targetL.includes('shoulder') || targetL.includes('delt') || nameL.includes('shoulder') || targetL.includes('arm circle') || targetL.includes('doorway'))) {
+                score += 8;
               }
-              if (focusLower === 'biceps' || focusLower === 'triceps') {
-                if (targetL.includes('shoulders') || targetL.includes('upper body') || targetL.includes('spine')) score += 1;
+              if (muscle === 'back' && (targetL.includes('back') || targetL.includes('lats') || targetL.includes('spine') || nameL.includes('back') || targetL.includes('cobra'))) {
+                score += 8;
+              }
+              if (muscle === 'core' && (targetL.includes('abs') || targetL.includes('core') || targetL.includes('abdominal') || targetL.includes('spine') || targetL.includes('cat-cow'))) {
+                score += 8;
               }
               
               if (score > 0) {
@@ -5624,7 +5985,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
             selected.push({
               ...finalStretch,
               sourceGroup: 'Stretching & Mobility',
-              reason: `Cool-down: Target stretch for ${focus}`
+              reason: `Cool-down: Target stretch for ${muscle}`
             });
           });
         }
@@ -5691,7 +6052,7 @@ async function syncWorkoutLibrary(force = false) {
   if (syncStatus && force) syncStatus.textContent = 'Syncing...';
   
   try {
-    const res = await fetch('/workouts.json');
+    const res = await fetch('workouts.json');
     if (!res.ok) throw new Error('Fetch failed');
     const fetched = await res.json();
     if (!Array.isArray(fetched)) throw new Error('Invalid workouts format');
@@ -6008,30 +6369,177 @@ function isExerciseExcludedForJoints(ex, avoidJoints) {
   return false;
 }
 
-function secondaryFinisher(secondaryGoal, eq) {
+function secondaryFinisher(secondaryGoal, eq, exercises = []) {
   const s = secondaryGoal?.type;
-  if (!s) return [];
-  if (s === 'steps') return [{ 
-    id: uid(), 
-    name: 'Walk (10–20 min)', 
-    info: 'A continuous, low-intensity recovery walk (treadmill or outdoors) to accumulate steps and reduce muscle soreness.' 
-  }];
-  if (s === 'zone2' && (eq.has('treadmill') || eq.has('bike'))) return [{ 
-    id: uid(), 
-    name: 'Zone 2 cardio (15–25 min)', 
-    info: 'Steady-state aerobic exercise (light jog, incline walk, or stationary bike) at a conversational pace. You should be able to speak full sentences easily without gasping for breath (roughly 60–70% of your maximum heart rate).' 
-  }];
-  if (s === 'mobility') return [{ 
-    id: uid(), 
-    name: 'Mobility flow (8–12 min)', 
-    info: "Perform 2-3 rounds of: 5x World's Greatest Stretch (per side), 10x Cat-Cow, and 1 minute of Child's Pose." 
-  }];
-  if (s === 'protein') return [{ 
-    id: uid(), 
-    name: 'Protein check (hit target today)', 
-    info: 'Verify that you consumed 0.8g to 1.0g of protein per pound of target body weight today (e.g. from lean meats, eggs, dairy, fish, or protein shakes) to repair and rebuild muscle tissues.' 
-  }];
-  return [];
+  // Only 'finisher' type generates real workout finishers; old types are ignored
+  if (s !== 'finisher') return [];
+
+  // Detect which muscle groups the main workout trained
+  const trained = getTrainedMuscles(exercises);
+  const hasDB = eq.has('dumbbells');
+  const hasBB = eq.has('barbell');
+  const hasPullup = eq.has('pullupbar');
+  const hasBands = eq.has('resistancebands');
+
+  // Helper to build a finisher exercise
+  const fin = (name, info) => ({ id: uid(), name, info, isFinisher: true });
+
+  // Pick finisher based on what was trained today
+  const isLegs = trained.has('quads') || trained.has('hamstrings') || trained.has('calves');
+  const isPush = trained.has('chest') || trained.has('shoulders');
+  const isPull = trained.has('back');
+  const isCore = trained.has('core');
+
+  if (isLegs && isPush && isPull) {
+    // Full-body day → burpee AMRAP
+    return [fin('Burpee AMRAP (90 sec)', 'All-out effort — as many reps as possible in 90 seconds. Chest to floor, full hip extension at the top. Rest 60s then repeat once more if you have gas left.')];
+  }
+
+  if (isLegs) {
+    const wallSit = fin('Wall Sit Hold — max time', 'Back flat against the wall, thighs parallel to floor. Hold until failure. Note your time — try to beat it next leg day. Rest 60s and repeat once.');
+    const jumpSquat = fin('Jump Squats (3 × 10)', 'Squat to parallel, then explode straight up. Land soft, reset, repeat. Controlled descent — explosive ascent. Rest 45s between sets.');
+    return trained.has('quads') ? [wallSit, jumpSquat] : [wallSit];
+  }
+
+  if (isPush) {
+    const pushBurnout = fin('Push-up Burn-out — max reps', 'Drop to the floor and do as many push-ups as you can with perfect form. Chest touches the ground each rep, full lockout at the top. No pausing at the bottom. One all-out set to failure.');
+    if (hasDB) {
+      const lateralDrop = fin('Dumbbell Lateral Raise Drop-set', 'Pick a moderate weight. Do 10 reps, immediately drop to lightest dumbbells, do 10 more reps with no rest. Shoulders should be burning by rep 15. One drop-set to failure.');
+      return [pushBurnout, lateralDrop];
+    }
+    return [pushBurnout];
+  }
+
+  if (isPull) {
+    if (hasPullup) {
+      return [fin('Dead Hang — max time', 'Jump to the bar, grip shoulder-width, and hang until your grip gives out. No kipping or shrugging. Rest 90s and repeat. Track your hang time — every second counts.')];
+    }
+    if (hasBands || hasDB) {
+      return [fin('Band Pull-Apart AMRAP (2 sets)', 'Hold band at chest height with straight arms. Pull the band apart until your hands reach your sides, squeezing shoulder blades hard. Return controlled. Max reps in 45s, rest 30s, repeat.')];
+    }
+    return [fin('Inverted Row Hold (2 × max)', 'Under a sturdy table or bar: body plank, pull chest to bar and hold at the top for max time. Squeeze your back hard. Lower slowly. Rest 60s between holds.')];
+  }
+
+  if (isCore) {
+    return [fin('Core Finisher — Plank Ladder', 'Plank max hold → rest 20s → side plank left max hold → rest 20s → side plank right max hold. No compromise on form: hips level, core braced, glutes squeezed throughout.')];
+  }
+
+  // Default: burpee AMRAP for general/unknown focus
+  return [fin('Burpee AMRAP (90 sec)', 'All-out effort — as many reps as possible in 90 seconds. Chest to floor, full hip extension and clap overhead at the top. Push yourself — this is the finisher.')];
+}
+
+function getTrainedMuscles(selectedExercises) {
+  const muscles = new Set();
+  selectedExercises.forEach(ex => {
+    if (ex.sourceGroup) {
+      const g = ex.sourceGroup.toLowerCase();
+      if (g === 'legs') muscles.add('quads');
+      if (g === 'chest' || g === 'shoulders' || g === 'triceps') muscles.add('chest');
+      if (g === 'back' || g === 'biceps') muscles.add('back');
+      if (g === 'core') muscles.add('core');
+    }
+    const nameL = (ex.name || '').toLowerCase();
+    const targetL = (ex.target || '').toLowerCase();
+    const infoL = (ex.info || '').toLowerCase();
+    
+    // Check calves
+    if (nameL.includes('calf') || nameL.includes('calves') || targetL.includes('calf') || targetL.includes('calves')) {
+      muscles.add('calves');
+    }
+    // Check quad/thigh
+    if (nameL.includes('squat') || nameL.includes('lunge') || nameL.includes('quad') || targetL.includes('quad') || targetL.includes('thigh')) {
+      muscles.add('quads');
+    }
+    // Check hamstrings/glutes
+    if (nameL.includes('deadlift') || nameL.includes('hamstring') || nameL.includes('glute') || targetL.includes('hamstring') || targetL.includes('glute') || targetL.includes('groin') || targetL.includes('hips')) {
+      muscles.add('hamstrings');
+    }
+    // Check chest
+    if (nameL.includes('bench press') || nameL.includes('chest') || nameL.includes('pushup') || nameL.includes('push-up') || targetL.includes('chest') || targetL.includes('pectoral')) {
+      muscles.add('chest');
+    }
+    // Check shoulders
+    if (nameL.includes('press') || nameL.includes('shoulder') || nameL.includes('lateral raise') || nameL.includes('delt') || targetL.includes('shoulder')) {
+      muscles.add('shoulders');
+    }
+    // Check back
+    if (nameL.includes('row') || nameL.includes('pullup') || nameL.includes('pull-up') || nameL.includes('chinup') || nameL.includes('chin-up') || nameL.includes('lats') || targetL.includes('back')) {
+      muscles.add('back');
+    }
+    // Check core
+    if (nameL.includes('plank') || nameL.includes('crunch') || nameL.includes('sit-up') || nameL.includes('situp') || targetL.includes('abs') || targetL.includes('core') || targetL.includes('abdominal')) {
+      muscles.add('core');
+    }
+  });
+  return muscles;
+}
+
+function selectVariantWithPriority(splitType, dayIndex, priorities) {
+  const pSet = new Set(priorities || []);
+  const upperGroups = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps'];
+  const pushGroups = ['Chest', 'Shoulders', 'Triceps'];
+  
+  const upperCount = upperGroups.filter(g => pSet.has(g)).length;
+  const pushCount = pushGroups.filter(g => pSet.has(g)).length;
+  const hasLegs = pSet.has('Legs');
+  
+  if (splitType === 'upper_lower') {
+    // 3+ upper muscles selected -> 3 Upper days : 1 Lower day cycle
+    if (upperCount >= 3) {
+      return (dayIndex % 4 === 3) ? 1 : 0; // [Upper, Upper, Upper, Lower]
+    }
+    // 1-2 upper muscles selected -> 2 Upper days : 1 Lower day cycle
+    if (upperCount >= 1) {
+      return (dayIndex % 3 === 2) ? 1 : 0; // [Upper, Upper, Lower]
+    }
+    // Legs selected -> shifts toward more Lower body days (e.g. 2 Lower : 1 Upper cycle)
+    if (hasLegs) {
+      return (dayIndex % 3 === 0) ? 0 : 1; // [Upper, Lower, Lower]
+    }
+    // Default Upper/Lower alternating
+    return dayIndex % 2;
+  }
+  
+  if (splitType === 'ppl') {
+    // 3+ push muscles -> extra Push day in PPL rotation
+    if (pushCount >= 3) {
+      const cycleIdx = dayIndex % 4;
+      if (cycleIdx === 0 || cycleIdx === 2) return 0; // Push
+      if (cycleIdx === 1) return 1; // Pull
+      return 2; // Legs
+    }
+    return dayIndex % 3;
+  }
+  
+  if (splitType === 'alternating') {
+    // alternating cycles: 0 (Upper), 1 (Lower), 2 (Full Body)
+    if (upperCount >= 3) {
+      const cycleIdx = dayIndex % 3;
+      if (cycleIdx === 0 || cycleIdx === 2) return 0; // Upper
+      return 2; // Full Body
+    }
+    if (upperCount >= 1) {
+      // 2 Upper, 1 Lower/Full Body
+      const cycleIdx = dayIndex % 3;
+      if (cycleIdx === 0) return 0; // Upper
+      if (cycleIdx === 1) return 2; // Full Body
+      return 1; // Lower
+    }
+    if (hasLegs) {
+      // More Lower / Full body focus
+      const cycleIdx = dayIndex % 3;
+      if (cycleIdx === 0) return 1; // Lower
+      if (cycleIdx === 1) return 2; // Full Body
+      return 1; // Lower
+    }
+    return dayIndex % 3;
+  }
+  
+  if (splitType === 'full_body') {
+    return 2; // Always Full Body
+  }
+  
+  return dayIndex % 3;
 }
 
 function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal = null, dayIndex = 0) {
@@ -6050,17 +6558,8 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
   let exercises = [];
 
   const splitType = primaryGoal?.splitType || profile?.splitType || 'alternating';
-  
-  let variant = 0;
-  if (splitType === 'full_body') {
-    variant = 2; // Always Full Body
-  } else if (splitType === 'upper_lower') {
-    variant = dayIndex % 2;
-  } else if (splitType === 'ppl') {
-    variant = dayIndex % 3;
-  } else {
-    variant = dayIndex % 3;
-  }
+  const priorities = primaryGoal?.priorities || profile?.priorities || [];
+  const variant = selectVariantWithPriority(splitType, dayIndex, priorities);
 
   if (goal === 'run_5k' || goal === '5k') {
     if (variant === 0) {
@@ -6207,6 +6706,10 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       const avoidJoints = primaryGoal?.avoidJoints || profile?.avoidJoints || [];
       const priorities = primaryGoal?.priorities || profile?.priorities || [];
 
+      if (priorities.includes('Core') && !selectedFoci.includes('Core')) {
+        selectedFoci.push('Core');
+      }
+
       if (priorities.length > 0) {
         selectedFoci.sort((a, b) => {
           const aPri = priorities.includes(a) ? 1 : 0;
@@ -6308,7 +6811,15 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       }
 
       if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
-        const warmupNames = ["World's Greatest Stretch", "Cat-Cow Stretch", "Jumping Jacks", "High Knees"];
+        const warmupNames = [
+          "World's Greatest Stretch",
+          "Cat-Cow Stretch",
+          "Jumping Jacks",
+          "High Knees",
+          "Leg Swings",
+          "Calf Raises (Dynamic)",
+          "Arm Circles"
+        ];
         const allExercises = [
           ...(EXERCISES_BY_GROUP["Cardio"] || []),
           ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
@@ -6316,12 +6827,54 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
         const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints));
         
         if (warmupPool.length > 0) {
+          const trainedMuscles = getTrainedMuscles(selected);
+          const isUpper = selectedFoci.some(f => ["Chest", "Back", "Shoulders", "Biceps", "Triceps"].includes(f));
+          const isLower = selectedFoci.some(f => ["Legs"].includes(f));
+
+          // 1. Dynamic Heart-rate / activation Warm-up
           const currentNames1 = selected.map(ex => ex.name);
-          const cardioCandidates = warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name) && !currentNames1.includes(ex.name));
-          const finalCardioPool = cardioCandidates.length > 0 ? cardioCandidates : warmupPool.filter(ex => ["Jumping Jacks", "High Knees"].includes(ex.name));
+          const dynamicCandidates = warmupPool.filter(ex => [
+            "Jumping Jacks", "High Knees", "Leg Swings", "Calf Raises (Dynamic)", "Arm Circles"
+          ].includes(ex.name) && !currentNames1.includes(ex.name));
+          const finalDynamicPool = dynamicCandidates.length > 0 ? dynamicCandidates : warmupPool.filter(ex => [
+            "Jumping Jacks", "High Knees", "Leg Swings", "Calf Raises (Dynamic)", "Arm Circles"
+          ].includes(ex.name));
           
-          if (finalCardioPool.length > 0) {
-            const pickCardio = finalCardioPool[Math.floor(Math.random() * finalCardioPool.length)];
+          if (finalDynamicPool.length > 0) {
+            let bestDynamic = [];
+            finalDynamicPool.forEach(ex => {
+              let score = 0;
+              if (isUpper && !isLower) {
+                if (ex.name === "Arm Circles") score += 10;
+                else if (ex.name === "Jumping Jacks") score += 2;
+                else score -= 5;
+              } else if (isLower && !isUpper) {
+                if (ex.name === "Leg Swings") score += 10;
+                else if (ex.name === "Calf Raises (Dynamic)") score += 8;
+                else if (ex.name === "High Knees") score += 5;
+                else if (ex.name === "Jumping Jacks") score += 4;
+                else score -= 5;
+              } else {
+                if (ex.name === "Calf Raises (Dynamic)") {
+                  if (trainedMuscles.has('calves')) score += 5;
+                  if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings')) score += 1;
+                } else if (ex.name === "Leg Swings") {
+                  if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings')) score += 5;
+                  if (trainedMuscles.has('calves')) score += 2;
+                } else if (ex.name === "Arm Circles") {
+                  if (trainedMuscles.has('shoulders') || trainedMuscles.has('chest') || trainedMuscles.has('back')) score += 5;
+                } else if (ex.name === "High Knees") {
+                  if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings') || trainedMuscles.has('calves')) score += 2;
+                } else if (ex.name === "Jumping Jacks") {
+                  if (trainedMuscles.has('calves') || trainedMuscles.has('quads')) score += 2;
+                }
+              }
+              bestDynamic.push({ ex, score });
+            });
+            
+            bestDynamic.sort((a, b) => b.score - a.score);
+            const pickCardio = bestDynamic[0].ex;
+            
             selected.push({
               ...pickCardio,
               sourceGroup: 'Warm-up',
@@ -6329,25 +6882,33 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
             });
           }
 
+          // 2. Mobility Warm-up Stretch
           const currentNames2 = selected.map(ex => ex.name);
           const mobilityCandidates = warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name) && !currentNames2.includes(ex.name));
           const finalMobilityPool = mobilityCandidates.length > 0 ? mobilityCandidates : warmupPool.filter(ex => ["World's Greatest Stretch", "Cat-Cow Stretch"].includes(ex.name));
           
           if (finalMobilityPool.length > 0) {
             let bestMobility = [];
-            const fociLower = selectedFoci.map(f => f.toLowerCase());
             finalMobilityPool.forEach(ex => {
               let score = 0;
-              fociLower.forEach(focus => {
-                if (focus === 'back' || focus === 'core') {
-                  if (ex.name === "Cat-Cow Stretch") score += 2;
+              if (isUpper && !isLower) {
+                if (ex.name === "Cat-Cow Stretch") score += 10;
+                else if (ex.name === "World's Greatest Stretch") score += 5;
+              } else if (isLower && !isUpper) {
+                if (ex.name === "World's Greatest Stretch") score += 10;
+                else if (ex.name === "Cat-Cow Stretch") score += 2;
+              } else {
+                if (ex.name === "Cat-Cow Stretch") {
+                  if (trainedMuscles.has('back') || trainedMuscles.has('core')) score += 5;
+                  if (trainedMuscles.has('shoulders')) score += 1;
+                } else if (ex.name === "World's Greatest Stretch") {
+                  if (trainedMuscles.has('quads') || trainedMuscles.has('hamstrings') || trainedMuscles.has('calves')) score += 4;
+                  if (trainedMuscles.has('chest') || trainedMuscles.has('shoulders') || trainedMuscles.has('back')) score += 4;
                 }
-                if (focus === 'legs' || focus === 'shoulders' || focus === 'chest') {
-                  if (ex.name === "World's Greatest Stretch") score += 2;
-                }
-              });
+              }
               bestMobility.push({ ex, score });
             });
+            
             bestMobility.sort((a, b) => b.score - a.score);
             const finalMobility = bestMobility[0].ex;
             selected.push({
@@ -6364,10 +6925,11 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
         const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints));
         
         if (matchStretches.length > 0) {
-          const activeFoci = selectedFoci.filter(f => f !== 'Cardio' && f !== 'Stretching & Mobility');
-          const fociToStretch = activeFoci.slice(0, 2);
+          const trainedMuscles = getTrainedMuscles(selected);
+          const musclesToStretch = [...trainedMuscles];
           
-          if (fociToStretch.length === 0) {
+          if (musclesToStretch.length === 0) {
+            // Fallback: add 1-2 general stretches
             const currentNames = selected.map(ex => ex.name);
             const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
             const finalPool = candidates.length > 0 ? candidates : matchStretches;
@@ -6378,9 +6940,16 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
               reason: "Cool-down: General stretching and recovery"
             });
           } else {
-            fociToStretch.forEach(focus => {
+            // Prioritize calves if calves are trained
+            if (musclesToStretch.includes('calves')) {
+              const idx = musclesToStretch.indexOf('calves');
+              musclesToStretch.splice(idx, 1);
+              musclesToStretch.unshift('calves');
+            }
+            
+            const targetMuscles = musclesToStretch.slice(0, 2);
+            targetMuscles.forEach(muscle => {
               let bestMatches = [];
-              const focusLower = focus.toLowerCase();
               const currentNames = selected.map(ex => ex.name);
               const candidates = matchStretches.filter(ex => !currentNames.includes(ex.name));
               const poolForFocus = candidates.length > 0 ? candidates : matchStretches;
@@ -6388,25 +6957,31 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
               poolForFocus.forEach(ex => {
                 const targetL = (ex.target || '').toLowerCase();
                 const infoL = (ex.info || '').toLowerCase();
+                const nameL = (ex.name || '').toLowerCase();
                 let score = 0;
-                if (focusLower === 'back') {
-                  if (targetL.includes('back') || targetL.includes('spine') || infoL.includes('back') || infoL.includes('spine')) score += 2;
+                
+                if (muscle === 'calves' && (targetL.includes('calf') || targetL.includes('calves') || nameL.includes('calf') || targetL.includes('ankle') || targetL.includes('pedal'))) {
+                  score += 10;
                 }
-                if (focusLower === 'chest') {
-                  if (targetL.includes('chest') || infoL.includes('chest') || targetL.includes('abs') || infoL.includes('abdominal')) score += 2;
+                if (muscle === 'quads' && (targetL.includes('quad') || targetL.includes('thigh') || nameL.includes('quad') || targetL.includes('hip flexor'))) {
+                  score += 8;
                 }
-                if (focusLower === 'shoulders') {
-                  if (targetL.includes('shoulders') || infoL.includes('shoulders')) score += 2;
+                if (muscle === 'hamstrings' && (targetL.includes('hamstring') || targetL.includes('glute') || nameL.includes('hamstring') || targetL.includes('thigh') || targetL.includes('groin'))) {
+                  score += 8;
                 }
-                if (focusLower === 'legs') {
-                  if (targetL.includes('hips') || targetL.includes('hamstring') || targetL.includes('calves') || infoL.includes('hips') || infoL.includes('hamstring')) score += 2;
+                if (muscle === 'chest' && (targetL.includes('chest') || nameL.includes('chest') || targetL.includes('pectoral') || targetL.includes('doorway'))) {
+                  score += 8;
                 }
-                if (focusLower === 'core') {
-                  if (targetL.includes('abs') || targetL.includes('spine') || infoL.includes('abdominal') || infoL.includes('spine')) score += 2;
+                if (muscle === 'shoulders' && (targetL.includes('shoulder') || targetL.includes('delt') || nameL.includes('shoulder') || targetL.includes('arm circle') || targetL.includes('doorway'))) {
+                  score += 8;
                 }
-                if (focusLower === 'biceps' || focusLower === 'triceps') {
-                  if (targetL.includes('shoulders') || targetL.includes('upper body') || targetL.includes('spine')) score += 1;
+                if (muscle === 'back' && (targetL.includes('back') || targetL.includes('lats') || targetL.includes('spine') || nameL.includes('back') || targetL.includes('cobra'))) {
+                  score += 8;
                 }
+                if (muscle === 'core' && (targetL.includes('abs') || targetL.includes('core') || targetL.includes('abdominal') || targetL.includes('spine') || targetL.includes('cat-cow'))) {
+                  score += 8;
+                }
+                
                 if (score > 0) {
                   bestMatches.push({ ex, score });
                 }
@@ -6419,10 +6994,11 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
               } else {
                 finalStretch = poolForFocus[Math.floor(Math.random() * poolForFocus.length)];
               }
+              
               selected.push({
                 ...finalStretch,
                 sourceGroup: 'Stretching & Mobility',
-                reason: `Cool-down: Target stretch for ${focus}`
+                reason: `Cool-down: Target stretch for ${muscle}`
               });
             });
           }
@@ -6439,7 +7015,8 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
           id: uid(),
           name: `${ex.name} (${repsDetails})`,
           info: ex.info || 'Control movement, breathe through the rep, and focus on form.',
-          reason: ex.reason || 'Workout sequence movement'
+          reason: ex.reason || 'Workout sequence movement',
+          sourceGroup: ex.sourceGroup
         };
       });
     }
@@ -6447,7 +7024,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
   // Only apply the exercise cap to the core working set (warm-up & cool-down are additive).
   // DO NOT re-slice after appending finishers — that would cut the cool-down.
-  const fin = secondaryFinisher(secondaryGoal, eq);
+  const fin = secondaryFinisher(secondaryGoal, eq, exercises);
   if (fin.length) exercises = [...exercises, ...fin];
 
   const idGoal = (primaryGoal?.type || goal);
@@ -6464,6 +7041,13 @@ function wire() {
   $('btnAddExercise')?.addEventListener('click', addExercise);
   $('btnEndWorkout')?.addEventListener('click', endWorkout);
   $('btnTheme')?.addEventListener('click', toggleTheme);
+
+  $('btnPriorityInfo')?.addEventListener('click', () => {
+    const panel = $('priorityInfoPanel');
+    if (panel) {
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+  });
 
   $('btnSwapExerciseClose')?.addEventListener('click', () => {
     $('modalSwapExercise').classList.remove('active');
@@ -6482,6 +7066,11 @@ function wire() {
   });
 
   $('btnCloudSyncLogin')?.addEventListener('click', showCloudSyncModal);
+  $('btnBannerLogin')?.addEventListener('click', showCloudSyncModal);
+  $('btnBannerDismiss')?.addEventListener('click', () => {
+    localStorage.setItem('bf:cloudOnboardingDismissed', 'true');
+    updateCloudSyncStatusUI();
+  });
   $('btnCloudSyncClose')?.addEventListener('click', closeCloudSyncModal);
   $('btnCloudSyncForce')?.addEventListener('click', cloudPush);
   $('btnCloudSyncLogout')?.addEventListener('click', cloudLogout);
@@ -7631,39 +8220,149 @@ function toggleTheme() {
 }
 
 function boot() {
-  seedIfEmpty();
-  loadState();
-  applyTheme();
+  // 1. Silent cloud sync auto-login/setup from family session
+  const storedPart = sessionStorage.getItem('ff_participant') || localStorage.getItem('ff_participant');
+  if (storedPart) {
+    try {
+      const part = JSON.parse(storedPart);
+      if (part && part.id && part.display_name) {
+        const displayName = part.display_name;
+        const currentActive = localStorage.getItem('bf:activeUser') || '';
+        
+        // If switched profile or new device, switch context silently
+        if (currentActive !== displayName) {
+          localStorage.setItem('bf:activeUser', displayName);
+        }
+        
+        // Set cloud credentials silently
+        localStorage.setItem('bf:cloudUser', part.id);
+        localStorage.setItem('bf:cloudDisplayName', displayName);
+        localStorage.setItem('bf:cloudPass', 'family-session-bypass');
+      }
+    } catch (e) {
+      console.warn('Failed to parse ff_participant on boot:', e);
+    }
+  }
+
+  // Wire events first to ensure interactiviy is active even if render/hydration fails
+  try {
+    wire();
+  } catch (e) {
+    console.error('Failed to wire global events:', e);
+  }
+  try {
+    wireDashboard();
+  } catch (e) {
+    console.error('Failed to wire dashboard events:', e);
+  }
+  try {
+    wireGenerator();
+  } catch (e) {
+    console.error('Failed to wire generator events:', e);
+  }
+
+  // Seeding and loading state
+  try {
+    seedIfEmpty();
+    loadState();
+  } catch (e) {
+    console.error('Failed to seed/load state:', e);
+  }
+
+  // Set username in state if missing
+  try {
+    const activeUser = localStorage.getItem('bf:activeUser') || '';
+    if (activeUser && !state.profile.username) {
+      state.profile.username = activeUser;
+      saveProfile();
+    }
+  } catch (e) {
+    console.error('Failed to resolve active user:', e);
+  }
+
+  try {
+    applyTheme();
+  } catch (e) {
+    console.error('Failed to apply theme:', e);
+  }
   
-  wire();
-  wireDashboard();
-  wireGenerator();
+  // Safe renders
+  try {
+    renderWorkoutIdeas();
+  } catch (e) {
+    console.error('Failed to render workout ideas:', e);
+  }
+  try {
+    renderExercisesDirectory();
+  } catch (e) {
+    console.error('Failed to render exercises directory:', e);
+  }
+  try {
+    renderDashboard();
+  } catch (e) {
+    console.error('Failed to render dashboard:', e);
+  }
+  try {
+    renderRoutines();
+  } catch (e) {
+    console.error('Failed to render routines:', e);
+  }
+  try {
+    renderWorkout();
+  } catch (e) {
+    console.error('Failed to render workout:', e);
+  }
   
-  renderWorkoutIdeas();
-  renderExercisesDirectory();
-  renderDashboard();
-  renderRoutines();
-  renderWorkout();
-  
-  hydrateGoalsForm();
-  renderProfileSwitcher();
-  updateCloudSyncStatusUI();
+  try {
+    hydrateGoalsForm();
+  } catch (e) {
+    console.error('Failed to hydrate goals form:', e);
+  }
+  try {
+    renderProfileSwitcher();
+  } catch (e) {
+    console.error('Failed to render profile switcher:', e);
+  }
+  try {
+    updateCloudSyncStatusUI();
+  } catch (e) {
+    console.error('Failed to update cloud sync status UI:', e);
+  }
   
   if (localStorage.getItem('bf:cloudUser')) {
-    cloudPull();
+    try {
+      cloudPull();
+    } catch (e) {
+      console.error('Failed cloud pull:', e);
+    }
   }
   
-  $('timer').textContent = fmtTimer(5);
-  switchTimerMode('countdown'); // Ensure it sets up correctly on boot
-  
-  if (state.activeSessionId) {
-    switchTab('workout');
-  } else {
-    switchTab('dashboard');
-    setSubtitle('Workout tracker');
+  try {
+    const timerEl = $('timer');
+    if (timerEl) {
+      timerEl.textContent = fmtTimer(5);
+    }
+    switchTimerMode('countdown'); // Ensure it sets up correctly on boot
+  } catch (e) {
+    console.error('Failed to set up timer:', e);
   }
   
-  syncWorkoutLibrary();
+  try {
+    if (state.activeSessionId) {
+      switchTab('workout');
+    } else {
+      switchTab('dashboard');
+      setSubtitle('Workout tracker');
+    }
+  } catch (e) {
+    console.error('Failed to switch default tabs:', e);
+  }
+  
+  try {
+    syncWorkoutLibrary();
+  } catch (e) {
+    console.error('Failed to sync workout library:', e);
+  }
 }
 
 boot();

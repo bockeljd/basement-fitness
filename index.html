@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f6f7fb" />
   <title>Basement Fitness</title>
-  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="manifest" href="manifest.webmanifest" />
   
   <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +27,8 @@
           <div class="subtitle" id="subtitle">Workout tracker</div>
         </div>
       </div>
-      <div class="actions">
+      <div class="actions" style="display: flex; gap: 8px; align-items: center;">
+        <a href="/" class="btn secondary" style="text-decoration: none;">🏠 Hub</a>
         <button class="btn secondary" id="btnTheme" type="button">Theme</button>
       </div>
     </header>
@@ -45,10 +46,6 @@
       <button class="tab-btn" data-tab="ideas" type="button">
         <span class="tab-icon">💡</span>
         <span class="tab-text">Workout Ideas</span>
-      </button>
-      <button class="tab-btn" data-tab="routines" type="button">
-        <span class="tab-icon">📋</span>
-        <span class="tab-text">Routines</span>
       </button>
       <button class="tab-btn" data-tab="exercises" type="button">
         <span class="tab-icon">💪</span>
@@ -68,12 +65,24 @@
       
       <!-- Tab 1: Dashboard Panel -->
       <div id="panel-dashboard" class="tab-panel active">
+        <!-- Onboarding Sync Banner -->
+        <div id="onboardingSyncBanner" class="onboarding-banner" style="display: none;">
+          <div class="banner-content">
+            <span class="banner-icon">☁️</span>
+            <div>
+              <h3>Save Workouts to the Cloud</h3>
+              <p>Create a profile to sync routines, track history, and access workouts on any device.</p>
+            </div>
+          </div>
+          <div class="banner-actions">
+            <button class="btn primary-gradient" id="btnBannerLogin" type="button">Sign In / Register</button>
+            <button class="btn-text" id="btnBannerDismiss" type="button">Dismiss</button>
+          </div>
+        </div>
+
         <section class="card" id="cardDashboard">
           <div class="cardHeader">
             <h2>Dashboard <span id="streakBadge" class="streak-badge" style="display: none;"></span></h2>
-            <div class="row wrap">
-              <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
-            </div>
           </div>
 
           <!-- KPI Hero Grid -->
@@ -167,6 +176,7 @@
           <div class="cardHeader">
             <h2>Calendar</h2>
             <div class="row wrap" style="gap: 8px;">
+              <button class="btn" id="btnGenerateToday" type="button">Generate today</button>
               <button class="btn secondary" id="btnToggleCalendarView" type="button">📅 Month View</button>
               <button class="btn secondary" id="btnRegenPlan" type="button">Regenerate</button>
             </div>
@@ -178,153 +188,158 @@
 
       <!-- Tab 2: Workout Ideas & Generator Panel -->
       <div id="panel-ideas" class="tab-panel">
-        <!-- Custom Workout Generator Section -->
-        <section class="card" id="cardGenerator">
-          <div class="cardHeader">
-            <div>
-              <h2 style="font-size: 18px; font-weight: 900;">Custom Workout Generator</h2>
-              <div class="muted">Generate a custom, science-backed workout tailored to your time and gear.</div>
-            </div>
+        <div class="ideas-layout">
+          <!-- Column 1: Custom Routines -->
+          <div class="ideas-column">
+            <section class="card" id="cardRoutines">
+              <div class="cardHeader">
+                <h2>Custom Routines</h2>
+                <button class="btn" id="btnNewRoutine" type="button">New routine</button>
+              </div>
+              <div class="muted">You can create custom routines, or use the Workout Ideas & Generator columns.</div>
+              <div class="routineList" id="routineList"></div>
+            </section>
           </div>
-          
-          <div class="panel" style="margin-top: 10px;">
-            <form id="generatorForm" class="generator-form">
-              <div class="form-group">
-                <label class="small" style="font-weight: 700;">1. How much time do you have?</label>
-                <div class="pill-group" id="genDuration">
-                  <button type="button" class="pill-btn" data-value="15">15 Min</button>
-                  <button type="button" class="pill-btn active" data-value="30">30 Min</button>
-                  <button type="button" class="pill-btn" data-value="45">45 Min</button>
-                  <button type="button" class="pill-btn" data-value="60">60 Min</button>
-                </div>
-              </div>
-              
-              <div class="form-group" style="margin-top: 15px;">
-                <label class="small" style="font-weight: 700;">2. Select muscle focus areas (select multiple):</label>
-                <div class="pill-group" id="genFocus" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                  <button type="button" class="pill-btn active" data-value="Chest">Chest</button>
-                  <button type="button" class="pill-btn active" data-value="Back">Back</button>
-                  <button type="button" class="pill-btn" data-value="Shoulders">Shoulders</button>
-                  <button type="button" class="pill-btn" data-value="Biceps">Biceps</button>
-                  <button type="button" class="pill-btn" data-value="Triceps">Triceps</button>
-                  <button type="button" class="pill-btn" data-value="Legs">Legs</button>
-                  <button type="button" class="pill-btn" data-value="Core">Core</button>
-                  <button type="button" class="pill-btn" data-value="Cardio">Cardio</button>
-                  <button type="button" class="pill-btn" data-value="Stretching & Mobility">Stretching</button>
-                </div>
-              </div>
-              
-              <div class="form-group" style="margin-top: 15px;">
-                <label class="small" style="font-weight: 700;">3. What equipment do you have?</label>
-                <div class="checkbox-grid" id="genEquipment">
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="bodyweight" checked disabled />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Bodyweight (Always enabled)</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="dumbbells" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Dumbbells</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="barbell" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Barbell</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="pullupbar" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Pull-up Bar</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="treadmill" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Treadmill / Bike</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="cables" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Cable Machine</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="rower" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Rower</span>
-                  </label>
-                  <label class="checkbox-container">
-                    <input type="checkbox" data-eq="resistancebands" />
-                    <span class="checkbox-checkmark"></span>
-                    <span class="checkbox-label">Resistance Bands</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div class="form-group" style="margin-top: 15px;">
-                <label class="small" style="font-weight: 700;">4. Set Intensity Level</label>
-                <div class="pill-group" id="genDifficulty">
-                  <button type="button" class="pill-btn" data-value="beginner">Beginner</button>
-                  <button type="button" class="pill-btn active" data-value="intermediate">Intermediate</button>
-                  <button type="button" class="pill-btn" data-value="advanced">Advanced</button>
-                </div>
-              </div>
-              
-              <button type="button" class="btn primary-gradient btn-large" id="btnRunGenerator" style="margin-top: 20px; width: 100%; justify-content: center; display: flex; font-size: 16px;">
-                <span>⚡ Generate Workout</span>
-              </button>
-            </form>
-          </div>
-          
-          <!-- Generator Loading State -->
-          <div id="generatorLoading" class="panel text-center" style="display: none; padding: 40px 20px; margin-top: 15px;">
-            <div class="spinner"></div>
-            <div style="font-weight: 900; margin-top: 15px; font-size: 16px;">Crafting custom routine...</div>
-            <div class="small" id="generatorStatus" style="margin-top: 5px;">Selecting optimal exercises...</div>
-          </div>
-          
-          <!-- Generator Result Preview -->
-          <div id="generatorPreview" class="panel" style="display: none; margin-top: 16px;">
-            <div class="preview-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; width: 100%;">
-              <div style="flex: 1; min-width: 200px;">
-                <label class="small" style="font-weight: 700; display: block; margin-bottom: 4px;">Routine Name</label>
-                <input type="text" id="customRoutineName" class="input" style="width: 100%; font-weight: 800; font-size: 15px; font-family: 'Outfit', sans-serif;" />
-                <p id="previewWorkoutDesc" class="small" style="margin: 6px 0 0;"></p>
-              </div>
-              <div style="display: flex; gap: 8px; flex-shrink: 0; margin-top: 18px;">
-                <button class="btn secondary" id="btnSaveGeneratedRoutine" type="button">Save Routine</button>
-                <button class="btn primary-gradient" id="btnStartGeneratedWorkout" type="button">Start Session</button>
-              </div>
-            </div>
-            <hr class="divider" style="margin: 12px 0; border: none; border-top: 1px solid var(--border);" />
-            <div id="previewExercisesList" class="preview-exercises" style="display: grid; gap: 10px;"></div>
-          </div>
-        </section>
 
-        <!-- Curated Workout Library Section -->
-        <section class="card" id="cardIdeas" style="margin-top: 20px;">
-          <div class="cardHeader">
-            <div>
-              <h2 style="font-size: 18px; font-weight: 900;">Curated Workout Library</h2>
-              <div class="muted">Select from our expert-curated workout templates to get started instantly.</div>
-            </div>
-          </div>
-          
-          <div class="ideas-grid" id="ideasGrid" style="display: grid; gap: 16px; margin-top: 14px;">
-            <!-- Populate dynamically via javascript -->
-          </div>
-        </section>
-      </div>
+          <!-- Column 2: Generator & Curated Library -->
+          <div class="ideas-column">
+            <!-- Custom Workout Generator Section -->
+            <section class="card" id="cardGenerator">
+              <div class="cardHeader">
+                <div>
+                  <h2 style="font-size: 18px; font-weight: 900;">Custom Workout Generator</h2>
+                  <div class="muted">Generate a custom, science-backed workout tailored to your time and gear.</div>
+                </div>
+              </div>
+              
+              <div class="panel" style="margin-top: 10px;">
+                <form id="generatorForm" class="generator-form">
+                  <div class="form-group">
+                    <label class="small" style="font-weight: 700;">1. How much time do you have?</label>
+                    <div class="pill-group" id="genDuration">
+                      <button type="button" class="pill-btn" data-value="15">15 Min</button>
+                      <button type="button" class="pill-btn active" data-value="30">30 Min</button>
+                      <button type="button" class="pill-btn" data-value="45">45 Min</button>
+                      <button type="button" class="pill-btn" data-value="60">60 Min</button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group" style="margin-top: 15px;">
+                    <label class="small" style="font-weight: 700;">2. Select muscle focus areas (select multiple):</label>
+                    <div class="pill-group" id="genFocus" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                      <button type="button" class="pill-btn active" data-value="Chest">Chest</button>
+                      <button type="button" class="pill-btn active" data-value="Back">Back</button>
+                      <button type="button" class="pill-btn" data-value="Shoulders">Shoulders</button>
+                      <button type="button" class="pill-btn" data-value="Biceps">Biceps</button>
+                      <button type="button" class="pill-btn" data-value="Triceps">Triceps</button>
+                      <button type="button" class="pill-btn" data-value="Legs">Legs</button>
+                      <button type="button" class="pill-btn" data-value="Core">Core</button>
+                      <button type="button" class="pill-btn" data-value="Cardio">Cardio</button>
+                      <button type="button" class="pill-btn" data-value="Stretching & Mobility">Stretching</button>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group" style="margin-top: 15px;">
+                    <label class="small" style="font-weight: 700;">3. What equipment do you have?</label>
+                    <div class="checkbox-grid" id="genEquipment">
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="bodyweight" checked disabled />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Bodyweight (Always enabled)</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="dumbbells" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Dumbbells</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="barbell" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Barbell</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="pullupbar" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Pull-up Bar</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="treadmill" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Treadmill / Bike</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="cables" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Cable Machine</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="rower" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Rower</span>
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" data-eq="resistancebands" />
+                        <span class="checkbox-checkmark"></span>
+                        <span class="checkbox-label">Resistance Bands</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group" style="margin-top: 15px;">
+                    <label class="small" style="font-weight: 700;">4. Set Intensity Level</label>
+                    <div class="pill-group" id="genDifficulty">
+                      <button type="button" class="pill-btn" data-value="beginner">Beginner</button>
+                      <button type="button" class="pill-btn active" data-value="intermediate">Intermediate</button>
+                      <button type="button" class="pill-btn" data-value="advanced">Advanced</button>
+                    </div>
+                  </div>
+                  
+                  <button type="button" class="btn primary-gradient btn-large" id="btnRunGenerator" style="margin-top: 20px; width: 100%; justify-content: center; display: flex; font-size: 16px;">
+                    <span>⚡ Generate Workout</span>
+                  </button>
+                </form>
+              </div>
+              
+              <!-- Generator Loading State -->
+              <div id="generatorLoading" class="panel text-center" style="display: none; padding: 40px 20px; margin-top: 15px;">
+                <div class="spinner"></div>
+                <div style="font-weight: 900; margin-top: 15px; font-size: 16px;">Crafting custom routine...</div>
+                <div class="small" id="generatorStatus" style="margin-top: 5px;">Selecting optimal exercises...</div>
+              </div>
+              
+              <!-- Generator Result Preview -->
+              <div id="generatorPreview" class="panel" style="display: none; margin-top: 16px;">
+                <div class="preview-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; width: 100%;">
+                  <div style="flex: 1; min-width: 200px;">
+                    <label class="small" style="font-weight: 700; display: block; margin-bottom: 4px;">Routine Name</label>
+                    <input type="text" id="customRoutineName" class="input" style="width: 100%; font-weight: 800; font-size: 15px; font-family: 'Outfit', sans-serif;" />
+                    <p id="previewWorkoutDesc" class="small" style="margin: 6px 0 0;"></p>
+                  </div>
+                  <div style="display: flex; gap: 8px; flex-shrink: 0; margin-top: 18px;">
+                    <button class="btn secondary" id="btnSaveGeneratedRoutine" type="button">Save Routine</button>
+                    <button class="btn primary-gradient" id="btnStartGeneratedWorkout" type="button">Start Session</button>
+                  </div>
+                </div>
+                <hr class="divider" style="margin: 12px 0; border: none; border-top: 1px solid var(--border);" />
+                <div id="previewExercisesList" class="preview-exercises" style="display: grid; gap: 10px;"></div>
+              </div>
+            </section>
 
-      <!-- Tab 4: My Routines Panel -->
-      <div id="panel-routines" class="tab-panel">
-        <section class="card" id="cardRoutines">
-          <div class="cardHeader">
-            <h2>Custom Routines</h2>
-            <button class="btn" id="btnNewRoutine" type="button">New routine</button>
+            <!-- Curated Workout Library Section -->
+            <section class="card" id="cardIdeas" style="margin-top: 20px;">
+              <div class="cardHeader">
+                <div>
+                  <h2 style="font-size: 18px; font-weight: 900;">Curated Workout Library</h2>
+                  <div class="muted">Select from our expert-curated workout templates to get started instantly.</div>
+                </div>
+              </div>
+              
+              <div class="ideas-grid" id="ideasGrid" style="display: grid; gap: 16px; margin-top: 14px;">
+                <!-- Populate dynamically via javascript -->
+              </div>
+            </section>
           </div>
-          <div class="muted">You can create custom routines, or use the Workout Ideas & Generator tabs.</div>
-          <div class="routineList" id="routineList"></div>
-        </section>
+        </div>
       </div>
 
       <!-- Tab 4.5: Exercises Directory Panel -->
@@ -458,7 +473,7 @@
                   <div class="small muted" style="margin-top: 2px;">Last synced: <span id="cloudSyncTimeText">Never</span></div>
                 </div>
                 <div class="row wrap" style="gap: 8px;">
-                  <button class="btn primary-gradient" id="btnCloudSyncLogin" type="button" style="padding: 6px 12px; font-size: 12px;">Enable Cloud Sync</button>
+                  <button class="btn primary-gradient" id="btnCloudSyncLogin" type="button" style="padding: 6px 12px; font-size: 12px; display: none;">Enable Cloud Sync</button>
                   <button class="btn secondary" id="btnCloudSyncForce" type="button" style="padding: 6px 12px; font-size: 12px; display: none;">Sync Now</button>
                   <button class="btn danger" id="btnCloudSyncLogout" type="button" style="padding: 6px 12px; font-size: 12px; display: none;">Disable Sync</button>
                 </div>
@@ -498,25 +513,15 @@
                     <label class="small" style="font-weight: 600;">Min / Session</label>
                     <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
                   </div>
-                  <div>
-                    <label class="small" style="font-weight: 600;">Workout Split</label>
-                    <select class="input" id="primarySplit">
-                      <option value="alternating">Alternating (Upper / Lower / Full Body)</option>
-                      <option value="ppl">Push / Pull / Legs (PPL)</option>
-                      <option value="upper_lower">Upper / Lower Focus</option>
-                      <option value="full_body">Full Body Focus only</option>
-                    </select>
+                </div>
+                <!-- Workout Finisher — full-width row below the grid -->
+                <div style="margin-top: 12px;">
+                  <label class="small" style="font-weight: 600; display: block; margin-bottom: 4px;">Workout Finisher</label>
+                  <div class="pill-group" id="secondaryType" style="display: flex; width: 100%; box-sizing: border-box;">
+                    <button type="button" class="pill-btn active" data-value="" onclick="document.querySelectorAll('#secondaryType .pill-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');" style="flex: 1; text-align: center;">No Finisher</button>
+                    <button type="button" class="pill-btn" data-value="finisher" onclick="document.querySelectorAll('#secondaryType .pill-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');" style="flex: 1; text-align: center;">🔥 Finisher</button>
                   </div>
-                  <div>
-                    <label class="small" style="font-weight: 600;">Workout Finisher</label>
-                    <select class="input" id="secondaryType">
-                      <option value="">None</option>
-                      <option value="steps">Steps</option>
-                      <option value="protein">Protein</option>
-                      <option value="mobility">Mobility</option>
-                      <option value="zone2">Zone 2</option>
-                    </select>
-                  </div>
+                  <div class="muted" style="font-size: 11px; margin-top: 4px;">Adds 1–2 all-out bonus exercises at the end of each workout, matched to your training focus that day.</div>
                 </div>
 
                 <!-- Custom / Baseline / Progress Wraps (conditional fields) -->
@@ -594,7 +599,22 @@
                 </div>
 
                 <div style="margin-top:20px">
-                  <label class="small" style="display:block; margin-bottom:8px; font-weight:700;">Prioritized Muscle Groups</label>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <label class="small" style="font-weight:700; margin: 0;">Prioritized Muscle Groups</label>
+                    <button type="button" id="btnPriorityInfo" style="width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; flex-shrink: 0;" title="How priorities work">ℹ</button>
+                  </div>
+                  <div id="priorityInfoPanel" style="display: none; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 12px; line-height: 1.6;">
+                    <div style="font-weight: 800; color: var(--accent); margin-bottom: 6px;">How the model uses your priorities</div>
+                    <div style="color: var(--text); margin-bottom: 8px;">Selecting muscle groups here reshapes your <strong>weekly schedule structure</strong> — not just exercise order within a single day.</div>
+                    <div style="display: grid; gap: 4px; color: var(--muted);">
+                      <div>📅 <strong>3+ upper muscles selected</strong> → 3 Upper days : 1 Lower day per week</div>
+                      <div>📅 <strong>1–2 upper muscles selected</strong> → 2 Upper days : 1 Lower day cycle</div>
+                      <div>📅 <strong>Legs selected</strong> → shifts toward more Lower body days</div>
+                      <div>📅 <strong>3+ push muscles (Chest, Shoulders, Triceps)</strong> → extra Push day in PPL rotation</div>
+                      <div>📅 <strong>Core selected</strong> → Core added to every session regardless of focus day</div>
+                    </div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted);">Within each day, prioritized muscle groups also get the first exercise slots — so you're always hitting them fresh before fatigue sets in.</div>
+                  </div>
                   <div class="goal-equipment-grid" id="goalPriorities">
                     <label class="eq-check"><input type="checkbox" data-goal-priority="Chest"> Chest</label>
                     <label class="eq-check"><input type="checkbox" data-goal-priority="Back"> Back</label>
@@ -637,7 +657,7 @@
     </main>
 
     <footer class="footer">
-      <div class="muted">Local-first. Optional Cloud Sync. Installable as a PWA.</div>
+      <div class="muted">Works offline. Optional cloud backup. Add to home screen for quick access.</div>
     </footer>
   </div>
 
