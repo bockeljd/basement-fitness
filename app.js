@@ -6,6 +6,7 @@
 
 const $ = (id) => document.getElementById(id);
 const uid = () => Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
+const DEFAULT_SUBTITLE = 'Routines, Rest Timers & Safety Filters';
 
 const KEYS = {
   routines: 'bf:routines',
@@ -1793,8 +1794,8 @@ function fmtTimer(sec) {
 
 function setSubtitle(text) {
   const username = state.profile?.username || '';
-  if (text === 'Workout tracker' && username) {
-    $('subtitle').textContent = `Workout tracker | ${username}`;
+  if (text === DEFAULT_SUBTITLE && username) {
+    $('subtitle').textContent = `${DEFAULT_SUBTITLE} | ${username}`;
   } else {
     $('subtitle').textContent = text;
   }
@@ -2203,7 +2204,7 @@ function renderWorkout() {
     if (state.activeTab === 'workout') {
       switchTab('dashboard');
     }
-    setSubtitle('Workout tracker');
+    setSubtitle(DEFAULT_SUBTITLE);
     return;
   }
   
@@ -2778,7 +2779,7 @@ function switchProfileTo(username) {
   }
 
   applyTheme();
-  setSubtitle('Workout tracker');
+  setSubtitle(DEFAULT_SUBTITLE);
   hydrateGoalsForm();
   renderProfileSwitcher();
   updateCloudSyncStatusUI();
@@ -2860,7 +2861,7 @@ function importData(file) {
       saveSessions();
       saveActive();
 
-      setSubtitle('Workout tracker');
+      setSubtitle(DEFAULT_SUBTITLE);
       applyTheme();
 
       renderRoutines();
@@ -4002,7 +4003,7 @@ function saveGoalsFromForm() {
   } else {
     state.profile.username = username;
     saveProfile();
-    setSubtitle('Workout tracker');
+    setSubtitle(DEFAULT_SUBTITLE);
     regeneratePlan();
     renderDashboard();
   }
@@ -8352,7 +8353,7 @@ function boot() {
       switchTab('workout');
     } else {
       switchTab('dashboard');
-      setSubtitle('Workout tracker');
+      setSubtitle(DEFAULT_SUBTITLE);
     }
   } catch (e) {
     console.error('Failed to switch default tabs:', e);
