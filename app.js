@@ -1801,6 +1801,16 @@ function setSubtitle(text) {
   }
 }
 
+function checkFirstTimeUser() {
+  const banner = $('firstTimeOnboardingBanner');
+  if (!banner) return;
+  if (!state.primaryGoal) {
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 // SPA Routing: Switch Tabs
 function switchTab(tabId) {
   state.activeTab = tabId;
@@ -3662,6 +3672,7 @@ function renderRecentActivity() {
   });
 }
 function renderDashboard() {
+  checkFirstTimeUser();
   const pg = $('primaryGoal');
   const pprog = $('primaryGoalProgress');
   if (pg) {
@@ -7071,6 +7082,19 @@ function wire() {
   $('btnBannerDismiss')?.addEventListener('click', () => {
     localStorage.setItem('bf:cloudOnboardingDismissed', 'true');
     updateCloudSyncStatusUI();
+  });
+  $('btnGoToGoals')?.addEventListener('click', () => {
+    switchTab('settings');
+    const card = $('cardSettings');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth' });
+      card.style.border = '2.5px solid var(--accent)';
+      card.style.boxShadow = '0 0 20px rgba(99, 102, 241, 0.4)';
+      setTimeout(() => {
+        card.style.border = '';
+        card.style.boxShadow = '';
+      }, 3000);
+    }
   });
   $('btnCloudSyncClose')?.addEventListener('click', closeCloudSyncModal);
   $('btnCloudSyncForce')?.addEventListener('click', cloudPush);
