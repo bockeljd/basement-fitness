@@ -6,7 +6,7 @@
 
 const $ = (id) => document.getElementById(id);
 const uid = () => Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
-const DEFAULT_SUBTITLE = 'Routines, Rest Timers & Safety Filters';
+const DEFAULT_SUBTITLE = 'Tailored Workouts, Joint Safety & Progressive Overload';
 
 const KEYS = {
   routines: 'bf:routines',
