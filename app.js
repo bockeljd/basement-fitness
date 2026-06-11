@@ -4989,6 +4989,137 @@ function reindexPlanRoutines(startIndex = 0) {
   savePlan();
 }
 
+function getAvailableWorkoutTypes() {
+  const goal = state.primaryGoal?.type || state.profile?.goal || 'general';
+  const splitType = state.primaryGoal?.splitType || state.profile?.splitType || 'alternating';
+  
+  const options = [];
+  
+  if (goal === 'run_5k' || goal === '5k') {
+    options.push({ type: 'variant', variant: 0, name: '5K - Intervals' });
+    options.push({ type: 'variant', variant: 1, name: '5K - Tempo Run' });
+    options.push({ type: 'variant', variant: 2, name: '5K - Recovery & Hills' });
+  } else if (goal === 'bar_hang' || goal === 'barhang') {
+    options.push({ type: 'variant', variant: 0, name: 'Grip & Upper Hang' });
+    options.push({ type: 'variant', variant: 1, name: 'Core & Pull Hang' });
+    options.push({ type: 'variant', variant: 2, name: 'Shoulder Stability Hang' });
+  } else if (goal === 'pushups') {
+    options.push({ type: 'variant', variant: 0, name: 'Pushup Volume' });
+    options.push({ type: 'variant', variant: 1, name: 'Pushup Strength' });
+    options.push({ type: 'variant', variant: 2, name: 'Pushup Endurance' });
+  } else {
+    // Dynamic splits
+    if (splitType === 'ppl') {
+      options.push({ type: 'variant', variant: 0, name: 'Push Focus' });
+      options.push({ type: 'variant', variant: 1, name: 'Pull Focus' });
+      options.push({ type: 'variant', variant: 2, name: 'Legs & Core Focus' });
+    } else if (splitType === 'upper_lower') {
+      options.push({ type: 'variant', variant: 0, name: 'Upper Focus' });
+      options.push({ type: 'variant', variant: 1, name: 'Lower Focus' });
+    } else if (splitType === 'full_body') {
+      options.push({ type: 'variant', variant: 2, name: 'Full Body Focus' });
+    } else { // alternating
+      options.push({ type: 'variant', variant: 0, name: 'Upper Focus' });
+      options.push({ type: 'variant', variant: 1, name: 'Lower Focus' });
+      options.push({ type: 'variant', variant: 2, name: 'Full Body Focus' });
+    }
+  }
+  
+  // Custom routines
+  if (Array.isArray(state.routines)) {
+    state.routines.forEach(r => {
+      options.push({ type: 'custom', routineId: r.id, name: `Custom: ${r.name}` });
+    });
+  }
+  
+  // Active Recovery
+  options.push({ type: 'active-recovery', name: 'Active Recovery' });
+  
+  // Rest Day
+  options.push({ type: 'rest', name: 'Rest Day' });
+  
+  return options;
+}
+
+function showSwapWorkoutModal(dateStr) {
+  const modal = $('modalSwapWorkout');
+  const listEl = $('swapWorkoutOptionsList');
+  if (!modal || !listEl) return;
+  
+  listEl.innerHTML = '';
+  const options = getAvailableWorkoutTypes();
+  
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn secondary';
+    btn.style.width = '100%';
+    btn.style.textAlign = 'left';
+    btn.style.justifyContent = 'flex-start';
+    btn.style.padding = '10px 14px';
+    btn.style.fontSize = '14px';
+    btn.textContent = opt.name;
+    btn.addEventListener('click', () => {
+      confirmAndExecuteWorkoutSwap(dateStr, opt);
+    });
+    listEl.appendChild(btn);
+  });
+  
+  modal.classList.add('active');
+}
+
+function closeSwapWorkoutModal() {
+  $('modalSwapWorkout')?.classList.remove('active');
+}
+
+function confirmAndExecuteWorkoutSwap(dateStr, option) {
+  const idx = state.plan.days.findIndex(d => d.date === dateStr);
+  if (idx === -1) return;
+  
+  const day = state.plan.days[idx];
+  
+  if (option.type === 'rest') {
+    day.kind = 'rest';
+    day.routine = null;
+  } else if (option.type === 'active-recovery') {
+    day.kind = 'workout';
+    day.routine = {
+      id: 'active-recovery',
+      name: 'Active Recovery',
+      desc: '15-min active recovery / stretching',
+      exercises: [
+        { id: uid(), name: 'Light stretching or mobility work', info: 'Move gently through tight areas' }
+      ],
+      isCustomized: true
+    };
+  } else if (option.type === 'custom') {
+    const custom = state.routines.find(r => r.id === option.routineId);
+    if (custom) {
+      day.kind = 'workout';
+      day.routine = {
+        ...JSON.parse(JSON.stringify(custom)),
+        isCustomized: true
+      };
+    }
+  } else if (option.type === 'variant') {
+    day.kind = 'workout';
+    const routine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, { variantOverride: option.variant });
+    routine.isCustomized = true;
+    day.routine = routine;
+  }
+  
+  savePlan();
+  closeSwapWorkoutModal();
+  
+  if (state.calendarView === 'month') {
+    renderMonthCalendar();
+    showDayPopover(dateStr);
+  } else {
+    renderPlan();
+    showDayPopover(dateStr);
+  }
+}
+
 function handleCalendarAction(act, dateStr) {
   if (!dateStr || !act) return;
   
@@ -5006,28 +5137,7 @@ function handleCalendarAction(act, dateStr) {
   } else if (act === 'edit-workout') {
     showEditWorkoutView(dateStr);
   } else if (act === 'swap') {
-    const idx = state.plan.days.findIndex(d => d.date === dateStr);
-    if (idx !== -1) {
-      const item = state.plan.days[idx];
-      if (item.routine && item.routine.id) {
-        const parts = item.routine.id.split(':');
-        let dayIndex = parseInt(parts[parts.length - 1], 10);
-        if (isNaN(dayIndex)) dayIndex = 0;
-        const nextDayIndex = dayIndex + 1;
-        const newRoutine = generateRoutineFromProfile(state.profile, state.primaryGoal, state.secondaryGoal, nextDayIndex);
-        parts[parts.length - 1] = String(nextDayIndex);
-        newRoutine.id = parts.join(':');
-        item.routine = newRoutine;
-        reindexPlanRoutines(idx + 1);
-        savePlan();
-        if (state.calendarView === 'month') {
-          renderMonthCalendar();
-          showDayPopover(dateStr);
-        } else {
-          renderPlan();
-        }
-      }
-    }
+    showSwapWorkoutModal(dateStr);
   } else if (act === 'shift') {
     const idx = state.plan.days.findIndex(d => d.date === dateStr);
     if (idx !== -1 && idx < state.plan.days.length - 1) {
@@ -5043,7 +5153,9 @@ function handleCalendarAction(act, dateStr) {
       next.kind = tempKind;
       next.routine = tempRoutine;
       
-      reindexPlanRoutines(idx);
+      if (current.routine) current.routine.isCustomized = true;
+      if (next.routine) next.routine.isCustomized = true;
+      
       savePlan();
       if (state.calendarView === 'month') {
         renderMonthCalendar();
@@ -6580,7 +6692,12 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
   const splitType = primaryGoal?.splitType || profile?.splitType || 'alternating';
   const priorities = primaryGoal?.priorities || profile?.priorities || [];
-  const variant = selectVariantWithPriority(splitType, dayIndex, priorities);
+  let variant;
+  if (typeof dayIndex === 'object' && dayIndex !== null && 'variantOverride' in dayIndex) {
+    variant = dayIndex.variantOverride;
+  } else {
+    variant = selectVariantWithPriority(splitType, dayIndex, priorities);
+  }
 
   if (goal === 'run_5k' || goal === '5k') {
     if (variant === 0) {
@@ -7076,6 +7193,15 @@ function wire() {
   $('modalSwapExercise')?.addEventListener('click', (e) => {
     if (e.target === $('modalSwapExercise')) {
       $('modalSwapExercise').classList.remove('active');
+    }
+  });
+
+  $('btnSwapWorkoutClose')?.addEventListener('click', () => {
+    $('modalSwapWorkout').classList.remove('active');
+  });
+  $('modalSwapWorkout')?.addEventListener('click', (e) => {
+    if (e.target === $('modalSwapWorkout')) {
+      $('modalSwapWorkout').classList.remove('active');
     }
   });
 

@@ -749,6 +749,22 @@
     </div>
   </div>
 
+  <!-- Modal for Swap Workout -->
+  <div id="modalSwapWorkout" class="modal-overlay">
+    <div class="modal-container" style="max-width: 430px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔄 Swap Workout Focus</h3>
+        <button class="modal-close" id="btnSwapWorkoutClose" type="button">&times;</button>
+      </div>
+      <div class="modal-content" style="max-height: 70vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+        <p class="muted" style="font-size: 13px; margin: 0;">Choose what type of workout you want to do on this day:</p>
+        <div id="swapWorkoutOptionsList" style="display: grid; gap: 8px;">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal for Cloud Sync (Login/Register) -->
   <div id="modalCloudSync" class="modal-overlay">
     <div class="modal-container" style="max-width: 380px;">
