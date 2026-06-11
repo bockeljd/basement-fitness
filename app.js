@@ -8510,7 +8510,7 @@ function boot() {
   }
   
   try {
-    if (state.activeSessionId) {
+    if (state.activeSessionId && activeSession()) {
       switchTab('workout');
     } else if (!state.primaryGoal || !state.primaryGoal.type) {
       switchTab('settings');
