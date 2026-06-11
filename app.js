@@ -1804,7 +1804,7 @@ function setSubtitle(text) {
 function checkFirstTimeUser() {
   const banner = $('firstTimeOnboardingBanner');
   if (!banner) return;
-  if (!state.primaryGoal) {
+  if (!state.primaryGoal || !state.primaryGoal.type) {
     banner.style.display = 'flex';
   } else {
     banner.style.display = 'none';
@@ -3676,7 +3676,7 @@ function renderDashboard() {
   const pg = $('primaryGoal');
   const pprog = $('primaryGoalProgress');
   if (pg) {
-    if (!state.primaryGoal) {
+    if (!state.primaryGoal || !state.primaryGoal.type) {
       pg.textContent = 'Not set';
       if (pprog) pprog.textContent = '';
     } else {
@@ -4004,13 +4004,22 @@ function saveGoalsFromForm() {
   const validFinisher = st === 'finisher' ? st : '';
   state.secondaryGoal = validFinisher ? { type: validFinisher, createdAt: new Date().toISOString() } : null;
 
+  const username = String($('usernameInput')?.value || '').trim();
+  const oldActiveUser = localStorage.getItem('bf:activeUser') || '';
+
+  if (username && username !== oldActiveUser) {
+    localStorage.setItem('bf:activeUser', username);
+    state.profile.username = username;
+  }
+
+  saveProfile();
   savePrimaryGoal();
   saveSecondaryGoal();
 
-  const username = String($('usernameInput')?.value || '').trim();
-  const oldActiveUser = localStorage.getItem('bf:activeUser') || '';
-  if (username !== oldActiveUser) {
+  if (username && username !== oldActiveUser) {
     switchProfileTo(username);
+    regeneratePlan();
+    renderDashboard();
   } else {
     state.profile.username = username;
     saveProfile();
