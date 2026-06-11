@@ -4020,12 +4020,14 @@ function saveGoalsFromForm() {
     switchProfileTo(username);
     regeneratePlan();
     renderDashboard();
+    switchTab('dashboard');
   } else {
     state.profile.username = username;
     saveProfile();
     setSubtitle(DEFAULT_SUBTITLE);
     regeneratePlan();
     renderDashboard();
+    switchTab('dashboard');
   }
 
   // Show confirmation
@@ -8510,6 +8512,8 @@ function boot() {
   try {
     if (state.activeSessionId) {
       switchTab('workout');
+    } else if (!state.primaryGoal || !state.primaryGoal.type) {
+      switchTab('settings');
     } else {
       switchTab('dashboard');
       setSubtitle(DEFAULT_SUBTITLE);
