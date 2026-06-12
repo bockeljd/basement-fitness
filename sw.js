@@ -1,4 +1,4 @@
-const CACHE_NAME = 'basement-fitness-v49';
+const CACHE_NAME = 'basement-fitness-v50';
 const ASSETS = [
   './',
   'index.html',
