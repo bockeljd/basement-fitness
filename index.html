@@ -454,33 +454,36 @@
         </section>
       </div>
 
-      <!-- Tab 6: Nutrition Panel -->
+      <!-- Tab 6: Nutrition / 30-Day Meal Plan Panel -->
       <div id="panel-nutrition" class="tab-panel">
-        <!-- Macro Target Bar -->
+
+        <!-- Header: Title + Macro Targets + Controls -->
         <section class="card" id="cardMacroTargets">
           <div class="cardHeader">
             <div>
-              <h2 style="margin:0;">Daily Macro Targets</h2>
-              <div class="muted" style="font-size:13px; margin-top:2px;">Based on your primary fitness goal. Tap to customize.</div>
+              <h2 style="margin:0; font-family:'Outfit',sans-serif;">30-Day Meal Plan</h2>
+              <div class="muted" style="font-size:13px; margin-top:2px;">Meals auto-matched to your fitness goal.</div>
             </div>
-            <button class="btn secondary" id="btnEditMacroTargets" type="button" style="white-space:nowrap;">✏️ Edit</button>
+            <div style="display:flex; gap:8px; flex-shrink:0;">
+              <button class="btn secondary" id="btnEditMacroTargets" type="button" style="white-space:nowrap;">✏️ Targets</button>
+              <button class="btn secondary" id="btnRegenMealPlan" type="button" style="white-space:nowrap;">🔄 New Plan</button>
+            </div>
           </div>
-          <div id="macroTargetBar" class="macro-target-bar-container">
-            <!-- Populated dynamically -->
-          </div>
-          <!-- Inline Macro Editor (hidden by default) -->
+          <!-- Daily Macro Target Bars -->
+          <div id="macroTargetBar" class="macro-target-bar-container"></div>
+          <!-- Inline Macro Editor -->
           <div id="macroTargetEditor" class="macro-target-editor" style="display:none;">
             <div class="macro-editor-grid">
               <div class="macro-editor-field">
-                <label class="small" style="font-weight:700; color: var(--indigo);">Protein (g)</label>
+                <label class="small" style="font-weight:700; color:#4f46e5;">Protein (g)</label>
                 <input type="number" id="macroInputProtein" class="input" min="0" max="500" placeholder="150" />
               </div>
               <div class="macro-editor-field">
-                <label class="small" style="font-weight:700; color: var(--emerald, #10b981);">Carbs (g)</label>
+                <label class="small" style="font-weight:700; color:#10b981;">Carbs (g)</label>
                 <input type="number" id="macroInputCarbs" class="input" min="0" max="800" placeholder="220" />
               </div>
               <div class="macro-editor-field">
-                <label class="small" style="font-weight:700; color: var(--amber, #f59e0b);">Fat (g)</label>
+                <label class="small" style="font-weight:700; color:#f59e0b;">Fat (g)</label>
                 <input type="number" id="macroInputFat" class="input" min="0" max="300" placeholder="65" />
               </div>
             </div>
@@ -491,45 +494,20 @@
           </div>
         </section>
 
-        <!-- Filter Row + Meal List -->
-        <section class="card" id="cardMealList" style="margin-top: 0;">
-          <div class="cardHeader">
-            <h2 style="margin:0;">Meal Library</h2>
-            <div class="muted" style="font-size:13px;">Science-backed meals tailored to your goals.</div>
+        <!-- Day Navigator: horizontal date chip strip -->
+        <div class="day-navigator-wrapper">
+          <div class="day-navigator" id="dayNavigator">
+            <!-- Populated dynamically -->
           </div>
+        </div>
 
-          <!-- Meal Type Filter -->
-          <div class="meal-filter-section">
-            <div class="meal-filter-label small" style="font-weight:700; margin-bottom:6px;">Meal Type</div>
-            <div class="meal-filter-row" id="mealTypeFilter">
-              <button class="pill-btn active" data-meal-type="all" type="button">All</button>
-              <button class="pill-btn" data-meal-type="breakfast" type="button">🌅 Breakfast</button>
-              <button class="pill-btn" data-meal-type="lunch" type="button">☀️ Lunch</button>
-              <button class="pill-btn" data-meal-type="dinner" type="button">🌙 Dinner</button>
-              <button class="pill-btn" data-meal-type="snack" type="button">🍎 Snack</button>
-              <button class="pill-btn" data-meal-type="pre-workout" type="button">⚡ Pre-Workout</button>
-              <button class="pill-btn" data-meal-type="post-workout" type="button">💪 Post-Workout</button>
-            </div>
-          </div>
-
-          <!-- Goal Filter -->
-          <div class="meal-filter-section" style="margin-top:10px;">
-            <div class="meal-filter-label small" style="font-weight:700; margin-bottom:6px;">Goal</div>
-            <div class="meal-filter-row" id="mealGoalFilter">
-              <button class="pill-btn active" data-meal-goal="all" type="button">All Goals</button>
-              <button class="pill-btn" data-meal-goal="muscle-gain" type="button">💪 Muscle Gain</button>
-              <button class="pill-btn" data-meal-goal="fat-loss" type="button">🔥 Fat Loss</button>
-              <button class="pill-btn" data-meal-goal="maintenance" type="button">⚖️ Maintenance</button>
-              <button class="pill-btn" data-meal-goal="general-fitness" type="button">🏃 General</button>
-              <button class="pill-btn" data-meal-goal="vegan" type="button">🌱 Vegan</button>
-            </div>
-          </div>
-
-          <!-- Meal List -->
-          <div id="mealList" class="meal-list" style="margin-top:15px;">
-            <!-- Populated dynamically via JS -->
+        <!-- 30-Day Meal Plan List -->
+        <section class="card" id="cardMealPlan" style="margin-top:0; padding-top:6px;">
+          <div id="mealPlanList" class="meal-plan-list">
+            <!-- Populated dynamically -->
           </div>
         </section>
+
       </div>
 
       <!-- Tab 7: Settings Panel -->
@@ -814,6 +792,32 @@
       </div>
     </div>
   </div>
+  <!-- Bottom Drawer: Nutrition Facts -->
+  <div class="bottom-drawer" id="nutritionDrawer" role="dialog" aria-modal="true" aria-labelledby="nutritionDrawerTitle">
+    <div class="bottom-drawer-handle-bar"></div>
+    <div class="bottom-drawer-header">
+      <h3 class="bottom-drawer-title" id="nutritionDrawerTitle">Nutrition Facts</h3>
+      <button class="modal-close" id="btnNutritionDrawerClose" type="button">&times;</button>
+    </div>
+    <div class="bottom-drawer-body" id="nutritionDrawerContent">
+      <!-- FDA label + ingredients rendered here -->
+    </div>
+  </div>
+
+  <!-- Bottom Drawer: Swap Meal -->
+  <div class="bottom-drawer" id="swapMealDrawer" role="dialog" aria-modal="true" aria-labelledby="swapMealDrawerTitle">
+    <div class="bottom-drawer-handle-bar"></div>
+    <div class="bottom-drawer-header">
+      <h3 class="bottom-drawer-title" id="swapMealDrawerTitle">🔄 Swap Meal</h3>
+      <button class="modal-close" id="btnSwapMealDrawerClose" type="button">&times;</button>
+    </div>
+    <div class="bottom-drawer-body" id="swapMealDrawerContent">
+      <!-- Swap options rendered here -->
+    </div>
+  </div>
+
+  <!-- Bottom Drawer Backdrop -->
+  <div class="bottom-drawer-backdrop" id="drawerBackdrop"></div>
 
   <!-- Modal for Swap Exercise -->
   <div id="modalSwapExercise" class="modal-overlay">

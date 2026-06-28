@@ -8744,39 +8744,41 @@ function toggleTheme() {
 
 
 // =============================================
-// ===== NUTRITION TAB MODULE ==================
+// ===== 30-DAY MEAL PLANNER MODULE ============
 // =============================================
 
-// ---- State keys ----
+// ---- Constants ----
+const BF_MEAL_PLAN_KEY  = 'bfMealPlan';
 const BF_FAV_MEALS_KEY  = 'bfFavMeals';
 const BF_MACRO_TARGETS  = 'bfNutritionTargets';
 
-// ---- In-memory cache ----
-let _nutritionMealsCache = null;
-let _nutritionActiveTypeFilter = 'all';
-let _nutritionActiveGoalFilter = 'all';
+// ---- Module state ----
+let _nutritionMealsCache = null;      // meals.json array
+let _mealPlan = null;                 // active 30-day plan object
+let _swapContext = null;              // { dayIndex, slot } for open swap drawer
 
-/**
- * Returns goal → macro default mapping (g per day, baseline 150 lb person).
- */
+// -----------------------------------------------
+// ---- Utility: goal → macro defaults ----------
+// -----------------------------------------------
 function getGoalMacroDefaults() {
-  const goal = (state.primaryGoal && state.primaryGoal.type) ? state.primaryGoal.type.toLowerCase() : '';
-  const goalMap = {
-    'muscle-gain':    { protein: 160, carbs: 240, fat: 60, label: 'Muscle Gain'    },
-    'strength':       { protein: 155, carbs: 220, fat: 65, label: 'Strength'       },
-    'fat-loss':       { protein: 140, carbs: 130, fat: 55, label: 'Fat Loss'       },
-    'weight-loss':    { protein: 140, carbs: 130, fat: 55, label: 'Fat Loss'       },
-    'maintenance':    { protein: 120, carbs: 190, fat: 60, label: 'Maintenance'    },
-    'endurance':      { protein: 110, carbs: 260, fat: 55, label: 'Endurance'      },
-    'general':        { protein: 110, carbs: 200, fat: 55, label: 'General Fitness' },
-    'general-fitness':{ protein: 110, carbs: 200, fat: 55, label: 'General Fitness' },
+  const goal = (state.primaryGoal && state.primaryGoal.type)
+    ? state.primaryGoal.type.toLowerCase() : '';
+  const map = {
+    'muscle-gain':    { protein: 160, carbs: 240, fat: 60,  label: 'Muscle Gain'     },
+    'strength':       { protein: 155, carbs: 220, fat: 65,  label: 'Strength'        },
+    'fat-loss':       { protein: 140, carbs: 130, fat: 55,  label: 'Fat Loss'        },
+    'weight-loss':    { protein: 140, carbs: 130, fat: 55,  label: 'Fat Loss'        },
+    'maintenance':    { protein: 120, carbs: 190, fat: 60,  label: 'Maintenance'     },
+    'endurance':      { protein: 110, carbs: 260, fat: 55,  label: 'Endurance'       },
+    'general':        { protein: 110, carbs: 200, fat: 55,  label: 'General Fitness' },
+    'general-fitness':{ protein: 110, carbs: 200, fat: 55,  label: 'General Fitness' },
   };
-  return goalMap[goal] || { protein: 120, carbs: 200, fat: 60, label: 'General' };
+  return map[goal] || { protein: 120, carbs: 200, fat: 60, label: 'General' };
 }
 
-/**
- * Load meals.json from server (once), cache to _nutritionMealsCache.
- */
+// -----------------------------------------------
+// ---- Meals.json loader -----------------------
+// -----------------------------------------------
 async function loadMeals() {
   if (_nutritionMealsCache) return _nutritionMealsCache;
   try {
@@ -8790,78 +8792,162 @@ async function loadMeals() {
   return _nutritionMealsCache;
 }
 
-/**
- * Get bookmarked meal IDs from localStorage.
- */
-function getFavMeals() {
+/** Build a quick id→meal map for O(1) lookups */
+function buildMealsMap(meals) {
+  const map = {};
+  meals.forEach(m => { map[m.id] = m; });
+  return map;
+}
+
+// -----------------------------------------------
+// ---- Meal Plan Generation --------------------
+// -----------------------------------------------
+function generateMealPlan(meals) {
+  if (!meals || meals.length === 0) return null;
+
+  const goal = (state.primaryGoal && state.primaryGoal.type)
+    ? state.primaryGoal.type.toLowerCase() : '';
+
+  // Bucket meals by slot type
+  const byType = {
+    breakfast: meals.filter(m => m.mealType === 'breakfast'),
+    lunch:     meals.filter(m => m.mealType === 'lunch'),
+    dinner:    meals.filter(m => m.mealType === 'dinner'),
+    snack:     meals.filter(m =>
+      m.mealType === 'snack' ||
+      m.mealType === 'pre-workout' ||
+      m.mealType === 'post-workout'
+    ),
+  };
+
+  // Score how well a meal matches the current goal
+  function scoreMeal(meal) {
+    if (!goal) return 1;
+    const matches = (meal.goal || []).some(g =>
+      g === goal || goal.startsWith(g.split('-')[0])
+    );
+    return matches ? 3 : 1;
+  }
+
+  // Weighted random pick excluding last-used meal
+  function pickMeal(pool, lastId) {
+    if (!pool || pool.length === 0) return null;
+    const candidates = pool.length > 1 ? pool.filter(m => m.id !== lastId) : pool;
+    const weighted = [];
+    candidates.forEach(m => {
+      const w = scoreMeal(m);
+      for (let i = 0; i < w; i++) weighted.push(m);
+    });
+    return weighted[Math.floor(Math.random() * weighted.length)] || null;
+  }
+
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-CA'); // YYYY-MM-DD local
+  const days = [];
+  const last = { breakfast: null, lunch: null, dinner: null, snack: null };
+
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const dateStr = d.toLocaleDateString('en-CA');
+
+    const bf = pickMeal(byType.breakfast, last.breakfast);
+    const lu = pickMeal(byType.lunch,     last.lunch);
+    const di = pickMeal(byType.dinner,    last.dinner);
+    const sn = pickMeal(byType.snack,     last.snack);
+
+    last.breakfast = bf?.id || null;
+    last.lunch     = lu?.id || null;
+    last.dinner    = di?.id || null;
+    last.snack     = sn?.id || null;
+
+    days.push({
+      day:   i + 1,
+      date:  dateStr,
+      meals: {
+        breakfast: bf?.id || null,
+        lunch:     lu?.id || null,
+        dinner:    di?.id || null,
+        snack:     sn?.id || null,
+      }
+    });
+  }
+
+  return { generatedAt: todayStr, startDate: todayStr, days };
+}
+
+function saveMealPlan(plan) {
   try {
-    return JSON.parse(localStorage.getItem(BF_FAV_MEALS_KEY) || '[]');
-  } catch { return []; }
+    localStorage.setItem(BF_MEAL_PLAN_KEY, JSON.stringify(plan));
+  } catch (e) { console.warn('Could not save meal plan:', e); }
 }
 
-/**
- * Toggle a meal bookmark and re-render its star.
- */
-function toggleMealBookmark(id, event) {
-  if (event) { event.stopPropagation(); }
-  const favs = getFavMeals();
-  const idx = favs.indexOf(id);
-  if (idx === -1) {
-    favs.push(id);
-  } else {
-    favs.splice(idx, 1);
-  }
-  localStorage.setItem(BF_FAV_MEALS_KEY, JSON.stringify(favs));
-  // Update star button in DOM without full re-render
-  const btn = document.querySelector(`.meal-bookmark-btn[data-meal-id="${id}"]`);
-  if (btn) {
-    const isFav = favs.includes(id);
-    btn.textContent = isFav ? '⭐' : '☆';
-    btn.setAttribute('aria-label', isFav ? 'Remove bookmark' : 'Bookmark meal');
-  }
+function loadStoredMealPlan() {
+  try {
+    const raw = localStorage.getItem(BF_MEAL_PLAN_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }
 
-/**
- * Render macro target progress bars.
- */
+// -----------------------------------------------
+// ---- Macro helpers ---------------------------
+// -----------------------------------------------
+function getDayMacros(dayObj, mealsMap) {
+  const slots = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const t = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  slots.forEach(slot => {
+    const meal = mealsMap[dayObj.meals[slot]];
+    if (meal?.macros) {
+      t.calories += meal.macros.calories || 0;
+      t.protein  += meal.macros.protein  || 0;
+      t.carbs    += meal.macros.carbs    || 0;
+      t.fat      += meal.macros.fat      || 0;
+    }
+  });
+  return t;
+}
+
+function getMacroTargets() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(BF_MACRO_TARGETS) || 'null');
+    return stored || getGoalMacroDefaults();
+  } catch { return getGoalMacroDefaults(); }
+}
+
+// -----------------------------------------------
+// ---- Macro Target Bar (header) ---------------
+// -----------------------------------------------
 function renderMacroTargetBar() {
   const el = $('macroTargetBar');
   if (!el) return;
 
-  const saved = (() => {
-    try { return JSON.parse(localStorage.getItem(BF_MACRO_TARGETS) || 'null'); } catch { return null; }
-  })();
+  const targets = getMacroTargets();
   const defaults = getGoalMacroDefaults();
-  const targets = saved || defaults;
-
   const rows = [
-    { key: 'protein', label: 'Protein', cls: 'protein', unit: 'g' },
-    { key: 'carbs',   label: 'Carbs',   cls: 'carbs',   unit: 'g' },
-    { key: 'fat',     label: 'Fat',     cls: 'fat',     unit: 'g' },
+    { key: 'protein', label: 'Protein', cls: 'protein', unit: 'g', cal: 4 },
+    { key: 'carbs',   label: 'Carbs',   cls: 'carbs',   unit: 'g', cal: 4 },
+    { key: 'fat',     label: 'Fat',     cls: 'fat',     unit: 'g', cal: 9 },
   ];
-
+  const maxVal = Math.max(targets.protein, targets.carbs, targets.fat, 1);
   const totalCals = targets.protein * 4 + targets.carbs * 4 + targets.fat * 9;
-  const maxVal = Math.max(targets.protein, targets.carbs, targets.fat);
 
   el.innerHTML = rows.map(r => {
     const val = targets[r.key] || 0;
-    const pct = maxVal > 0 ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
-    const calContrib = r.key === 'fat' ? val * 9 : val * 4;
+    const pct = Math.min(100, Math.round((val / maxVal) * 100));
     return `
       <div class="macro-bar-row">
         <span class="macro-bar-label">${r.label}</span>
         <div class="macro-bar-track">
-          <div class="macro-bar-fill ${r.cls}" style="width: ${pct}%;"></div>
+          <div class="macro-bar-fill ${r.cls}" style="width:${pct}%;"></div>
         </div>
-        <span class="macro-bar-value">${val}${r.unit} <span style="font-weight:500; font-size:10.5px; opacity:0.65;">(${calContrib} kcal)</span></span>
-      </div>
-    `;
-  }).join('') + `<div class="muted" style="font-size:12px; margin-top:4px;">≈ ${totalCals} kcal/day target · Based on <strong>${defaults.label}</strong> goal</div>`;
+        <span class="macro-bar-value">${val}${r.unit}</span>
+      </div>`;
+  }).join('') +
+  `<div class="muted" style="font-size:12px; margin-top:6px;">
+    ≈ ${totalCals} kcal/day &nbsp;·&nbsp; Goal: <strong>${defaults.label}</strong>
+  </div>`;
 }
 
-/**
- * Save customized macro targets to localStorage and re-render.
- */
 function saveMacroTargets() {
   const p = parseInt($('macroInputProtein').value) || 0;
   const c = parseInt($('macroInputCarbs').value)   || 0;
@@ -8872,247 +8958,445 @@ function saveMacroTargets() {
   showToast('Macro targets saved ✅');
 }
 
-/**
- * Populate the macro editor inputs from current targets.
- */
 function openMacroTargetEditor() {
-  const saved = (() => {
-    try { return JSON.parse(localStorage.getItem(BF_MACRO_TARGETS) || 'null'); } catch { return null; }
-  })();
-  const targets = saved || getGoalMacroDefaults();
-  $('macroInputProtein').value = targets.protein;
-  $('macroInputCarbs').value   = targets.carbs;
-  $('macroInputFat').value     = targets.fat;
+  const t = getMacroTargets();
+  $('macroInputProtein').value = t.protein;
+  $('macroInputCarbs').value   = t.carbs;
+  $('macroInputFat').value     = t.fat;
   $('macroTargetEditor').style.display = 'block';
-  $('macroTargetEditor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-/**
- * Build the FDA-style nutrition label HTML for a meal.
- */
+// -----------------------------------------------
+// ---- FDA Nutrition Label ---------------------
+// -----------------------------------------------
 function renderNutritionLabel(meal) {
-  const m = meal.macros;
+  const m = meal.macros || {};
   const mi = meal.micros || {};
-  const dv = (val, dvTotal) => val != null ? `${Math.round((val / dvTotal) * 100)}%` : '—';
-
+  const dv = (val, total) => val != null ? Math.round((val / total) * 100) + '%' : '—';
   return `
-    <div class="nutrition-label" role="region" aria-label="Nutrition facts for ${escapeHtml(meal.name)}">
+    <div class="nutrition-label" role="region" aria-label="Nutrition facts">
       <div class="nutrition-label-title">Nutrition Facts</div>
       <div class="nutrition-label-serving">${escapeHtml(meal.servingSize || '1 serving')}</div>
       <div class="nutrition-label-calories-row">
-        <div>
-          <div class="nutrition-label-calories-label">Calories</div>
-        </div>
-        <div class="nutrition-label-calories-value">${m.calories}</div>
+        <div class="nutrition-label-calories-label">Calories</div>
+        <div class="nutrition-label-calories-value">${m.calories || 0}</div>
       </div>
-      <div class="nutrition-label-row" style="justify-content: flex-end; font-size: 11px; font-weight: 700; border-bottom: 3px solid var(--text); padding-bottom: 2px;">% Daily Value*</div>
-      <div class="nutrition-label-row bold">Total Fat <span>${m.fat}g &nbsp; ${dv(m.fat, 78)}</span></div>
+      <div class="nutrition-label-row" style="justify-content:flex-end;font-size:11px;font-weight:700;border-bottom:3px solid var(--text);padding-bottom:2px;">% Daily Value*</div>
+      <div class="nutrition-label-row bold">Total Fat <span>${m.fat || 0}g &nbsp; ${dv(m.fat, 78)}</span></div>
       <div class="nutrition-label-row indent">Saturated Fat <span>—</span></div>
       <div class="nutrition-label-row indent">Trans Fat <span>0g</span></div>
-      <div class="nutrition-label-row bold">Cholesterol <span>—</span></div>
       <div class="nutrition-label-row bold">Sodium <span>${mi.sodium != null ? mi.sodium + 'mg' : '—'} &nbsp; ${dv(mi.sodium, 2300)}</span></div>
-      <div class="nutrition-label-row bold">Total Carbohydrate <span>${m.carbs}g &nbsp; ${dv(m.carbs, 275)}</span></div>
+      <div class="nutrition-label-row bold">Total Carbohydrate <span>${m.carbs || 0}g &nbsp; ${dv(m.carbs, 275)}</span></div>
       <div class="nutrition-label-row indent">Dietary Fiber <span>${m.fiber != null ? m.fiber + 'g' : '—'} &nbsp; ${dv(m.fiber, 28)}</span></div>
       <div class="nutrition-label-row indent">Total Sugars <span>${m.sugar != null ? m.sugar + 'g' : '—'}</span></div>
-      <div class="nutrition-label-row bold">Protein <span>${m.protein}g</span></div>
-      <div class="nutrition-label-row" style="border-top: 4px solid var(--text); padding-top: 3px; margin-top: 2px;">Vitamin D <span>${mi.vitaminD != null ? mi.vitaminD + '%' : '—'}</span></div>
+      <div class="nutrition-label-row bold">Protein <span>${m.protein || 0}g</span></div>
+      <div class="nutrition-label-row" style="border-top:4px solid var(--text);padding-top:3px;margin-top:2px;">Vitamin D <span>${mi.vitaminD != null ? mi.vitaminD + '%' : '—'}</span></div>
       <div class="nutrition-label-row">Calcium <span>${mi.calcium != null ? mi.calcium + '%' : '—'}</span></div>
       <div class="nutrition-label-row">Iron <span>${mi.iron != null ? mi.iron + '%' : '—'}</span></div>
       <div class="nutrition-label-row">Potassium <span>${mi.potassium != null ? mi.potassium + 'mg' : '—'}</span></div>
-      <div class="nutrition-label-dv-note">* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
-    </div>
-  `;
+      <div class="nutrition-label-dv-note">* The % Daily Value (DV) tells you how much a nutrient in a serving contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+    </div>`;
 }
 
-/**
- * Build the expandable drawer HTML for a meal.
- */
-function renderMealDrawer(meal) {
-  const ingList = (meal.ingredients || []).map(i => `<li>${escapeHtml(i)}</li>`).join('');
-  const tags = (meal.tags || []).map(t => `<span class="meal-tag-chip">${escapeHtml(t)}</span>`).join('');
+// -----------------------------------------------
+// ---- Day Navigator ---------------------------
+// -----------------------------------------------
+function renderDayNavigator(plan) {
+  const el = $('dayNavigator');
+  if (!el || !plan) return;
 
-  return `
-    <div class="meal-card-drawer">
-      ${tags ? `<div class="meal-tags-row">${tags}</div>` : ''}
-      ${renderNutritionLabel(meal)}
-      <div class="meal-ingredients-block">
-        <div class="meal-section-title">Ingredients</div>
-        <ul class="meal-ingredients-list">${ingList}</ul>
-      </div>
-      <div class="meal-ingredients-block">
-        <div class="meal-section-title">How to Prepare</div>
-        <div class="meal-instructions-text">${escapeHtml(meal.instructions || '')}</div>
-      </div>
-      ${meal.tip ? `<div class="meal-tip-block">${escapeHtml(meal.tip)}</div>` : ''}
-    </div>
-  `;
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  el.innerHTML = plan.days.map((d, i) => {
+    const isToday = d.date === todayStr;
+    const dateObj = new Date(d.date + 'T00:00:00');
+    const mon = dateObj.toLocaleDateString(undefined, { month: 'short' });
+    const dayNum = dateObj.getDate();
+    const chipClass = 'day-nav-chip' + (isToday ? ' today' : '');
+    return `
+      <button type="button" class="${chipClass}" data-day-index="${i}"
+        onclick="scrollToPlanDay(${i})" aria-label="Day ${d.day}, ${d.date}">
+        <span class="day-nav-chip-num">${dayNum}</span>
+        <span class="day-nav-chip-label">${mon}</span>
+      </button>`;
+  }).join('');
+
+  // Auto-scroll today's chip into view
+  const todayChip = el.querySelector('.day-nav-chip.today');
+  if (todayChip) {
+    setTimeout(() => todayChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }), 120);
+  }
 }
 
-/**
- * Build full meal card HTML.
- */
-function renderMealCard(meal) {
-  const favs = getFavMeals();
-  const isFav = favs.includes(meal.id);
-  const mealTypeLabel = (meal.mealType || '').replace('-', ' ');
-  const prepTime = meal.prepTime ? `⏱ ${meal.prepTime} min` : '';
+function scrollToPlanDay(index) {
+  const card = document.querySelector(`.meal-plan-day[data-day-index="${index}"]`);
+  if (!card) return;
+  if (!card.classList.contains('expanded')) {
+    card.classList.add('expanded');
+  }
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// -----------------------------------------------
+// ---- Meal Slot Rendering ---------------------
+// -----------------------------------------------
+const SLOT_CONFIG = {
+  breakfast: { icon: '🌅', label: 'Breakfast' },
+  lunch:     { icon: '☀️',  label: 'Lunch'      },
+  dinner:    { icon: '🌙', label: 'Dinner'     },
+  snack:     { icon: '🍎', label: 'Snack'      },
+};
+
+function renderMealSlotRow(dayIndex, slot, meal) {
+  const cfg = SLOT_CONFIG[slot] || { icon: '🍽️', label: slot };
+  if (!meal) {
+    return `
+      <div class="meal-slot-row">
+        <span class="meal-slot-type-icon">${cfg.icon}</span>
+        <div class="meal-slot-info">
+          <div class="meal-slot-type-label">${cfg.label}</div>
+          <div class="meal-slot-name muted" style="font-style:italic;">No meal assigned</div>
+        </div>
+        <div class="meal-slot-actions">
+          <button class="meal-slot-btn primary" type="button"
+            onclick="openSwapMealDrawer(${dayIndex}, '${slot}')">+ Add</button>
+        </div>
+      </div>`;
+  }
+  const m = meal.macros || {};
+  return `
+    <div class="meal-slot-row">
+      <span class="meal-slot-type-icon">${cfg.icon}</span>
+      <div class="meal-slot-info">
+        <div class="meal-slot-type-label">${cfg.label}</div>
+        <div class="meal-slot-name">${meal.emoji || ''} ${escapeHtml(meal.name)}</div>
+        <div class="meal-slot-macros">
+          🔥 ${m.calories || 0} kcal &nbsp;·&nbsp;
+          💪 ${m.protein || 0}g &nbsp;·&nbsp;
+          🍞 ${m.carbs || 0}g &nbsp;·&nbsp;
+          🫙 ${m.fat || 0}g
+        </div>
+      </div>
+      <div class="meal-slot-actions">
+        <button class="meal-slot-btn" type="button"
+          onclick="openNutritionDrawer('${escapeHtml(meal.id)}')" aria-label="View nutrition facts">📋</button>
+        <button class="meal-slot-btn" type="button"
+          onclick="openSwapMealDrawer(${dayIndex}, '${slot}')" aria-label="Swap meal">↔</button>
+      </div>
+    </div>`;
+}
+
+// -----------------------------------------------
+// ---- Day Card Rendering ----------------------
+// -----------------------------------------------
+function renderPlanDayCard(dayObj, dayIndex, mealsMap, expandToday) {
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const isToday = dayObj.date === todayStr;
+  const dateObj = new Date(dayObj.date + 'T00:00:00');
+  const dayLabel = dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const macros = getDayMacros(dayObj, mealsMap);
+  const targets = getMacroTargets();
+  const expanded = isToday && expandToday;
+
+  const todayBadge = isToday ? '<span class="today-day-badge">TODAY</span>' : '';
+  const dayClass = 'meal-plan-day' + (isToday ? ' today-day' : '') + (expanded ? ' expanded' : '');
+
+  const slots = Object.entries(dayObj.meals).map(([slot, mealId]) => {
+    return renderMealSlotRow(dayIndex, slot, mealsMap[mealId] || null);
+  }).join('');
+
+  const calDiff = macros.calories - targets.protein * 4 - targets.carbs * 4 - targets.fat * 9;
+  const diffStr = calDiff >= 0
+    ? `+${calDiff} kcal vs target`
+    : `${calDiff} kcal vs target`;
+  const diffColor = Math.abs(calDiff) < 150 ? 'var(--good)' : 'var(--danger)';
 
   return `
-    <div class="meal-card" data-meal-id="${escapeHtml(meal.id)}" role="article">
-      <div class="meal-card-header" onclick="toggleMealCardExpand('${escapeHtml(meal.id)}')">
-        <span class="meal-emoji" aria-hidden="true">${meal.emoji || '🍽️'}</span>
-        <div class="meal-card-meta">
-          <div class="meal-card-name">${escapeHtml(meal.name)}</div>
-          <span class="meal-type-badge">${escapeHtml(mealTypeLabel)}</span>
-          <div class="meal-macro-row">
-            <span class="meal-macro-pill calories">🔥 ${meal.macros.calories} kcal</span>
-            <span class="meal-macro-pill">💪 ${meal.macros.protein}g</span>
-            <span class="meal-macro-pill">🍞 ${meal.macros.carbs}g</span>
-            <span class="meal-macro-pill">🫙 ${meal.macros.fat}g</span>
-            ${prepTime ? `<span class="meal-prep-time">${prepTime}</span>` : ''}
+    <div class="${dayClass}" data-day-index="${dayIndex}" id="plan-day-${dayIndex}">
+      <div class="meal-plan-day-header" onclick="togglePlanDay(${dayIndex})">
+        <div class="meal-plan-day-date">
+          <div class="meal-plan-day-num">Day ${dayObj.day}</div>
+          <div class="meal-plan-day-label">${dayLabel}${todayBadge}</div>
+        </div>
+        <div class="meal-plan-day-macros">
+          <span class="day-macro-chip kcal">🔥 ${macros.calories} kcal</span>
+          <span class="day-macro-chip protein">💪 ${macros.protein}g</span>
+          <span class="day-macro-chip carbs">🍞 ${macros.carbs}g</span>
+          <span class="day-macro-chip fat">🫙 ${macros.fat}g</span>
+        </div>
+        <span class="meal-plan-day-expand-icon">▼</span>
+      </div>
+      <div class="meal-plan-day-body">
+        ${slots}
+        <div class="day-total-bar">
+          <div class="day-total-label">Day Total</div>
+          <span class="day-total-value">🔥 ${macros.calories} kcal</span>
+          <span class="day-total-value">💪 ${macros.protein}g protein</span>
+          <span class="day-total-value">🍞 ${macros.carbs}g carbs</span>
+          <span class="day-total-value">🫙 ${macros.fat}g fat</span>
+          <div class="day-target-row">
+            Target: ${targets.protein * 4 + targets.carbs * 4 + targets.fat * 9} kcal
+            &nbsp;·&nbsp;
+            <span style="color:${diffColor}; font-weight:700;">${diffStr}</span>
           </div>
         </div>
-        <div class="meal-card-actions">
-          <button
-            class="meal-bookmark-btn"
-            data-meal-id="${escapeHtml(meal.id)}"
-            onclick="toggleMealBookmark('${escapeHtml(meal.id)}', event)"
-            aria-label="${isFav ? 'Remove bookmark' : 'Bookmark meal'}"
-            title="${isFav ? 'Remove bookmark' : 'Save meal'}"
-          >${isFav ? '⭐' : '☆'}</button>
-          <span class="meal-expand-icon">▼</span>
-        </div>
       </div>
-      ${renderMealDrawer(meal)}
-    </div>
-  `;
+    </div>`;
 }
 
-/**
- * Toggle expand/collapse of a meal card.
- */
-function toggleMealCardExpand(mealId) {
-  const card = document.querySelector(`.meal-card[data-meal-id="${mealId}"]`);
+function togglePlanDay(dayIndex) {
+  const card = document.querySelector(`.meal-plan-day[data-day-index="${dayIndex}"]`);
   if (!card) return;
-  const isExpanded = card.classList.contains('expanded');
-  // Collapse all others first (optional UX - one open at a time)
-  document.querySelectorAll('.meal-card.expanded').forEach(c => c.classList.remove('expanded'));
-  if (!isExpanded) {
-    card.classList.add('expanded');
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+  card.classList.toggle('expanded');
 }
 
-/**
- * Filter and render the meal list.
- */
-function renderMealList() {
-  const el = $('mealList');
+// -----------------------------------------------
+// ---- Full Calendar Render --------------------
+// -----------------------------------------------
+function renderMealPlanCalendar() {
+  const el = $('mealPlanList');
   if (!el) return;
 
+  if (!_mealPlan || !_mealPlan.days) {
+    el.innerHTML = '<div class="muted" style="text-align:center;padding:40px 0;">Generating your meal plan…</div>';
+    return;
+  }
+
   const meals = _nutritionMealsCache || [];
-  if (meals.length === 0) {
-    el.innerHTML = '<div class="muted" style="text-align:center; padding:30px 0;">Loading meals…</div>';
-    return;
-  }
+  const mealsMap = buildMealsMap(meals);
+  const todayStr = new Date().toLocaleDateString('en-CA');
 
-  const typeFilter = _nutritionActiveTypeFilter;
-  const goalFilter = _nutritionActiveGoalFilter;
-
-  let filtered = meals.filter(meal => {
-    const typeOk = typeFilter === 'all' || meal.mealType === typeFilter;
-    let goalOk = true;
-    if (goalFilter === 'vegan') {
-      goalOk = (meal.tags || []).includes('vegan');
-    } else if (goalFilter !== 'all') {
-      goalOk = (meal.goal || []).includes(goalFilter) || (meal.tags || []).includes(goalFilter);
-    }
-    return typeOk && goalOk;
-  });
-
-  if (filtered.length === 0) {
-    el.innerHTML = '<div class="muted" style="text-align:center; padding:30px 0;">No meals match these filters.</div>';
-    return;
-  }
-
-  el.innerHTML = filtered.map(m => renderMealCard(m)).join('');
+  el.innerHTML = _mealPlan.days.map((d, i) => {
+    const isToday = d.date === todayStr;
+    return renderPlanDayCard(d, i, mealsMap, isToday);
+  }).join('');
 }
 
-/**
- * Initialize nutrition tab — load meals (lazy on first open) and wire filters.
- */
+// -----------------------------------------------
+// ---- Bottom Drawers --------------------------
+// -----------------------------------------------
+function openDrawerBackdrop() {
+  const bd = $('drawerBackdrop');
+  if (bd) bd.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAllDrawers() {
+  ['nutritionDrawer', 'swapMealDrawer'].forEach(id => {
+    const d = $(id);
+    if (d) d.classList.remove('open');
+  });
+  const bd = $('drawerBackdrop');
+  if (bd) bd.classList.remove('open');
+  document.body.style.overflow = '';
+  _swapContext = null;
+}
+
+function openNutritionDrawer(mealId) {
+  const meals = _nutritionMealsCache || [];
+  const meal = meals.find(m => m.id === mealId);
+  if (!meal) return;
+
+  const ingList = (meal.ingredients || [])
+    .map(i => `<li>${escapeHtml(i)}</li>`).join('');
+
+  const content = `
+    <div class="nutrition-drawer-meal-header">
+      <span class="nutrition-drawer-emoji">${meal.emoji || '🍽️'}</span>
+      <div>
+        <div class="nutrition-drawer-name">${escapeHtml(meal.name)}</div>
+        <div class="nutrition-drawer-serving">${escapeHtml(meal.servingSize || '1 serving')} · ⏱ ${meal.prepTime || '?'} min</div>
+      </div>
+    </div>
+    ${renderNutritionLabel(meal)}
+    <div class="meal-ingredients-block">
+      <div class="meal-section-title">Ingredients</div>
+      <ul class="meal-ingredients-list">${ingList}</ul>
+    </div>
+    <div class="meal-ingredients-block">
+      <div class="meal-section-title">How to Prepare</div>
+      <div class="meal-instructions-text">${escapeHtml(meal.instructions || '')}</div>
+    </div>
+    ${meal.tip ? `<div class="meal-tip-block">${escapeHtml(meal.tip)}</div>` : ''}
+  `;
+
+  const contentEl = $('nutritionDrawerContent');
+  const titleEl = $('nutritionDrawerTitle');
+  if (contentEl) contentEl.innerHTML = content;
+  if (titleEl) titleEl.textContent = meal.name;
+
+  $('nutritionDrawer').classList.add('open');
+  openDrawerBackdrop();
+}
+
+function openSwapMealDrawer(dayIndex, slot) {
+  _swapContext = { dayIndex, slot };
+  const cfg = SLOT_CONFIG[slot] || { icon: '🍽️', label: slot };
+  const titleEl = $('swapMealDrawerTitle');
+  if (titleEl) titleEl.textContent = `Swap ${cfg.label}`;
+
+  const meals = _nutritionMealsCache || [];
+  // Filter to same meal type for breakfast/lunch/dinner; snack gets snack variants
+  let typeFilter;
+  if (slot === 'snack') {
+    typeFilter = m => ['snack', 'pre-workout', 'post-workout'].includes(m.mealType);
+  } else {
+    typeFilter = m => m.mealType === slot;
+  }
+  const options = meals.filter(typeFilter);
+
+  const contentEl = $('swapMealDrawerContent');
+  if (!contentEl) return;
+
+  contentEl.innerHTML = options.length === 0
+    ? '<div class="muted" style="text-align:center;padding:30px 0;">No meals available for this slot.</div>'
+    : options.map(meal => {
+        const m = meal.macros || {};
+        return `
+          <div class="swap-meal-option" onclick="commitMealSwap('${escapeHtml(meal.id)}')"
+            role="button" tabindex="0" aria-label="Select ${escapeHtml(meal.name)}">
+            <span class="swap-meal-option-emoji">${meal.emoji || '🍽️'}</span>
+            <div class="swap-meal-option-info">
+              <div class="swap-meal-option-name">${escapeHtml(meal.name)}</div>
+              <div class="swap-meal-option-macros">
+                🔥 ${m.calories || 0} kcal · 💪 ${m.protein || 0}g · 🍞 ${m.carbs || 0}g · 🫙 ${m.fat || 0}g
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+  $('swapMealDrawer').classList.add('open');
+  openDrawerBackdrop();
+}
+
+function commitMealSwap(newMealId) {
+  if (!_swapContext || !_mealPlan) { closeAllDrawers(); return; }
+  const { dayIndex, slot } = _swapContext;
+
+  _mealPlan.days[dayIndex].meals[slot] = newMealId;
+  saveMealPlan(_mealPlan);
+  closeAllDrawers();
+
+  // Re-render just the affected day card
+  const meals = _nutritionMealsCache || [];
+  const mealsMap = buildMealsMap(meals);
+  const dayObj = _mealPlan.days[dayIndex];
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const wasExpanded = true; // keep expanded after swap
+
+  const oldCard = document.querySelector(`.meal-plan-day[data-day-index="${dayIndex}"]`);
+  if (oldCard) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = renderPlanDayCard(dayObj, dayIndex, mealsMap, dayObj.date === todayStr);
+    const newCard = tempDiv.firstElementChild;
+    if (newCard) {
+      newCard.classList.add('expanded');
+      oldCard.replaceWith(newCard);
+    }
+  }
+
+  // Also refresh day navigator macro (optional: could re-render just that chip)
+  showToast('Meal swapped ✅');
+}
+
+// -----------------------------------------------
+// ---- Init / Wire -----------------------------
+// -----------------------------------------------
 async function initNutritionTab() {
-  // Render macro bar immediately (no async needed)
+  // Render macro target bar immediately (sync)
   renderMacroTargetBar();
 
-  // Show loading state in list
-  const el = $('mealList');
-  if (el && !_nutritionMealsCache) {
-    el.innerHTML = '<div class="muted" style="text-align:center; padding:30px 0;">Loading meals…</div>';
+  // Show loading skeleton in calendar
+  const el = $('mealPlanList');
+  if (el && !_mealPlan) {
+    el.innerHTML = `
+      <div class="muted" style="text-align:center; padding:50px 0;">
+        <div style="font-size:32px; margin-bottom:8px;">🥗</div>
+        Loading your meal plan…
+      </div>`;
   }
 
-  // Load meals if not cached
-  await loadMeals();
+  // Load meal data if not cached
+  if (!_nutritionMealsCache) {
+    await loadMeals();
+  }
 
-  // Render list
-  renderMealList();
+  // Load or generate plan
+  if (!_mealPlan) {
+    _mealPlan = loadStoredMealPlan();
+    if (!_mealPlan || !_mealPlan.days || _mealPlan.days.length < 30) {
+      _mealPlan = generateMealPlan(_nutritionMealsCache);
+      if (_mealPlan) saveMealPlan(_mealPlan);
+    }
+  }
+
+  renderDayNavigator(_mealPlan);
+  renderMealPlanCalendar();
+
+  // Auto-scroll to today
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const todayIndex = _mealPlan ? _mealPlan.days.findIndex(d => d.date === todayStr) : -1;
+  if (todayIndex >= 0) {
+    setTimeout(() => scrollToPlanDay(todayIndex), 200);
+  }
 }
 
-/**
- * Wire all nutrition tab interactive elements.
- * Called once from boot().
- */
 function wireNutritionTab() {
-  // Meal Type filter pills
-  const typeFilter = $('mealTypeFilter');
-  if (typeFilter) {
-    typeFilter.addEventListener('click', e => {
-      const btn = e.target.closest('[data-meal-type]');
-      if (!btn) return;
-      typeFilter.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      _nutritionActiveTypeFilter = btn.getAttribute('data-meal-type');
-      renderMealList();
-    });
-  }
-
-  // Goal filter pills
-  const goalFilter = $('mealGoalFilter');
-  if (goalFilter) {
-    goalFilter.addEventListener('click', e => {
-      const btn = e.target.closest('[data-meal-goal]');
-      if (!btn) return;
-      goalFilter.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      _nutritionActiveGoalFilter = btn.getAttribute('data-meal-goal');
-      renderMealList();
-    });
-  }
-
-  // Macro target edit button
+  // Macro target buttons
   const editBtn = $('btnEditMacroTargets');
-  if (editBtn) {
-    editBtn.addEventListener('click', openMacroTargetEditor);
-  }
+  if (editBtn) editBtn.addEventListener('click', openMacroTargetEditor);
 
-  // Save macro targets button
   const saveBtn = $('btnSaveMacroTargets');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', saveMacroTargets);
-  }
+  if (saveBtn) saveBtn.addEventListener('click', saveMacroTargets);
 
-  // Cancel macro editor
   const cancelBtn = $('btnCancelMacroTargets');
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
-      $('macroTargetEditor').style.display = 'none';
+  if (cancelBtn) cancelBtn.addEventListener('click', () => {
+    $('macroTargetEditor').style.display = 'none';
+  });
+
+  // Regen plan button
+  const regenBtn = $('btnRegenMealPlan');
+  if (regenBtn) {
+    regenBtn.addEventListener('click', () => {
+      if (!confirm('Generate a fresh 30-day meal plan? Your current plan will be replaced.')) return;
+      _mealPlan = generateMealPlan(_nutritionMealsCache || []);
+      if (_mealPlan) {
+        saveMealPlan(_mealPlan);
+        renderDayNavigator(_mealPlan);
+        renderMealPlanCalendar();
+        showToast('New 30-day plan generated 🎉');
+        // scroll to top of plan
+        const el = $('cardMealPlan');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
+
+  // Nutrition drawer close
+  const ndClose = $('btnNutritionDrawerClose');
+  if (ndClose) ndClose.addEventListener('click', closeAllDrawers);
+
+  // Swap drawer close
+  const sdClose = $('btnSwapMealDrawerClose');
+  if (sdClose) sdClose.addEventListener('click', closeAllDrawers);
+
+  // Backdrop closes all drawers
+  const backdrop = $('drawerBackdrop');
+  if (backdrop) backdrop.addEventListener('click', closeAllDrawers);
+
+  // Keyboard escape closes drawers
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeAllDrawers();
+  });
 }
 
 // =============================================
-// ===== END NUTRITION TAB MODULE ==============
+// ===== END 30-DAY MEAL PLANNER MODULE ========
 // =============================================
+
+
+
+
+
 
 function boot() {
 
