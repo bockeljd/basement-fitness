@@ -552,5 +552,185 @@
         "reps": "3 sets x 12-15 reps"
       }
     ]
+  },
+  {
+    "id": "idea-senior-mobility",
+    "name": "Senior Balance & Mobility Flow",
+    "desc": "Gentle mobility and balance flow designed specifically for seniors to maintain joint health, posture, and stability.",
+    "category": "bodyweight",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Bird Dog",
+        "reps": "3 sets x 8 reps each"
+      },
+      {
+        "name": "Single-Leg Balance",
+        "reps": "3 sets x 30 sec hold each side"
+      },
+      {
+        "name": "Wall Sit",
+        "reps": "3 sets x 20 sec hold"
+      },
+      {
+        "name": "Child's Pose",
+        "reps": "2 sets x 45 sec hold"
+      }
+    ]
+  },
+  {
+    "id": "idea-youth-foundation",
+    "name": "Youth Foundation Strength",
+    "desc": "Fun, coordination-focused bodyweight routine to build foundational strength and athletic patterns for youth.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Air Squats",
+        "reps": "3 sets x 10-12 reps"
+      },
+      {
+        "name": "Bear Crawl",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Incline Push-ups",
+        "reps": "3 sets x 8-10 reps"
+      },
+      {
+        "name": "Plank Hold",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Jumping Jacks",
+        "reps": "3 sets x 30 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-athletic-power",
+    "name": "Athletic Power & Speed",
+    "desc": "Explosive conditioning circuit designed for athletic body types to enhance power output, speed, and cardiovascular threshold.",
+    "category": "hiit",
+    "duration": 30,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Burpees",
+        "reps": "4 sets x 12 reps"
+      },
+      {
+        "name": "DB Thrusters",
+        "reps": "4 sets x 10 reps"
+      },
+      {
+        "name": "Kettlebell Swings",
+        "reps": "4 sets x 15 reps"
+      },
+      {
+        "name": "Mountain Climbers",
+        "reps": "4 sets x 45 sec"
+      },
+      {
+        "name": "Hanging Knee Raises",
+        "reps": "3 sets x 12 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-conditioned-restart",
+    "name": "Full Body Restart Flow",
+    "desc": "A low-volume, high-recovery starter workout designed for building consistency and endurance for anyone returning to fitness.",
+    "category": "bodyweight",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Glute Bridges",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Wall Push-ups",
+        "reps": "2 sets x 8-10 reps"
+      },
+      {
+        "name": "Chair Squats",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Plank Hold (Knees)",
+        "reps": "2 sets x 20 sec hold"
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 8 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-kb-band-tone",
+    "name": "Kettlebell & Band Tone",
+    "desc": "Efficient full-body resistance routine utilizing kettlebells and bands for muscle tone and endurance.",
+    "category": "strength",
+    "duration": 30,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "KB Goblet Squats",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Band Lat Pulldowns",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "KB Romanian Deadlifts",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Band Chest Press",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Band Face Pulls",
+        "reps": "3 sets x 15 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-joint-recovery",
+    "name": "Knee & Back Safe Recovery",
+    "desc": "Joint-safe active recovery routine completely avoiding knee flexion stress and lower back loading.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Clamshells",
+        "reps": "3 sets x 15 reps each"
+      },
+      {
+        "name": "Bird Dog",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Glute Bridges",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Deadbug",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Chest Opener Stretch",
+        "reps": "2 sets x 45 sec hold"
+      }
+    ]
   }
 ]

@@ -1,9 +1,10 @@
-const CACHE_NAME = 'basement-fitness-v50';
+const CACHE_NAME = 'basement-fitness-v51';
 const ASSETS = [
   './',
   'index.html',
   'styles.css',
   'app.js',
+  'meals.json',
   'manifest.webmanifest',
   'favicon.ico',
   'icons/icon-192.png',

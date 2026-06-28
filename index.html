@@ -51,6 +51,10 @@
         <span class="tab-icon">💪</span>
         <span class="tab-text">Exercises</span>
       </button>
+      <button class="tab-btn" data-tab="nutrition" type="button" id="tabNutrition">
+        <span class="tab-icon">🥗</span>
+        <span class="tab-text">Nutrition</span>
+      </button>
       <button class="tab-btn" data-tab="settings" type="button">
         <span class="tab-icon">⚙️</span>
         <span class="tab-text">Settings</span>
@@ -450,7 +454,85 @@
         </section>
       </div>
 
-      <!-- Tab 6: Settings Panel -->
+      <!-- Tab 6: Nutrition Panel -->
+      <div id="panel-nutrition" class="tab-panel">
+        <!-- Macro Target Bar -->
+        <section class="card" id="cardMacroTargets">
+          <div class="cardHeader">
+            <div>
+              <h2 style="margin:0;">Daily Macro Targets</h2>
+              <div class="muted" style="font-size:13px; margin-top:2px;">Based on your primary fitness goal. Tap to customize.</div>
+            </div>
+            <button class="btn secondary" id="btnEditMacroTargets" type="button" style="white-space:nowrap;">✏️ Edit</button>
+          </div>
+          <div id="macroTargetBar" class="macro-target-bar-container">
+            <!-- Populated dynamically -->
+          </div>
+          <!-- Inline Macro Editor (hidden by default) -->
+          <div id="macroTargetEditor" class="macro-target-editor" style="display:none;">
+            <div class="macro-editor-grid">
+              <div class="macro-editor-field">
+                <label class="small" style="font-weight:700; color: var(--indigo);">Protein (g)</label>
+                <input type="number" id="macroInputProtein" class="input" min="0" max="500" placeholder="150" />
+              </div>
+              <div class="macro-editor-field">
+                <label class="small" style="font-weight:700; color: var(--emerald, #10b981);">Carbs (g)</label>
+                <input type="number" id="macroInputCarbs" class="input" min="0" max="800" placeholder="220" />
+              </div>
+              <div class="macro-editor-field">
+                <label class="small" style="font-weight:700; color: var(--amber, #f59e0b);">Fat (g)</label>
+                <input type="number" id="macroInputFat" class="input" min="0" max="300" placeholder="65" />
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button class="btn primary-gradient" id="btnSaveMacroTargets" type="button">Save Targets</button>
+              <button class="btn secondary" id="btnCancelMacroTargets" type="button">Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Filter Row + Meal List -->
+        <section class="card" id="cardMealList" style="margin-top: 0;">
+          <div class="cardHeader">
+            <h2 style="margin:0;">Meal Library</h2>
+            <div class="muted" style="font-size:13px;">Science-backed meals tailored to your goals.</div>
+          </div>
+
+          <!-- Meal Type Filter -->
+          <div class="meal-filter-section">
+            <div class="meal-filter-label small" style="font-weight:700; margin-bottom:6px;">Meal Type</div>
+            <div class="meal-filter-row" id="mealTypeFilter">
+              <button class="pill-btn active" data-meal-type="all" type="button">All</button>
+              <button class="pill-btn" data-meal-type="breakfast" type="button">🌅 Breakfast</button>
+              <button class="pill-btn" data-meal-type="lunch" type="button">☀️ Lunch</button>
+              <button class="pill-btn" data-meal-type="dinner" type="button">🌙 Dinner</button>
+              <button class="pill-btn" data-meal-type="snack" type="button">🍎 Snack</button>
+              <button class="pill-btn" data-meal-type="pre-workout" type="button">⚡ Pre-Workout</button>
+              <button class="pill-btn" data-meal-type="post-workout" type="button">💪 Post-Workout</button>
+            </div>
+          </div>
+
+          <!-- Goal Filter -->
+          <div class="meal-filter-section" style="margin-top:10px;">
+            <div class="meal-filter-label small" style="font-weight:700; margin-bottom:6px;">Goal</div>
+            <div class="meal-filter-row" id="mealGoalFilter">
+              <button class="pill-btn active" data-meal-goal="all" type="button">All Goals</button>
+              <button class="pill-btn" data-meal-goal="muscle-gain" type="button">💪 Muscle Gain</button>
+              <button class="pill-btn" data-meal-goal="fat-loss" type="button">🔥 Fat Loss</button>
+              <button class="pill-btn" data-meal-goal="maintenance" type="button">⚖️ Maintenance</button>
+              <button class="pill-btn" data-meal-goal="general-fitness" type="button">🏃 General</button>
+              <button class="pill-btn" data-meal-goal="vegan" type="button">🌱 Vegan</button>
+            </div>
+          </div>
+
+          <!-- Meal List -->
+          <div id="mealList" class="meal-list" style="margin-top:15px;">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab 7: Settings Panel -->
       <div id="panel-settings" class="tab-panel">
         <section class="card" id="cardSettings">
           <div class="cardHeader">
@@ -526,6 +608,22 @@
                   <div>
                     <label class="small" style="font-weight: 600;">Min / Session</label>
                     <input class="input" id="primaryMinutes" inputmode="numeric" placeholder="30" />
+                  </div>
+                  <div>
+                    <label class="small" style="font-weight: 600;">Age Group</label>
+                    <select class="input" id="primaryAgeGroup">
+                      <option value="adult" selected>Adult (18-60)</option>
+                      <option value="youth">Youth (under 18)</option>
+                      <option value="senior">Senior (60+)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="small" style="font-weight: 600;">Body Type</label>
+                    <select class="input" id="primaryBodyType">
+                      <option value="general" selected>General</option>
+                      <option value="athletic">Athletic</option>
+                      <option value="under-conditioned">Under-conditioned</option>
+                    </select>
                   </div>
                 </div>
                 <!-- Workout Finisher — full-width row below the grid -->

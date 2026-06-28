@@ -634,6 +634,186 @@ const WORKOUT_LIBRARY = [
         "reps": "3 sets x 12-15 reps"
       }
     ]
+  },
+  {
+    "id": "idea-senior-mobility",
+    "name": "Senior Balance & Mobility Flow",
+    "desc": "Gentle mobility and balance flow designed specifically for seniors to maintain joint health, posture, and stability.",
+    "category": "bodyweight",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Bird Dog",
+        "reps": "3 sets x 8 reps each"
+      },
+      {
+        "name": "Single-Leg Balance",
+        "reps": "3 sets x 30 sec hold each side"
+      },
+      {
+        "name": "Wall Sit",
+        "reps": "3 sets x 20 sec hold"
+      },
+      {
+        "name": "Child's Pose",
+        "reps": "2 sets x 45 sec hold"
+      }
+    ]
+  },
+  {
+    "id": "idea-youth-foundation",
+    "name": "Youth Foundation Strength",
+    "desc": "Fun, coordination-focused bodyweight routine to build foundational strength and athletic patterns for youth.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Air Squats",
+        "reps": "3 sets x 10-12 reps"
+      },
+      {
+        "name": "Bear Crawl",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Incline Push-ups",
+        "reps": "3 sets x 8-10 reps"
+      },
+      {
+        "name": "Plank Hold",
+        "reps": "3 sets x 30 sec"
+      },
+      {
+        "name": "Jumping Jacks",
+        "reps": "3 sets x 30 sec"
+      }
+    ]
+  },
+  {
+    "id": "idea-athletic-power",
+    "name": "Athletic Power & Speed",
+    "desc": "Explosive conditioning circuit designed for athletic body types to enhance power output, speed, and cardiovascular threshold.",
+    "category": "hiit",
+    "duration": 30,
+    "difficulty": "Advanced",
+    "exercises": [
+      {
+        "name": "Burpees",
+        "reps": "4 sets x 12 reps"
+      },
+      {
+        "name": "DB Thrusters",
+        "reps": "4 sets x 10 reps"
+      },
+      {
+        "name": "Kettlebell Swings",
+        "reps": "4 sets x 15 reps"
+      },
+      {
+        "name": "Mountain Climbers",
+        "reps": "4 sets x 45 sec"
+      },
+      {
+        "name": "Hanging Knee Raises",
+        "reps": "3 sets x 12 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-conditioned-restart",
+    "name": "Full Body Restart Flow",
+    "desc": "A low-volume, high-recovery starter workout designed for building consistency and endurance for anyone returning to fitness.",
+    "category": "bodyweight",
+    "duration": 20,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Glute Bridges",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Wall Push-ups",
+        "reps": "2 sets x 8-10 reps"
+      },
+      {
+        "name": "Chair Squats",
+        "reps": "2 sets x 10 reps"
+      },
+      {
+        "name": "Plank Hold (Knees)",
+        "reps": "2 sets x 20 sec hold"
+      },
+      {
+        "name": "Cat-Cow Stretch",
+        "reps": "2 sets x 8 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-kb-band-tone",
+    "name": "Kettlebell & Band Tone",
+    "desc": "Efficient full-body resistance routine utilizing kettlebells and bands for muscle tone and endurance.",
+    "category": "strength",
+    "duration": 30,
+    "difficulty": "Intermediate",
+    "exercises": [
+      {
+        "name": "KB Goblet Squats",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Band Lat Pulldowns",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "KB Romanian Deadlifts",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Band Chest Press",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Band Face Pulls",
+        "reps": "3 sets x 15 reps"
+      }
+    ]
+  },
+  {
+    "id": "idea-joint-recovery",
+    "name": "Knee & Back Safe Recovery",
+    "desc": "Joint-safe active recovery routine completely avoiding knee flexion stress and lower back loading.",
+    "category": "bodyweight",
+    "duration": 25,
+    "difficulty": "Beginner",
+    "exercises": [
+      {
+        "name": "Clamshells",
+        "reps": "3 sets x 15 reps each"
+      },
+      {
+        "name": "Bird Dog",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Glute Bridges",
+        "reps": "3 sets x 12 reps"
+      },
+      {
+        "name": "Deadbug",
+        "reps": "3 sets x 10 reps each"
+      },
+      {
+        "name": "Chest Opener Stretch",
+        "reps": "2 sets x 45 sec hold"
+      }
+    ]
   }
 ];
 
@@ -1837,6 +2017,10 @@ function switchTab(tabId) {
     renderPlan();
   }
 
+  if (tabId === 'nutrition') {
+    initNutritionTab();
+  }
+
   // Scroll to top of app
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2498,12 +2682,13 @@ function swapExercise(exId) {
 
   const eq = new Set(state.primaryGoal?.equipment || state.profile?.equipment || ['bodyweight']);
   const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
+  const ageGroup = state.primaryGoal?.ageGroup || state.profile?.ageGroup || 'adult';
 
   let alternatives = [];
   if (groupName) {
     alternatives = (EXERCISES_BY_GROUP[groupName] || []).filter(item => {
       const matchName = item.name.toLowerCase() !== baseName;
-      return matchName && matchEquipment(item.type, item.name, eq) && !isExerciseExcludedForJoints(item, avoidJoints);
+      return matchName && matchEquipment(item.type, item.name, eq) && !isExerciseExcludedForJoints(item, avoidJoints, ageGroup);
     });
   }
 
@@ -2581,6 +2766,8 @@ function confirmAndExecuteSwap(exId, newName, newInfo) {
   // Format reps based on difficulty
   const difficulty = state.primaryGoal?.difficulty || state.profile?.difficulty || 'intermediate';
   const goal = state.primaryGoal?.type || state.profile?.goal || 'general';
+  const ageGroup = state.primaryGoal?.ageGroup || state.profile?.ageGroup || 'adult';
+  const bodyType = state.primaryGoal?.bodyType || state.profile?.bodyType || 'general';
   
   // Find exercise details in database or synthesize
   let baseEx = null;
@@ -2593,7 +2780,7 @@ function confirmAndExecuteSwap(exId, newName, newInfo) {
   }
   if (!baseEx) baseEx = { name: newName, type: 'Bodyweight', info: newInfo };
 
-  const repsDetails = generateRepsForExercise(baseEx, difficulty, goal);
+  const repsDetails = generateRepsForExercise(baseEx, difficulty, goal, ageGroup, bodyType);
   const formattedName = `${newName} (${repsDetails})`;
 
   // Mutate routine exercises if template routine exists
@@ -3922,6 +4109,8 @@ function saveGoalsFromForm() {
   const daysPerWeek = Number($('primaryDays')?.value || 3);
   const splitType = autoSelectSplit(t, daysPerWeek || 3);
   const difficulty = String($('primaryDifficulty')?.value || 'intermediate').trim();
+  const ageGroup = String($('primaryAgeGroup')?.value || 'adult').trim();
+  const bodyType = String($('primaryBodyType')?.value || 'general').trim();
 
   // Collect equipment from the goal form checkboxes
   const eqChecks = document.querySelectorAll('#goalEquipment input[data-goal-eq]:checked');
@@ -3942,6 +4131,8 @@ function saveGoalsFromForm() {
     daysPerWeek: daysPerWeek || 3,
     splitType: splitType,
     difficulty: difficulty,
+    ageGroup: ageGroup,
+    bodyType: bodyType,
     equipment: equipment,
     avoidJoints: avoidJoints,
     priorities: priorities,
@@ -3952,6 +4143,8 @@ function saveGoalsFromForm() {
   state.profile.equipment = equipment;
   state.profile.avoidJoints = avoidJoints;
   state.profile.priorities = priorities;
+  state.profile.ageGroup = ageGroup;
+  state.profile.bodyType = bodyType;
   saveProfile();
 
   if (t === 'custom') {
@@ -4051,6 +4244,8 @@ function hydrateGoalsForm() {
   const base = $('primaryBaseline');
   const prog = $('primaryProgress');
   const diff = $('primaryDifficulty');
+  const ageGroupEl = $('primaryAgeGroup');
+  const bodyTypeEl = $('primaryBodyType');
 
   if (pt) pt.value = state.primaryGoal?.type || '';
   if (pm) pm.value = String(state.primaryGoal?.durationMin || state.profile.durationMin || 30);
@@ -4065,6 +4260,8 @@ function hydrateGoalsForm() {
     });
   }
   if (diff) diff.value = state.primaryGoal?.difficulty || state.profile?.difficulty || 'intermediate';
+  if (ageGroupEl) ageGroupEl.value = state.primaryGoal?.ageGroup || state.profile?.ageGroup || 'adult';
+  if (bodyTypeEl) bodyTypeEl.value = state.primaryGoal?.bodyType || state.profile?.bodyType || 'general';
 
   // splitType is auto-determined — no UI element to hydrate
 
@@ -5554,58 +5751,195 @@ function matchEquipment(exType, exName, eqSet) {
   return matches;
 }
 
-function generateRepsForExercise(ex, difficulty, goal = 'general') {
+function generateRepsForExercise(ex, difficulty, goal = 'general', ageGroup = 'adult', bodyType = 'general') {
   const nameL = (ex.name || '').toLowerCase();
   const typeL = (ex.type || '').toLowerCase();
 
-  // Stretching / cool-down — always holds, regardless of goal
-  if (typeL === 'stretching') {
-    if (difficulty === 'beginner') return '2 sets × 30s hold';
-    if (difficulty === 'advanced') return '3 sets × 60s hold';
-    return '2 sets × 45s hold';
+  let sets = 3;
+  let repStr = '10-12 reps';
+  let restStr = '';
+  let isHold = false;
+  let isHIIT = false;
+  let isStretching = (typeL === 'stretching');
+
+  // Determine base sets/reps/rest/holds
+  if (isStretching) {
+    isHold = true;
+    if (difficulty === 'beginner') {
+      sets = 2;
+      repStr = '30s hold';
+    } else if (difficulty === 'advanced') {
+      sets = 3;
+      repStr = '60s hold';
+    } else {
+      sets = 2;
+      repStr = '45s hold';
+    }
+  } else if (nameL.includes('plank') || nameL.includes('hold') || nameL.includes('wall sit')) {
+    isHold = true;
+    if (difficulty === 'beginner') {
+      sets = 3;
+      repStr = '20s hold';
+    } else if (difficulty === 'advanced') {
+      sets = 4;
+      repStr = '60s hold';
+    } else {
+      sets = 3;
+      repStr = '40s hold';
+    }
+  } else if (nameL.includes('burpee') || nameL.includes('jack') || nameL.includes('climber') || nameL.includes('high knee') || nameL.includes('sprint')) {
+    isHIIT = true;
+    if (difficulty === 'beginner') {
+      sets = 3;
+      repStr = '30s work';
+      restStr = '30s rest';
+    } else if (difficulty === 'advanced') {
+      sets = 4;
+      repStr = '45s work';
+      restStr = '15s rest';
+    } else {
+      sets = 3;
+      repStr = '40s work';
+      restStr = '20s rest';
+    }
+  } else if (goal === 'strength') {
+    if (difficulty === 'beginner') {
+      sets = 3;
+      repStr = '6-8 reps (heavy)';
+    } else if (difficulty === 'advanced') {
+      sets = 5;
+      repStr = '3-5 reps (heavy)';
+    } else {
+      sets = 4;
+      repStr = '4-6 reps (heavy)';
+    }
+  } else if (goal === 'build_muscle' || goal === 'hypertrophy') {
+    if (difficulty === 'beginner') {
+      sets = 3;
+      repStr = '10-12 reps';
+    } else if (difficulty === 'advanced') {
+      sets = 4;
+      repStr = '8-12 reps (controlled)';
+    } else {
+      sets = 3;
+      repStr = '8-12 reps';
+    }
+  } else if (goal === 'lose_weight' || goal === 'fat_loss') {
+    if (difficulty === 'beginner') {
+      sets = 3;
+      repStr = '15 reps';
+      restStr = '30s rest';
+    } else if (difficulty === 'advanced') {
+      sets = 4;
+      repStr = '20 reps';
+      restStr = '15s rest';
+    } else {
+      sets = 3;
+      repStr = '15-20 reps';
+      restStr = '20s rest';
+    }
+  } else {
+    // General / fallback
+    if (difficulty === 'beginner') {
+      sets = 2;
+      repStr = '10-12 reps';
+    } else if (difficulty === 'advanced') {
+      sets = 4;
+      repStr = '8-12 reps';
+    } else {
+      sets = 3;
+      repStr = '10-12 reps';
+    }
   }
 
-  // Isometric holds (plank, wall sit, etc.)
-  if (nameL.includes('plank') || nameL.includes('hold') || nameL.includes('wall sit')) {
-    if (difficulty === 'beginner') return '3 sets × 20s hold';
-    if (difficulty === 'advanced') return '4 sets × 60s hold';
-    return '3 sets × 40s hold';
+  // ── Apply Age Adjustments ──
+  if (ageGroup === 'senior') {
+    // Seniors: Cap sets at 2-3 to manage volume
+    if (sets > 3) sets = 3;
+    if (isHold) {
+      // Scale hold times down slightly
+      repStr = repStr.replace('60s hold', '45s hold').replace('40s hold', '30s hold');
+    } else if (isHIIT) {
+      repStr = repStr.replace('45s work', '30s work').replace('40s work', '30s work');
+      restStr = '45s rest'; // More rest for HIIT
+    } else {
+      // Avoid super low-rep heavy sets; focus on safety
+      if (goal === 'strength') {
+        repStr = repStr.replace('3-5 reps (heavy)', '8-10 reps (moderate)')
+                       .replace('4-6 reps (heavy)', '8-10 reps (moderate)')
+                       .replace('6-8 reps (heavy)', '10-12 reps (light-moderate)');
+      } else {
+        // Lighten weight / ensure moderate reps
+        repStr = repStr.replace('(controlled)', '').trim() + ' (moderate)';
+      }
+    }
+    // Add rest time details if not set
+    if (!restStr && !isStretching) {
+      restStr = '60-90s rest';
+    } else if (restStr && !isStretching) {
+      // Increase rest times by 30s
+      if (restStr.includes('15s')) restStr = '45s rest';
+      else if (restStr.includes('20s')) restStr = '50s rest';
+      else if (restStr.includes('30s')) restStr = '60s rest';
+    }
+  } else if (ageGroup === 'youth') {
+    // Youth: Suffix/replace heavy weights with bodyweight/light weights
+    repStr = repStr.replace('(heavy)', '(light/bodyweight)');
+    if (goal === 'strength') {
+      // Adjust to higher reps for safety and form
+      if (difficulty === 'advanced') {
+        sets = 4;
+        repStr = '8-10 reps (light/bodyweight)';
+      } else if (difficulty === 'intermediate') {
+        sets = 3;
+        repStr = '10-12 reps (bodyweight)';
+      } else {
+        sets = 3;
+        repStr = '12-15 reps (bodyweight)';
+      }
+    }
   }
 
-  // Cardio / HIIT movements
-  if (nameL.includes('burpee') || nameL.includes('jack') || nameL.includes('climber') || nameL.includes('high knee') || nameL.includes('sprint')) {
-    if (difficulty === 'beginner') return '3 sets × 30s work / 30s rest';
-    if (difficulty === 'advanced') return '4 sets × 45s work / 15s rest';
-    return '3 sets × 40s work / 20s rest';
+  // ── Apply Body Type Adjustments ──
+  if (bodyType === 'under-conditioned') {
+    // Reduce sets by 1 (minimum 2 sets)
+    if (sets > 2) sets -= 1;
+    // Lower hold or work times, increase rest
+    if (isHold) {
+      repStr = repStr.replace('60s hold', '40s hold').replace('40s hold', '30s hold');
+    } else if (isHIIT) {
+      repStr = repStr.replace('45s work', '30s work').replace('40s work', '30s work');
+      restStr = '45s rest';
+    } else {
+      // Lower reps slightly for hypertrophy/fat loss
+      repStr = repStr.replace('15-20 reps', '10-12 reps')
+                     .replace('20 reps', '12-15 reps')
+                     .replace('15 reps', '10 reps');
+    }
+    if (!restStr && !isStretching) {
+      restStr = '75-90s rest';
+    } else if (restStr && !isStretching) {
+      if (restStr.includes('15s')) restStr = '45s rest';
+      else if (restStr.includes('20s')) restStr = '60s rest';
+      else if (restStr.includes('30s')) restStr = '60s rest';
+    }
+  } else if (bodyType === 'athletic') {
+    // Increase sets by 1 (maximum 5 sets)
+    if (sets < 5 && !isStretching) sets += 1;
+    if (isHIIT && difficulty === 'advanced') {
+      restStr = '15s rest'; // maintain short recovery
+    }
+    if (!restStr && !isStretching) {
+      restStr = '45-60s rest';
+    }
   }
 
-  // ── Goal-specific rep schemes ──
-
-  // Strength: low reps, heavy — 4–5 sets × 3–6 reps
-  if (goal === 'strength') {
-    if (difficulty === 'beginner') return '3 sets × 6–8 reps (heavy)';
-    if (difficulty === 'advanced') return '5 sets × 3–5 reps (heavy)';
-    return '4 sets × 4–6 reps (heavy)';
+  // ── Format Output ──
+  let output = `${sets} sets × ${repStr}`;
+  if (restStr) {
+    output += ` (${restStr})`;
   }
-
-  // Muscle building / hypertrophy: moderate-heavy, 8–12 reps
-  if (goal === 'build_muscle' || goal === 'hypertrophy') {
-    if (difficulty === 'beginner') return '3 sets × 10–12 reps';
-    if (difficulty === 'advanced') return '4 sets × 8–12 reps (controlled)';
-    return '3 sets × 8–12 reps';
-  }
-
-  // Fat loss / weight loss: higher reps, shorter rest, circuit style
-  if (goal === 'lose_weight' || goal === 'fat_loss') {
-    if (difficulty === 'beginner') return '3 sets × 15 reps (30s rest)';
-    if (difficulty === 'advanced') return '4 sets × 20 reps (15s rest)';
-    return '3 sets × 15–20 reps (20s rest)';
-  }
-
-  // General / fallback
-  if (difficulty === 'beginner') return '2 sets × 10–12 reps';
-  if (difficulty === 'advanced') return '4 sets × 8–12 reps';
-  return '3 sets × 10–12 reps';
+  return output;
 }
 
 
@@ -5659,6 +5993,9 @@ function swapExerciseAtIndex(idx) {
 
   const eqSet = new Set(state.lastGenParams.equipment || ['bodyweight']);
   const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
+  const ageGroup = state.primaryGoal?.ageGroup || state.profile?.ageGroup || 'adult';
+  const bodyType = state.primaryGoal?.bodyType || state.profile?.bodyType || 'general';
+
   let pool;
   if (group === 'Warm-up') {
     const warmupNames = [
@@ -5674,10 +6011,10 @@ function swapExerciseAtIndex(idx) {
       ...(EXERCISES_BY_GROUP["Cardio"] || []),
       ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
     ];
-    pool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
+    pool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup));
   } else {
     pool = (EXERCISES_BY_GROUP[group] || []).filter(ex => {
-      return matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints);
+      return matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup);
     });
   }
 
@@ -5696,7 +6033,7 @@ function swapExerciseAtIndex(idx) {
   }
 
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
-  const repsDetails = generateRepsForExercise(pick, state.lastGenParams?.difficulty || 'intermediate', state.primaryGoal?.type || 'general');
+  const repsDetails = generateRepsForExercise(pick, state.lastGenParams?.difficulty || 'intermediate', state.primaryGoal?.type || 'general', ageGroup, bodyType);
 
   let swapReason = '';
   if (group === 'Warm-up') {
@@ -5832,11 +6169,13 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     // Determine movement structure and select exercises
     let matchPool = [];
     const avoidJoints = state.primaryGoal?.avoidJoints || state.profile?.avoidJoints || [];
+    const ageGroup = state.primaryGoal?.ageGroup || state.profile?.ageGroup || 'adult';
+    const bodyType = state.primaryGoal?.bodyType || state.profile?.bodyType || 'general';
     
     selectedFoci.forEach(focusKey => {
       const list = EXERCISES_BY_GROUP[focusKey] || [];
       list.forEach(ex => {
-        if (matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints)) {
+        if (matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup)) {
           matchPool.push({
             ...ex,
             sourceGroup: focusKey
@@ -5943,7 +6282,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
         ...(EXERCISES_BY_GROUP["Cardio"] || []),
         ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
       ];
-      const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
+      const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup));
       
       if (warmupPool.length > 0) {
         // 1. Dynamic Heart-rate / activation Warm-up
@@ -6044,7 +6383,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     // Inject cool-down stretches matched to active muscle focus areas (max 2 stretches)
     if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
       const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
-      const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints));
+      const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eqSet) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup));
       
       if (matchStretches.length > 0) {
         const trainedMuscles = getTrainedMuscles(selected);
@@ -6139,7 +6478,7 @@ function generateCustomWorkout(duration, selectedFoci, equipment, difficulty) {
     else if (difficulty === 'advanced') difficultyBadge = "Advanced";
 
     const exercisesMapped = selected.map(ex => {
-      const repsDetails = generateRepsForExercise(ex, difficulty, state.primaryGoal?.type || 'general');
+      const repsDetails = generateRepsForExercise(ex, difficulty, state.primaryGoal?.type || 'general', ageGroup, bodyType);
       return {
         id: uid(),
         name: ex.name,
@@ -6469,9 +6808,29 @@ function wireQuickStart() {
   });
 }
 
-function isExerciseExcludedForJoints(ex, avoidJoints) {
+function isExerciseExcludedForJoints(ex, avoidJoints, ageGroup = 'adult') {
+  const nameL = (ex.name || '').toLowerCase();
+  const typeL = (ex.type || '').toLowerCase();
+
+  // 1. Check age-specific safety restrictions
+  if (ageGroup === 'senior') {
+    // Seniors automatically avoid high-impact movements
+    if (nameL.includes('burpee') || nameL.includes('jump') || nameL.includes('jumping jack') || 
+        nameL.includes('high knees') || nameL.includes('mountain climber') || nameL.includes('rope')) {
+      return true;
+    }
+  }
+
+  if (ageGroup === 'youth') {
+    // Youth automatically avoid heavy compound barbell loading lifts
+    if (typeL === 'barbell' && (nameL.includes('deadlift') || nameL.includes('back squat') || nameL.includes('overhead press') || nameL.includes('military press'))) {
+      return true;
+    }
+  }
+
+  // 2. Check manual joint avoidance constraints
   if (!avoidJoints || avoidJoints.length === 0) return false;
-  const name = (ex.name || '').toLowerCase();
+  const name = nameL;
   const target = (ex.target || '').toLowerCase();
   const info = (ex.info || '').toLowerCase();
   
@@ -6680,6 +7039,8 @@ function selectVariantWithPriority(splitType, dayIndex, priorities) {
 function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal = null, dayIndex = 0) {
   const goal = primaryGoal?.type || profile?.goal || 'general';
   const dur = Number(primaryGoal?.durationMin || profile?.durationMin || 30);
+  const ageGroup = primaryGoal?.ageGroup || profile?.ageGroup || 'adult';
+  const bodyType = primaryGoal?.bodyType || profile?.bodyType || 'general';
   // Prefer equipment from the goal (set in Settings), fall back to profile (set in Quick Start)
   const eq = new Set(primaryGoal?.equipment || profile?.equipment || ['bodyweight']);
 
@@ -6864,7 +7225,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       selectedFoci.forEach(focusKey => {
         const list = EXERCISES_BY_GROUP[focusKey] || [];
         list.forEach(ex => {
-          if (ex && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints)) {
+          if (ex && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup)) {
             matchPool.push({
               ...ex,
               sourceGroup: focusKey
@@ -6964,7 +7325,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
           ...(EXERCISES_BY_GROUP["Cardio"] || []),
           ...(EXERCISES_BY_GROUP["Stretching & Mobility"] || [])
         ];
-        const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints));
+        const warmupPool = allExercises.filter(ex => warmupNames.includes(ex.name) && matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup));
         
         if (warmupPool.length > 0) {
           const trainedMuscles = getTrainedMuscles(selected);
@@ -7062,7 +7423,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
 
       if (selected.length > 0 && !selectedFoci.includes('Stretching & Mobility')) {
         const stretchPool = EXERCISES_BY_GROUP["Stretching & Mobility"] || [];
-        const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints));
+        const matchStretches = stretchPool.filter(ex => matchEquipment(ex.type, ex.name, eq) && !isExerciseExcludedForJoints(ex, avoidJoints, ageGroup));
         
         if (matchStretches.length > 0) {
           const trainedMuscles = getTrainedMuscles(selected);
@@ -7150,7 +7511,7 @@ function generateRoutineFromProfile(profile, primaryGoal = null, secondaryGoal =
       const difficulty = primaryGoal?.difficulty || profile?.difficulty || 'intermediate';
       exercises = selected.map(ex => {
         // Pass the goal type so rep/set schemes are goal-appropriate
-        const repsDetails = generateRepsForExercise(ex, difficulty, goal);
+        const repsDetails = generateRepsForExercise(ex, difficulty, goal, ageGroup, bodyType);
         return {
           id: uid(),
           name: `${ex.name} (${repsDetails})`,
@@ -8381,7 +8742,380 @@ function toggleTheme() {
   applyTheme();
 }
 
+
+// =============================================
+// ===== NUTRITION TAB MODULE ==================
+// =============================================
+
+// ---- State keys ----
+const BF_FAV_MEALS_KEY  = 'bfFavMeals';
+const BF_MACRO_TARGETS  = 'bfNutritionTargets';
+
+// ---- In-memory cache ----
+let _nutritionMealsCache = null;
+let _nutritionActiveTypeFilter = 'all';
+let _nutritionActiveGoalFilter = 'all';
+
+/**
+ * Returns goal → macro default mapping (g per day, baseline 150 lb person).
+ */
+function getGoalMacroDefaults() {
+  const goal = (state.primaryGoal && state.primaryGoal.type) ? state.primaryGoal.type.toLowerCase() : '';
+  const goalMap = {
+    'muscle-gain':    { protein: 160, carbs: 240, fat: 60, label: 'Muscle Gain'    },
+    'strength':       { protein: 155, carbs: 220, fat: 65, label: 'Strength'       },
+    'fat-loss':       { protein: 140, carbs: 130, fat: 55, label: 'Fat Loss'       },
+    'weight-loss':    { protein: 140, carbs: 130, fat: 55, label: 'Fat Loss'       },
+    'maintenance':    { protein: 120, carbs: 190, fat: 60, label: 'Maintenance'    },
+    'endurance':      { protein: 110, carbs: 260, fat: 55, label: 'Endurance'      },
+    'general':        { protein: 110, carbs: 200, fat: 55, label: 'General Fitness' },
+    'general-fitness':{ protein: 110, carbs: 200, fat: 55, label: 'General Fitness' },
+  };
+  return goalMap[goal] || { protein: 120, carbs: 200, fat: 60, label: 'General' };
+}
+
+/**
+ * Load meals.json from server (once), cache to _nutritionMealsCache.
+ */
+async function loadMeals() {
+  if (_nutritionMealsCache) return _nutritionMealsCache;
+  try {
+    const res = await fetch('/meals.json?v=' + Date.now());
+    if (!res.ok) throw new Error('meals.json not found');
+    _nutritionMealsCache = await res.json();
+  } catch (e) {
+    console.warn('Could not load meals.json:', e);
+    _nutritionMealsCache = [];
+  }
+  return _nutritionMealsCache;
+}
+
+/**
+ * Get bookmarked meal IDs from localStorage.
+ */
+function getFavMeals() {
+  try {
+    return JSON.parse(localStorage.getItem(BF_FAV_MEALS_KEY) || '[]');
+  } catch { return []; }
+}
+
+/**
+ * Toggle a meal bookmark and re-render its star.
+ */
+function toggleMealBookmark(id, event) {
+  if (event) { event.stopPropagation(); }
+  const favs = getFavMeals();
+  const idx = favs.indexOf(id);
+  if (idx === -1) {
+    favs.push(id);
+  } else {
+    favs.splice(idx, 1);
+  }
+  localStorage.setItem(BF_FAV_MEALS_KEY, JSON.stringify(favs));
+  // Update star button in DOM without full re-render
+  const btn = document.querySelector(`.meal-bookmark-btn[data-meal-id="${id}"]`);
+  if (btn) {
+    const isFav = favs.includes(id);
+    btn.textContent = isFav ? '⭐' : '☆';
+    btn.setAttribute('aria-label', isFav ? 'Remove bookmark' : 'Bookmark meal');
+  }
+}
+
+/**
+ * Render macro target progress bars.
+ */
+function renderMacroTargetBar() {
+  const el = $('macroTargetBar');
+  if (!el) return;
+
+  const saved = (() => {
+    try { return JSON.parse(localStorage.getItem(BF_MACRO_TARGETS) || 'null'); } catch { return null; }
+  })();
+  const defaults = getGoalMacroDefaults();
+  const targets = saved || defaults;
+
+  const rows = [
+    { key: 'protein', label: 'Protein', cls: 'protein', unit: 'g' },
+    { key: 'carbs',   label: 'Carbs',   cls: 'carbs',   unit: 'g' },
+    { key: 'fat',     label: 'Fat',     cls: 'fat',     unit: 'g' },
+  ];
+
+  const totalCals = targets.protein * 4 + targets.carbs * 4 + targets.fat * 9;
+  const maxVal = Math.max(targets.protein, targets.carbs, targets.fat);
+
+  el.innerHTML = rows.map(r => {
+    const val = targets[r.key] || 0;
+    const pct = maxVal > 0 ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
+    const calContrib = r.key === 'fat' ? val * 9 : val * 4;
+    return `
+      <div class="macro-bar-row">
+        <span class="macro-bar-label">${r.label}</span>
+        <div class="macro-bar-track">
+          <div class="macro-bar-fill ${r.cls}" style="width: ${pct}%;"></div>
+        </div>
+        <span class="macro-bar-value">${val}${r.unit} <span style="font-weight:500; font-size:10.5px; opacity:0.65;">(${calContrib} kcal)</span></span>
+      </div>
+    `;
+  }).join('') + `<div class="muted" style="font-size:12px; margin-top:4px;">≈ ${totalCals} kcal/day target · Based on <strong>${defaults.label}</strong> goal</div>`;
+}
+
+/**
+ * Save customized macro targets to localStorage and re-render.
+ */
+function saveMacroTargets() {
+  const p = parseInt($('macroInputProtein').value) || 0;
+  const c = parseInt($('macroInputCarbs').value)   || 0;
+  const f = parseInt($('macroInputFat').value)     || 0;
+  localStorage.setItem(BF_MACRO_TARGETS, JSON.stringify({ protein: p, carbs: c, fat: f }));
+  $('macroTargetEditor').style.display = 'none';
+  renderMacroTargetBar();
+  showToast('Macro targets saved ✅');
+}
+
+/**
+ * Populate the macro editor inputs from current targets.
+ */
+function openMacroTargetEditor() {
+  const saved = (() => {
+    try { return JSON.parse(localStorage.getItem(BF_MACRO_TARGETS) || 'null'); } catch { return null; }
+  })();
+  const targets = saved || getGoalMacroDefaults();
+  $('macroInputProtein').value = targets.protein;
+  $('macroInputCarbs').value   = targets.carbs;
+  $('macroInputFat').value     = targets.fat;
+  $('macroTargetEditor').style.display = 'block';
+  $('macroTargetEditor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/**
+ * Build the FDA-style nutrition label HTML for a meal.
+ */
+function renderNutritionLabel(meal) {
+  const m = meal.macros;
+  const mi = meal.micros || {};
+  const dv = (val, dvTotal) => val != null ? `${Math.round((val / dvTotal) * 100)}%` : '—';
+
+  return `
+    <div class="nutrition-label" role="region" aria-label="Nutrition facts for ${escapeHtml(meal.name)}">
+      <div class="nutrition-label-title">Nutrition Facts</div>
+      <div class="nutrition-label-serving">${escapeHtml(meal.servingSize || '1 serving')}</div>
+      <div class="nutrition-label-calories-row">
+        <div>
+          <div class="nutrition-label-calories-label">Calories</div>
+        </div>
+        <div class="nutrition-label-calories-value">${m.calories}</div>
+      </div>
+      <div class="nutrition-label-row" style="justify-content: flex-end; font-size: 11px; font-weight: 700; border-bottom: 3px solid var(--text); padding-bottom: 2px;">% Daily Value*</div>
+      <div class="nutrition-label-row bold">Total Fat <span>${m.fat}g &nbsp; ${dv(m.fat, 78)}</span></div>
+      <div class="nutrition-label-row indent">Saturated Fat <span>—</span></div>
+      <div class="nutrition-label-row indent">Trans Fat <span>0g</span></div>
+      <div class="nutrition-label-row bold">Cholesterol <span>—</span></div>
+      <div class="nutrition-label-row bold">Sodium <span>${mi.sodium != null ? mi.sodium + 'mg' : '—'} &nbsp; ${dv(mi.sodium, 2300)}</span></div>
+      <div class="nutrition-label-row bold">Total Carbohydrate <span>${m.carbs}g &nbsp; ${dv(m.carbs, 275)}</span></div>
+      <div class="nutrition-label-row indent">Dietary Fiber <span>${m.fiber != null ? m.fiber + 'g' : '—'} &nbsp; ${dv(m.fiber, 28)}</span></div>
+      <div class="nutrition-label-row indent">Total Sugars <span>${m.sugar != null ? m.sugar + 'g' : '—'}</span></div>
+      <div class="nutrition-label-row bold">Protein <span>${m.protein}g</span></div>
+      <div class="nutrition-label-row" style="border-top: 4px solid var(--text); padding-top: 3px; margin-top: 2px;">Vitamin D <span>${mi.vitaminD != null ? mi.vitaminD + '%' : '—'}</span></div>
+      <div class="nutrition-label-row">Calcium <span>${mi.calcium != null ? mi.calcium + '%' : '—'}</span></div>
+      <div class="nutrition-label-row">Iron <span>${mi.iron != null ? mi.iron + '%' : '—'}</span></div>
+      <div class="nutrition-label-row">Potassium <span>${mi.potassium != null ? mi.potassium + 'mg' : '—'}</span></div>
+      <div class="nutrition-label-dv-note">* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+    </div>
+  `;
+}
+
+/**
+ * Build the expandable drawer HTML for a meal.
+ */
+function renderMealDrawer(meal) {
+  const ingList = (meal.ingredients || []).map(i => `<li>${escapeHtml(i)}</li>`).join('');
+  const tags = (meal.tags || []).map(t => `<span class="meal-tag-chip">${escapeHtml(t)}</span>`).join('');
+
+  return `
+    <div class="meal-card-drawer">
+      ${tags ? `<div class="meal-tags-row">${tags}</div>` : ''}
+      ${renderNutritionLabel(meal)}
+      <div class="meal-ingredients-block">
+        <div class="meal-section-title">Ingredients</div>
+        <ul class="meal-ingredients-list">${ingList}</ul>
+      </div>
+      <div class="meal-ingredients-block">
+        <div class="meal-section-title">How to Prepare</div>
+        <div class="meal-instructions-text">${escapeHtml(meal.instructions || '')}</div>
+      </div>
+      ${meal.tip ? `<div class="meal-tip-block">${escapeHtml(meal.tip)}</div>` : ''}
+    </div>
+  `;
+}
+
+/**
+ * Build full meal card HTML.
+ */
+function renderMealCard(meal) {
+  const favs = getFavMeals();
+  const isFav = favs.includes(meal.id);
+  const mealTypeLabel = (meal.mealType || '').replace('-', ' ');
+  const prepTime = meal.prepTime ? `⏱ ${meal.prepTime} min` : '';
+
+  return `
+    <div class="meal-card" data-meal-id="${escapeHtml(meal.id)}" role="article">
+      <div class="meal-card-header" onclick="toggleMealCardExpand('${escapeHtml(meal.id)}')">
+        <span class="meal-emoji" aria-hidden="true">${meal.emoji || '🍽️'}</span>
+        <div class="meal-card-meta">
+          <div class="meal-card-name">${escapeHtml(meal.name)}</div>
+          <span class="meal-type-badge">${escapeHtml(mealTypeLabel)}</span>
+          <div class="meal-macro-row">
+            <span class="meal-macro-pill calories">🔥 ${meal.macros.calories} kcal</span>
+            <span class="meal-macro-pill">💪 ${meal.macros.protein}g</span>
+            <span class="meal-macro-pill">🍞 ${meal.macros.carbs}g</span>
+            <span class="meal-macro-pill">🫙 ${meal.macros.fat}g</span>
+            ${prepTime ? `<span class="meal-prep-time">${prepTime}</span>` : ''}
+          </div>
+        </div>
+        <div class="meal-card-actions">
+          <button
+            class="meal-bookmark-btn"
+            data-meal-id="${escapeHtml(meal.id)}"
+            onclick="toggleMealBookmark('${escapeHtml(meal.id)}', event)"
+            aria-label="${isFav ? 'Remove bookmark' : 'Bookmark meal'}"
+            title="${isFav ? 'Remove bookmark' : 'Save meal'}"
+          >${isFav ? '⭐' : '☆'}</button>
+          <span class="meal-expand-icon">▼</span>
+        </div>
+      </div>
+      ${renderMealDrawer(meal)}
+    </div>
+  `;
+}
+
+/**
+ * Toggle expand/collapse of a meal card.
+ */
+function toggleMealCardExpand(mealId) {
+  const card = document.querySelector(`.meal-card[data-meal-id="${mealId}"]`);
+  if (!card) return;
+  const isExpanded = card.classList.contains('expanded');
+  // Collapse all others first (optional UX - one open at a time)
+  document.querySelectorAll('.meal-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!isExpanded) {
+    card.classList.add('expanded');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+/**
+ * Filter and render the meal list.
+ */
+function renderMealList() {
+  const el = $('mealList');
+  if (!el) return;
+
+  const meals = _nutritionMealsCache || [];
+  if (meals.length === 0) {
+    el.innerHTML = '<div class="muted" style="text-align:center; padding:30px 0;">Loading meals…</div>';
+    return;
+  }
+
+  const typeFilter = _nutritionActiveTypeFilter;
+  const goalFilter = _nutritionActiveGoalFilter;
+
+  let filtered = meals.filter(meal => {
+    const typeOk = typeFilter === 'all' || meal.mealType === typeFilter;
+    let goalOk = true;
+    if (goalFilter === 'vegan') {
+      goalOk = (meal.tags || []).includes('vegan');
+    } else if (goalFilter !== 'all') {
+      goalOk = (meal.goal || []).includes(goalFilter) || (meal.tags || []).includes(goalFilter);
+    }
+    return typeOk && goalOk;
+  });
+
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="muted" style="text-align:center; padding:30px 0;">No meals match these filters.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(m => renderMealCard(m)).join('');
+}
+
+/**
+ * Initialize nutrition tab — load meals (lazy on first open) and wire filters.
+ */
+async function initNutritionTab() {
+  // Render macro bar immediately (no async needed)
+  renderMacroTargetBar();
+
+  // Show loading state in list
+  const el = $('mealList');
+  if (el && !_nutritionMealsCache) {
+    el.innerHTML = '<div class="muted" style="text-align:center; padding:30px 0;">Loading meals…</div>';
+  }
+
+  // Load meals if not cached
+  await loadMeals();
+
+  // Render list
+  renderMealList();
+}
+
+/**
+ * Wire all nutrition tab interactive elements.
+ * Called once from boot().
+ */
+function wireNutritionTab() {
+  // Meal Type filter pills
+  const typeFilter = $('mealTypeFilter');
+  if (typeFilter) {
+    typeFilter.addEventListener('click', e => {
+      const btn = e.target.closest('[data-meal-type]');
+      if (!btn) return;
+      typeFilter.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _nutritionActiveTypeFilter = btn.getAttribute('data-meal-type');
+      renderMealList();
+    });
+  }
+
+  // Goal filter pills
+  const goalFilter = $('mealGoalFilter');
+  if (goalFilter) {
+    goalFilter.addEventListener('click', e => {
+      const btn = e.target.closest('[data-meal-goal]');
+      if (!btn) return;
+      goalFilter.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _nutritionActiveGoalFilter = btn.getAttribute('data-meal-goal');
+      renderMealList();
+    });
+  }
+
+  // Macro target edit button
+  const editBtn = $('btnEditMacroTargets');
+  if (editBtn) {
+    editBtn.addEventListener('click', openMacroTargetEditor);
+  }
+
+  // Save macro targets button
+  const saveBtn = $('btnSaveMacroTargets');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveMacroTargets);
+  }
+
+  // Cancel macro editor
+  const cancelBtn = $('btnCancelMacroTargets');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      $('macroTargetEditor').style.display = 'none';
+    });
+  }
+}
+
+// =============================================
+// ===== END NUTRITION TAB MODULE ==============
+// =============================================
+
 function boot() {
+
   // 1. Silent cloud sync auto-login/setup from family session
   const storedPart = sessionStorage.getItem('ff_participant') || localStorage.getItem('ff_participant');
   if (storedPart) {
@@ -8526,6 +9260,12 @@ function boot() {
     syncWorkoutLibrary();
   } catch (e) {
     console.error('Failed to sync workout library:', e);
+  }
+  
+  try {
+    wireNutritionTab();
+  } catch (e) {
+    console.error('Failed to wire nutrition tab:', e);
   }
 }
 

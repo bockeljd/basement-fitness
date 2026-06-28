@@ -1,0 +1,999 @@
+[
+  {
+    "id": "meal-power-oatmeal",
+    "name": "Power Oatmeal Bowl",
+    "emoji": "🥣",
+    "mealType": "breakfast",
+    "tags": ["high-protein", "bulk", "meal-prep"],
+    "goal": ["muscle-gain", "maintenance"],
+    "prepTime": 10,
+    "servingSize": "1 bowl (~370g)",
+    "macros": {
+      "calories": 490,
+      "protein": 30,
+      "carbs": 64,
+      "fat": 12,
+      "fiber": 9,
+      "sugar": 16
+    },
+    "micros": {
+      "sodium": 220,
+      "potassium": 540,
+      "calcium": 20,
+      "iron": 25,
+      "vitaminC": 4,
+      "vitaminD": 10
+    },
+    "ingredients": [
+      "1 cup rolled oats",
+      "1 scoop vanilla whey protein",
+      "1 tbsp peanut butter",
+      "1/2 banana, sliced",
+      "1 tsp honey",
+      "1 cup oat milk"
+    ],
+    "instructions": "Cook oats per package directions. Stir in protein powder while still hot. Top with banana slices, peanut butter drizzle, and honey.",
+    "tip": "Add 1 tbsp chia seeds for an omega-3 boost and extra fiber without much added calories."
+  },
+  {
+    "id": "meal-egg-veggie-scramble",
+    "name": "Protein Egg Scramble",
+    "emoji": "🍳",
+    "mealType": "breakfast",
+    "tags": ["high-protein", "low-carb", "quick"],
+    "goal": ["muscle-gain", "fat-loss"],
+    "prepTime": 8,
+    "servingSize": "1 plate (~300g)",
+    "macros": {
+      "calories": 380,
+      "protein": 34,
+      "carbs": 10,
+      "fat": 22,
+      "fiber": 2,
+      "sugar": 3
+    },
+    "micros": {
+      "sodium": 480,
+      "potassium": 410,
+      "calcium": 12,
+      "iron": 18,
+      "vitaminC": 20,
+      "vitaminD": 15
+    },
+    "ingredients": [
+      "4 large eggs",
+      "1/2 cup egg whites",
+      "1/2 cup spinach",
+      "1/4 cup bell pepper, diced",
+      "1/4 cup mushrooms",
+      "1 oz feta cheese",
+      "1 tsp olive oil",
+      "Salt, pepper, garlic powder"
+    ],
+    "instructions": "Heat olive oil in pan over medium heat. Sauté peppers and mushrooms 2 min. Add spinach, wilt 1 min. Pour in whisked eggs and whites, scramble to preference. Top with feta.",
+    "tip": "Add a side of sliced avocado (+6g fat, +1.5g fiber) for a more complete fat-loss meal."
+  },
+  {
+    "id": "meal-greek-yogurt-parfait",
+    "name": "Greek Yogurt Parfait",
+    "emoji": "🫙",
+    "mealType": "breakfast",
+    "tags": ["high-protein", "quick", "vegan-adaptable"],
+    "goal": ["maintenance", "fat-loss"],
+    "prepTime": 5,
+    "servingSize": "1 parfait (~280g)",
+    "macros": {
+      "calories": 320,
+      "protein": 26,
+      "carbs": 38,
+      "fat": 6,
+      "fiber": 4,
+      "sugar": 22
+    },
+    "micros": {
+      "sodium": 110,
+      "potassium": 390,
+      "calcium": 28,
+      "iron": 6,
+      "vitaminC": 15,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "1 cup non-fat Greek yogurt (plain)",
+      "1/3 cup granola (low-sugar)",
+      "1/2 cup mixed berries",
+      "1 tbsp honey",
+      "1 tbsp almonds, slivered"
+    ],
+    "instructions": "Layer yogurt in a glass or bowl. Add granola, then berries. Drizzle honey and top with almonds.",
+    "tip": "Use Icelandic skyr instead of Greek yogurt for ~2g more protein per serving."
+  },
+  {
+    "id": "meal-avocado-toast-eggs",
+    "name": "Avocado Toast & Eggs",
+    "emoji": "🥑",
+    "mealType": "breakfast",
+    "tags": ["balanced", "healthy-fats", "quick"],
+    "goal": ["maintenance", "general-fitness"],
+    "prepTime": 10,
+    "servingSize": "2 slices + 2 eggs (~300g)",
+    "macros": {
+      "calories": 420,
+      "protein": 20,
+      "carbs": 36,
+      "fat": 22,
+      "fiber": 9,
+      "sugar": 3
+    },
+    "micros": {
+      "sodium": 380,
+      "potassium": 560,
+      "calcium": 10,
+      "iron": 22,
+      "vitaminC": 18,
+      "vitaminD": 8
+    },
+    "ingredients": [
+      "2 slices whole grain bread, toasted",
+      "1 medium avocado, mashed",
+      "2 eggs, poached or fried",
+      "Red pepper flakes",
+      "Everything bagel seasoning",
+      "Squeeze of lemon juice"
+    ],
+    "instructions": "Toast bread. Mash avocado with lemon, salt, and seasoning. Spread on toast. Top with eggs and red pepper flakes.",
+    "tip": "Use sourdough bread for a lower glycemic index and better gut-friendly prebiotics."
+  },
+  {
+    "id": "meal-banana-protein-smoothie",
+    "name": "Banana Protein Smoothie",
+    "emoji": "🥤",
+    "mealType": "breakfast",
+    "tags": ["quick", "high-protein", "pre-workout"],
+    "goal": ["muscle-gain", "general-fitness"],
+    "prepTime": 4,
+    "servingSize": "1 large glass (~500ml)",
+    "macros": {
+      "calories": 430,
+      "protein": 35,
+      "carbs": 52,
+      "fat": 8,
+      "fiber": 5,
+      "sugar": 30
+    },
+    "micros": {
+      "sodium": 200,
+      "potassium": 760,
+      "calcium": 35,
+      "iron": 10,
+      "vitaminC": 12,
+      "vitaminD": 20
+    },
+    "ingredients": [
+      "1 large banana",
+      "1 scoop chocolate whey protein",
+      "1 tbsp almond butter",
+      "1 cup whole milk",
+      "1/2 cup Greek yogurt",
+      "Handful of ice"
+    ],
+    "instructions": "Blend all ingredients until smooth. Serve immediately.",
+    "tip": "Freeze the banana the night before for a thicker, colder shake without extra ice dilution."
+  },
+  {
+    "id": "meal-overnight-oats",
+    "name": "Overnight Protein Oats",
+    "emoji": "🌙",
+    "mealType": "breakfast",
+    "tags": ["meal-prep", "high-protein", "balanced"],
+    "goal": ["muscle-gain", "maintenance"],
+    "prepTime": 5,
+    "servingSize": "1 jar (~350g)",
+    "macros": {
+      "calories": 455,
+      "protein": 32,
+      "carbs": 55,
+      "fat": 10,
+      "fiber": 8,
+      "sugar": 18
+    },
+    "micros": {
+      "sodium": 190,
+      "potassium": 520,
+      "calcium": 24,
+      "iron": 20,
+      "vitaminC": 2,
+      "vitaminD": 8
+    },
+    "ingredients": [
+      "1/2 cup rolled oats",
+      "3/4 cup Greek yogurt",
+      "1/2 cup oat milk",
+      "1 scoop vanilla protein powder",
+      "1 tbsp chia seeds",
+      "1 tsp maple syrup",
+      "1/2 cup blueberries"
+    ],
+    "instructions": "Combine oats, yogurt, milk, protein, chia seeds, and maple syrup in a jar. Stir well. Refrigerate overnight. Top with blueberries in the morning.",
+    "tip": "Prep 3–4 jars Sunday night for the week. They keep well for up to 4 days refrigerated."
+  },
+  {
+    "id": "meal-chicken-rice-bowl",
+    "name": "Classic Chicken & Rice Bowl",
+    "emoji": "🍚",
+    "mealType": "lunch",
+    "tags": ["high-protein", "meal-prep", "bulk"],
+    "goal": ["muscle-gain", "maintenance"],
+    "prepTime": 30,
+    "servingSize": "1 bowl (~500g)",
+    "macros": {
+      "calories": 620,
+      "protein": 52,
+      "carbs": 68,
+      "fat": 12,
+      "fiber": 4,
+      "sugar": 4
+    },
+    "micros": {
+      "sodium": 540,
+      "potassium": 680,
+      "calcium": 6,
+      "iron": 16,
+      "vitaminC": 18,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "6 oz grilled chicken breast",
+      "1 cup cooked white or brown rice",
+      "1/2 cup steamed broccoli",
+      "1/4 cup corn",
+      "2 tbsp low-sodium soy sauce",
+      "1 tsp sesame oil",
+      "Green onions and sesame seeds"
+    ],
+    "instructions": "Grill seasoned chicken breast 6–7 min per side. Slice. Serve over rice with broccoli and corn. Drizzle with soy sauce and sesame oil.",
+    "tip": "Swap white rice for brown rice or quinoa for more fiber and a lower glycemic impact."
+  },
+  {
+    "id": "meal-turkey-wrap",
+    "name": "High-Protein Turkey Wrap",
+    "emoji": "🌯",
+    "mealType": "lunch",
+    "tags": ["high-protein", "quick", "balanced"],
+    "goal": ["fat-loss", "maintenance"],
+    "prepTime": 10,
+    "servingSize": "1 large wrap (~380g)",
+    "macros": {
+      "calories": 440,
+      "protein": 38,
+      "carbs": 42,
+      "fat": 12,
+      "fiber": 6,
+      "sugar": 5
+    },
+    "micros": {
+      "sodium": 820,
+      "potassium": 470,
+      "calcium": 14,
+      "iron": 18,
+      "vitaminC": 30,
+      "vitaminD": 2
+    },
+    "ingredients": [
+      "1 large whole wheat tortilla",
+      "5 oz sliced turkey breast (deli)",
+      "2 tbsp hummus",
+      "1/4 cup romaine lettuce",
+      "3 slices tomato",
+      "1/4 avocado, sliced",
+      "Mustard, pepper"
+    ],
+    "instructions": "Spread hummus on tortilla. Layer turkey, lettuce, tomato, and avocado. Season and roll tightly. Slice in half.",
+    "tip": "Substitute hummus for Greek yogurt-based tzatziki to cut fat while keeping creaminess."
+  },
+  {
+    "id": "meal-tuna-salad-bowl",
+    "name": "Tuna & Quinoa Power Bowl",
+    "emoji": "🐟",
+    "mealType": "lunch",
+    "tags": ["high-protein", "omega-3", "meal-prep"],
+    "goal": ["fat-loss", "muscle-gain"],
+    "prepTime": 15,
+    "servingSize": "1 bowl (~420g)",
+    "macros": {
+      "calories": 480,
+      "protein": 46,
+      "carbs": 42,
+      "fat": 14,
+      "fiber": 7,
+      "sugar": 4
+    },
+    "micros": {
+      "sodium": 590,
+      "potassium": 640,
+      "calcium": 10,
+      "iron": 24,
+      "vitaminC": 25,
+      "vitaminD": 30
+    },
+    "ingredients": [
+      "2 cans tuna in water, drained",
+      "1 cup cooked quinoa",
+      "1/2 cup cherry tomatoes, halved",
+      "1/4 cucumber, diced",
+      "2 tbsp olive oil",
+      "Juice of 1 lemon",
+      "Fresh parsley, salt, pepper"
+    ],
+    "instructions": "Combine tuna with lemon juice, olive oil, salt and pepper. Serve over quinoa with tomatoes and cucumber. Top with parsley.",
+    "tip": "Canned wild-caught salmon is a great omega-3 swap — nearly identical macros with more DHA."
+  },
+  {
+    "id": "meal-lentil-soup",
+    "name": "Hearty Red Lentil Soup",
+    "emoji": "🍲",
+    "mealType": "lunch",
+    "tags": ["vegan", "high-fiber", "meal-prep"],
+    "goal": ["maintenance", "fat-loss", "general-fitness"],
+    "prepTime": 35,
+    "servingSize": "1.5 cups (~400g)",
+    "macros": {
+      "calories": 350,
+      "protein": 22,
+      "carbs": 58,
+      "fat": 5,
+      "fiber": 16,
+      "sugar": 8
+    },
+    "micros": {
+      "sodium": 680,
+      "potassium": 820,
+      "calcium": 8,
+      "iron": 32,
+      "vitaminC": 22,
+      "vitaminD": 0
+    },
+    "ingredients": [
+      "1 cup red lentils (dry)",
+      "1 can diced tomatoes",
+      "1 medium onion, diced",
+      "3 cloves garlic",
+      "1 tsp cumin, turmeric, paprika",
+      "4 cups low-sodium vegetable broth",
+      "Juice of 1/2 lemon",
+      "Fresh cilantro"
+    ],
+    "instructions": "Sauté onion and garlic until soft. Add spices and stir 1 min. Add lentils, tomatoes, and broth. Simmer 20–25 min until lentils are tender. Finish with lemon juice.",
+    "tip": "Lentils are a complete protein source when paired with whole grains like rice or bread."
+  },
+  {
+    "id": "meal-salmon-salad",
+    "name": "Grilled Salmon Salad",
+    "emoji": "🥗",
+    "mealType": "lunch",
+    "tags": ["high-protein", "omega-3", "low-carb"],
+    "goal": ["fat-loss", "maintenance"],
+    "prepTime": 20,
+    "servingSize": "1 plate (~450g)",
+    "macros": {
+      "calories": 420,
+      "protein": 40,
+      "carbs": 18,
+      "fat": 22,
+      "fiber": 6,
+      "sugar": 5
+    },
+    "micros": {
+      "sodium": 460,
+      "potassium": 780,
+      "calcium": 14,
+      "iron": 16,
+      "vitaminC": 35,
+      "vitaminD": 80
+    },
+    "ingredients": [
+      "5 oz salmon fillet",
+      "3 cups mixed greens (arugula, spinach)",
+      "1/4 cup cherry tomatoes",
+      "1/4 cup cucumber, sliced",
+      "2 tbsp olive oil + lemon dressing",
+      "1 tbsp pumpkin seeds",
+      "1/4 avocado"
+    ],
+    "instructions": "Season and grill salmon 4 min per side. Assemble greens, tomatoes, cucumber, and avocado. Top with flaked salmon, seeds, and dressing.",
+    "tip": "Wild-caught salmon contains 2–3x more omega-3s than farm-raised. Worth the small price difference."
+  },
+  {
+    "id": "meal-steak-veggie",
+    "name": "Steak & Roasted Veggies",
+    "emoji": "🥩",
+    "mealType": "dinner",
+    "tags": ["high-protein", "low-carb", "bulk"],
+    "goal": ["muscle-gain", "maintenance"],
+    "prepTime": 30,
+    "servingSize": "1 plate (~550g)",
+    "macros": {
+      "calories": 560,
+      "protein": 52,
+      "carbs": 24,
+      "fat": 28,
+      "fiber": 6,
+      "sugar": 6
+    },
+    "micros": {
+      "sodium": 480,
+      "potassium": 1020,
+      "calcium": 8,
+      "iron": 40,
+      "vitaminC": 60,
+      "vitaminD": 6
+    },
+    "ingredients": [
+      "7 oz sirloin or flank steak",
+      "1 cup broccoli florets",
+      "1 cup zucchini, sliced",
+      "1/2 cup bell peppers",
+      "1 tbsp olive oil",
+      "Salt, pepper, garlic powder, rosemary"
+    ],
+    "instructions": "Preheat oven to 425°F. Toss veggies in olive oil and seasoning, roast 20–25 min. Pan-sear steak 3–4 min per side to preferred doneness. Rest 5 min before slicing.",
+    "tip": "Sirloin is the leanest high-protein cut — 7g fat per 3oz vs 15g+ for ribeye."
+  },
+  {
+    "id": "meal-chicken-pasta",
+    "name": "Chicken Pasta Marinara",
+    "emoji": "🍝",
+    "mealType": "dinner",
+    "tags": ["high-protein", "bulk", "balanced"],
+    "goal": ["muscle-gain"],
+    "prepTime": 30,
+    "servingSize": "1 large bowl (~550g)",
+    "macros": {
+      "calories": 680,
+      "protein": 54,
+      "carbs": 78,
+      "fat": 14,
+      "fiber": 7,
+      "sugar": 10
+    },
+    "micros": {
+      "sodium": 620,
+      "potassium": 680,
+      "calcium": 12,
+      "iron": 22,
+      "vitaminC": 24,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "6 oz chicken breast, cubed",
+      "2 oz whole wheat pasta (dry weight)",
+      "1/2 cup marinara sauce (low-sugar)",
+      "1/2 cup spinach",
+      "2 cloves garlic",
+      "1 tsp olive oil",
+      "Parmesan, basil, red pepper flakes"
+    ],
+    "instructions": "Cook pasta al dente. Sauté garlic in oil, add chicken and cook through. Add marinara and spinach, simmer 5 min. Toss with pasta. Top with parmesan.",
+    "tip": "Whole wheat pasta has 5g more fiber and a notably lower glycemic index than white pasta."
+  },
+  {
+    "id": "meal-salmon-sweet-potato",
+    "name": "Salmon & Sweet Potato",
+    "emoji": "🍠",
+    "mealType": "dinner",
+    "tags": ["balanced", "omega-3", "anti-inflammatory"],
+    "goal": ["fat-loss", "maintenance", "general-fitness"],
+    "prepTime": 35,
+    "servingSize": "1 plate (~500g)",
+    "macros": {
+      "calories": 530,
+      "protein": 44,
+      "carbs": 46,
+      "fat": 18,
+      "fiber": 7,
+      "sugar": 10
+    },
+    "micros": {
+      "sodium": 420,
+      "potassium": 1100,
+      "calcium": 10,
+      "iron": 20,
+      "vitaminC": 48,
+      "vitaminD": 75
+    },
+    "ingredients": [
+      "6 oz salmon fillet",
+      "1 large sweet potato",
+      "1 cup green beans",
+      "1 tbsp olive oil",
+      "Paprika, garlic powder, salt, pepper",
+      "Lemon wedge"
+    ],
+    "instructions": "Bake sweet potato at 400°F for 45 min (or microwave 8–10 min). Season salmon with paprika, garlic, salt. Pan-sear 4 min per side. Steam or roast green beans. Serve with lemon.",
+    "tip": "Sweet potatoes are a slow-digesting complex carb — ideal for sustained energy without blood sugar spikes."
+  },
+  {
+    "id": "meal-turkey-chili",
+    "name": "Lean Turkey Chili",
+    "emoji": "🌶️",
+    "mealType": "dinner",
+    "tags": ["high-protein", "meal-prep", "high-fiber"],
+    "goal": ["fat-loss", "muscle-gain", "maintenance"],
+    "prepTime": 40,
+    "servingSize": "1.5 cups (~450g)",
+    "macros": {
+      "calories": 480,
+      "protein": 46,
+      "carbs": 42,
+      "fat": 12,
+      "fiber": 13,
+      "sugar": 9
+    },
+    "micros": {
+      "sodium": 740,
+      "potassium": 920,
+      "calcium": 10,
+      "iron": 30,
+      "vitaminC": 40,
+      "vitaminD": 2
+    },
+    "ingredients": [
+      "1 lb lean ground turkey (93%)",
+      "1 can kidney beans, drained",
+      "1 can black beans, drained",
+      "1 can crushed tomatoes",
+      "1 onion, diced",
+      "3 cloves garlic",
+      "1 tbsp chili powder, 1 tsp cumin",
+      "Low-sodium chicken broth"
+    ],
+    "instructions": "Brown turkey in large pot. Add onion and garlic, cook 3 min. Add beans, tomatoes, broth, and spices. Simmer 25 min. Adjust seasoning.",
+    "tip": "Top with non-fat Greek yogurt instead of sour cream to add ~5g protein while cutting fat."
+  },
+  {
+    "id": "meal-tofu-stirfry",
+    "name": "Tofu & Veggie Stir-Fry",
+    "emoji": "🥦",
+    "mealType": "dinner",
+    "tags": ["vegan", "high-protein", "balanced"],
+    "goal": ["fat-loss", "maintenance", "general-fitness"],
+    "prepTime": 25,
+    "servingSize": "1 plate + 1 cup rice (~500g)",
+    "macros": {
+      "calories": 490,
+      "protein": 28,
+      "carbs": 60,
+      "fat": 14,
+      "fiber": 8,
+      "sugar": 10
+    },
+    "micros": {
+      "sodium": 680,
+      "potassium": 720,
+      "calcium": 26,
+      "iron": 28,
+      "vitaminC": 80,
+      "vitaminD": 0
+    },
+    "ingredients": [
+      "7 oz extra-firm tofu, pressed and cubed",
+      "1 cup snap peas",
+      "1 cup broccoli",
+      "1/2 cup carrots, sliced",
+      "1 cup cooked brown rice",
+      "3 tbsp low-sodium soy sauce",
+      "1 tsp sesame oil",
+      "1 tsp ginger, minced",
+      "2 cloves garlic"
+    ],
+    "instructions": "Press tofu dry and cube. Pan-fry in a splash of oil until golden, 8–10 min. Remove. Stir-fry veggies with garlic and ginger 4–5 min. Add tofu back, pour sauce, toss. Serve over rice.",
+    "tip": "Pressing tofu for 20+ min before cooking dramatically improves crispiness and sauce absorption."
+  },
+  {
+    "id": "meal-greek-chicken-bowl",
+    "name": "Greek Chicken Bowl",
+    "emoji": "🫒",
+    "mealType": "dinner",
+    "tags": ["high-protein", "balanced", "meal-prep"],
+    "goal": ["muscle-gain", "fat-loss", "maintenance"],
+    "prepTime": 25,
+    "servingSize": "1 bowl (~480g)",
+    "macros": {
+      "calories": 510,
+      "protein": 48,
+      "carbs": 38,
+      "fat": 18,
+      "fiber": 6,
+      "sugar": 6
+    },
+    "micros": {
+      "sodium": 560,
+      "potassium": 740,
+      "calcium": 16,
+      "iron": 20,
+      "vitaminC": 40,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "6 oz chicken breast, marinated in lemon/oregano/garlic",
+      "1/2 cup cooked farro or quinoa",
+      "1/4 cup cucumber, diced",
+      "1/4 cup cherry tomatoes, halved",
+      "2 tbsp Kalamata olives",
+      "2 tbsp tzatziki",
+      "Fresh dill"
+    ],
+    "instructions": "Grill marinated chicken. Assemble bowl: grain base, chicken, cucumber, tomatoes, olives. Dollop tzatziki, garnish with dill.",
+    "tip": "Marinate chicken overnight in lemon juice, olive oil, garlic, and dried oregano for maximum flavor."
+  },
+  {
+    "id": "meal-apple-peanutbutter",
+    "name": "Apple & Peanut Butter",
+    "emoji": "🍎",
+    "mealType": "snack",
+    "tags": ["quick", "balanced", "healthy-fats"],
+    "goal": ["maintenance", "general-fitness", "fat-loss"],
+    "prepTime": 2,
+    "servingSize": "1 apple + 2 tbsp PB (~220g)",
+    "macros": {
+      "calories": 280,
+      "protein": 8,
+      "carbs": 36,
+      "fat": 14,
+      "fiber": 5,
+      "sugar": 22
+    },
+    "micros": {
+      "sodium": 110,
+      "potassium": 320,
+      "calcium": 4,
+      "iron": 6,
+      "vitaminC": 14,
+      "vitaminD": 0
+    },
+    "ingredients": [
+      "1 medium apple",
+      "2 tbsp natural peanut butter"
+    ],
+    "instructions": "Slice apple. Serve with peanut butter for dipping.",
+    "tip": "Natural peanut butter (just peanuts and salt) avoids added sugar and hydrogenated oils found in commercial brands."
+  },
+  {
+    "id": "meal-cottage-cheese-berries",
+    "name": "Cottage Cheese & Berry Bowl",
+    "emoji": "🫐",
+    "mealType": "snack",
+    "tags": ["high-protein", "quick", "low-carb"],
+    "goal": ["fat-loss", "muscle-gain"],
+    "prepTime": 3,
+    "servingSize": "1 bowl (~280g)",
+    "macros": {
+      "calories": 230,
+      "protein": 26,
+      "carbs": 20,
+      "fat": 4,
+      "fiber": 3,
+      "sugar": 14
+    },
+    "micros": {
+      "sodium": 380,
+      "potassium": 280,
+      "calcium": 16,
+      "iron": 4,
+      "vitaminC": 18,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "1 cup low-fat cottage cheese",
+      "1/2 cup mixed berries",
+      "1 tsp honey",
+      "Pinch of cinnamon"
+    ],
+    "instructions": "Spoon cottage cheese into bowl. Top with berries, drizzle honey, and dust with cinnamon.",
+    "tip": "Cottage cheese is high in casein protein — a slow-digesting protein ideal as a late-night snack."
+  },
+  {
+    "id": "meal-edamame-hummus",
+    "name": "Edamame & Hummus Plate",
+    "emoji": "🫛",
+    "mealType": "snack",
+    "tags": ["vegan", "high-protein", "quick"],
+    "goal": ["fat-loss", "maintenance", "general-fitness"],
+    "prepTime": 5,
+    "servingSize": "1 plate (~200g)",
+    "macros": {
+      "calories": 260,
+      "protein": 18,
+      "carbs": 24,
+      "fat": 10,
+      "fiber": 10,
+      "sugar": 3
+    },
+    "micros": {
+      "sodium": 340,
+      "potassium": 490,
+      "calcium": 8,
+      "iron": 20,
+      "vitaminC": 10,
+      "vitaminD": 0
+    },
+    "ingredients": [
+      "1 cup shelled edamame (cooked/salted)",
+      "3 tbsp hummus",
+      "1/2 cup veggie sticks (carrots, celery)"
+    ],
+    "instructions": "Steam or microwave edamame per package. Serve alongside hummus and veggie sticks.",
+    "tip": "Edamame is one of the only plant-based complete proteins — containing all 9 essential amino acids."
+  },
+  {
+    "id": "meal-protein-bar-shake",
+    "name": "Protein Bar & Shake Combo",
+    "emoji": "🍫",
+    "mealType": "snack",
+    "tags": ["quick", "high-protein", "on-the-go"],
+    "goal": ["muscle-gain", "general-fitness"],
+    "prepTime": 1,
+    "servingSize": "1 bar + 1 shake (~350ml)",
+    "macros": {
+      "calories": 380,
+      "protein": 42,
+      "carbs": 36,
+      "fat": 10,
+      "fiber": 6,
+      "sugar": 12
+    },
+    "micros": {
+      "sodium": 460,
+      "potassium": 360,
+      "calcium": 30,
+      "iron": 20,
+      "vitaminC": 8,
+      "vitaminD": 25
+    },
+    "ingredients": [
+      "1 high-protein bar (e.g., RXBAR, Quest, Barebells)",
+      "1 scoop whey protein in water or milk"
+    ],
+    "instructions": "Mix protein powder with 8–12oz cold water or milk. Shake well. Pair with protein bar.",
+    "tip": "Look for bars with <5g sugar and at least 20g protein. Avoid bars with more than 10 ingredients."
+  },
+  {
+    "id": "meal-pre-banana-rice-cakes",
+    "name": "Pre-Workout: Banana & Rice Cakes",
+    "emoji": "⚡",
+    "mealType": "pre-workout",
+    "tags": ["quick", "high-carb", "pre-workout"],
+    "goal": ["muscle-gain", "general-fitness", "maintenance"],
+    "prepTime": 3,
+    "servingSize": "1 banana + 2 rice cakes + 1 tbsp PB (~220g)",
+    "macros": {
+      "calories": 310,
+      "protein": 8,
+      "carbs": 54,
+      "fat": 8,
+      "fiber": 4,
+      "sugar": 24
+    },
+    "micros": {
+      "sodium": 120,
+      "potassium": 560,
+      "calcium": 4,
+      "iron": 6,
+      "vitaminC": 14,
+      "vitaminD": 0
+    },
+    "ingredients": [
+      "1 ripe banana",
+      "2 plain rice cakes",
+      "1 tbsp peanut butter"
+    ],
+    "instructions": "Spread peanut butter on rice cakes. Eat with banana 30–60 min before training.",
+    "tip": "Eat this 45–60 min before your workout. The fast carbs from the banana fuel your session immediately."
+  },
+  {
+    "id": "meal-pre-oatmeal-protein",
+    "name": "Pre-Workout: Oatmeal & Protein",
+    "emoji": "🏋️",
+    "mealType": "pre-workout",
+    "tags": ["high-carb", "high-protein", "pre-workout"],
+    "goal": ["muscle-gain", "maintenance"],
+    "prepTime": 10,
+    "servingSize": "1 bowl + 1 shake (~420g)",
+    "macros": {
+      "calories": 500,
+      "protein": 36,
+      "carbs": 68,
+      "fat": 8,
+      "fiber": 7,
+      "sugar": 18
+    },
+    "micros": {
+      "sodium": 240,
+      "potassium": 580,
+      "calcium": 22,
+      "iron": 22,
+      "vitaminC": 4,
+      "vitaminD": 12
+    },
+    "ingredients": [
+      "1 cup cooked oatmeal",
+      "1 tbsp honey",
+      "1/2 banana, sliced",
+      "1 scoop protein powder in water"
+    ],
+    "instructions": "Prepare oatmeal. Top with honey and banana. Drink protein shake alongside.",
+    "tip": "Best consumed 60–90 min before training for sustained energy with no GI discomfort mid-session."
+  },
+  {
+    "id": "meal-pre-chicken-sweet-potato",
+    "name": "Pre-Workout: Chicken & Sweet Potato",
+    "emoji": "🍗",
+    "mealType": "pre-workout",
+    "tags": ["high-protein", "high-carb", "meal-prep"],
+    "goal": ["muscle-gain"],
+    "prepTime": 35,
+    "servingSize": "1 plate (~450g)",
+    "macros": {
+      "calories": 540,
+      "protein": 46,
+      "carbs": 56,
+      "fat": 10,
+      "fiber": 6,
+      "sugar": 12
+    },
+    "micros": {
+      "sodium": 480,
+      "potassium": 980,
+      "calcium": 8,
+      "iron": 18,
+      "vitaminC": 42,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "6 oz baked chicken breast",
+      "1 large sweet potato, baked",
+      "1 cup steamed green beans",
+      "Salt, pepper, garlic powder"
+    ],
+    "instructions": "Bake chicken at 400°F for 22–25 min. Bake or microwave sweet potato. Steam green beans. Serve all together seasoned simply.",
+    "tip": "Eat this 2 hours before a heavy lifting session for maximum performance without stomach discomfort."
+  },
+  {
+    "id": "meal-post-shake-banana",
+    "name": "Post-Workout Shake & Banana",
+    "emoji": "💪",
+    "mealType": "post-workout",
+    "tags": ["quick", "high-protein", "recovery"],
+    "goal": ["muscle-gain", "general-fitness"],
+    "prepTime": 3,
+    "servingSize": "1 large shake + 1 banana (~550ml)",
+    "macros": {
+      "calories": 430,
+      "protein": 40,
+      "carbs": 52,
+      "fat": 6,
+      "fiber": 4,
+      "sugar": 30
+    },
+    "micros": {
+      "sodium": 280,
+      "potassium": 820,
+      "calcium": 28,
+      "iron": 10,
+      "vitaminC": 14,
+      "vitaminD": 20
+    },
+    "ingredients": [
+      "1.5 scoops whey protein in milk",
+      "1 large banana",
+      "Handful of ice (optional)"
+    ],
+    "instructions": "Blend protein with milk and banana. Drink within 30–45 min post-workout.",
+    "tip": "The 30-minute post-workout anabolic window is slightly overstated — but getting protein within 2 hours of training is still optimal."
+  },
+  {
+    "id": "meal-post-chicken-rice-broccoli",
+    "name": "Post-Workout: Chicken, Rice & Broccoli",
+    "emoji": "🥡",
+    "mealType": "post-workout",
+    "tags": ["high-protein", "meal-prep", "recovery"],
+    "goal": ["muscle-gain"],
+    "prepTime": 30,
+    "servingSize": "1 container (~520g)",
+    "macros": {
+      "calories": 610,
+      "protein": 56,
+      "carbs": 70,
+      "fat": 10,
+      "fiber": 6,
+      "sugar": 4
+    },
+    "micros": {
+      "sodium": 520,
+      "potassium": 760,
+      "calcium": 10,
+      "iron": 20,
+      "vitaminC": 60,
+      "vitaminD": 4
+    },
+    "ingredients": [
+      "7 oz grilled chicken breast",
+      "1.25 cups cooked white rice",
+      "1.5 cups broccoli, steamed",
+      "Low-sodium soy sauce, garlic powder"
+    ],
+    "instructions": "Grill chicken, steam broccoli, cook rice. Combine in meal prep container. Season with soy sauce.",
+    "tip": "White rice (vs brown) is actually preferable post-workout — it digests faster, replenishing glycogen more quickly."
+  },
+  {
+    "id": "meal-post-greek-yogurt-granola",
+    "name": "Post-Workout: Yogurt & Granola",
+    "emoji": "🏃",
+    "mealType": "post-workout",
+    "tags": ["quick", "high-protein", "recovery"],
+    "goal": ["fat-loss", "maintenance"],
+    "prepTime": 5,
+    "servingSize": "1 cup yogurt + toppings (~320g)",
+    "macros": {
+      "calories": 360,
+      "protein": 30,
+      "carbs": 44,
+      "fat": 6,
+      "fiber": 3,
+      "sugar": 24
+    },
+    "micros": {
+      "sodium": 160,
+      "potassium": 440,
+      "calcium": 30,
+      "iron": 8,
+      "vitaminC": 12,
+      "vitaminD": 6
+    },
+    "ingredients": [
+      "1 cup non-fat Greek yogurt",
+      "1/3 cup low-sugar granola",
+      "1/2 cup strawberries, sliced",
+      "1 tbsp honey"
+    ],
+    "instructions": "Layer yogurt in a bowl. Top with granola, strawberries, and honey. Eat immediately post-workout.",
+    "tip": "Great option for lighter training days or cardio sessions where you want protein without a heavy meal."
+  },
+  {
+    "id": "meal-black-bean-bowl",
+    "name": "Black Bean & Rice Bowl",
+    "emoji": "🫘",
+    "mealType": "lunch",
+    "tags": ["vegan", "high-fiber", "balanced"],
+    "goal": ["maintenance", "fat-loss", "general-fitness"],
+    "prepTime": 20,
+    "servingSize": "1 bowl (~450g)",
+    "macros": {
+      "calories": 440,
+      "protein": 20,
+      "carbs": 72,
+      "fat": 8,
+      "fiber": 16,
+      "sugar": 5
+    },
+    "micros": {
+      "sodium": 420,
+      "potassium": 740,
+      "calcium": 10,
+      "iron": 28,
+      "vitaminC": 18,
+      "vitaminD": 0
+    },
+    "ingredients": [
+      "1 cup cooked brown rice",
+      "1 cup black beans (canned, rinsed)",
+      "1/4 cup corn",
+      "1/4 cup salsa",
+      "1/4 avocado, diced",
+      "Lime juice, cumin, chili powder",
+      "Fresh cilantro"
+    ],
+    "instructions": "Warm beans with cumin and chili powder. Layer over rice. Top with corn, salsa, avocado, and a squeeze of lime.",
+    "tip": "Pair with a side of sliced chicken to easily boost protein by 30–40g if not eating vegan."
+  }
+]
